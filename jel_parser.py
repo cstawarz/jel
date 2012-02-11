@@ -1,6 +1,7 @@
 from __future__ import division, print_function, unicode_literals
 
 import ply.lex as lex
+from ply.lex import TOKEN
 
 
 class JELLexer(object):
@@ -23,17 +24,10 @@ class JELLexer(object):
         return {
             't_NUMBER': (
                 r'-?'				# Sign
-                r'([0-9]|([1-9][0-9]+))'	# Integer
+                r'(([1-9][0-9]+)|[0-9])'	# Integer
                 r'(\.[0-9]+)?'			# Fraction
                 r'([eE][+-]?[0-9]+)?'		# Exponent
-                
-                # Don't match if the preceding is immediately followed
-                # by a digit.  This prevents e.g. '23' being lexed as
-                # '2 3' or '01' as '0 1'.
-                r'(?![0-9])'
                 ),
-                
-            't_STRING': r'''('[^'\n]*')|("[^"\n]*")''',
             
             't_COLON'			: r':',
             't_COMMA'			: r',',
@@ -63,6 +57,16 @@ class JELLexer(object):
 
     def get_ignore(self):
         return ' \t'
+
+    @TOKEN(
+        r"('''(.|\n)*?(?<!\\)''')"	# Multiline single quotes
+        r'|("""(.|\n)*?(?<!\\)""")'	# Multiline double quotes
+        r"|('[^\n]*?(?<!\\)')"		# Single quotes
+        r'|("[^\n]*?(?<!\\)")'		# Double quotes
+        )
+    def t_STRING(self, t):
+        t.lexer.lineno += t.value.count('\n')
+        return t
         
     def t_IDENTIFIER(self, t):
         r'[a-zA-Z_][a-zA-Z0-9_]*'
