@@ -1,16 +1,13 @@
 from __future__ import division, print_function, unicode_literals
+import collections
 
 import ply.lex as lex
 from ply.lex import TOKEN
 
 
 class JELLexer(object):
-
-    @classmethod
-    def build(cls, **kwargs):
-        return lex.lex(object=cls(), **kwargs)
         
-    def __init__(self):
+    def __init__(self, print_errors=False):
         self.__dict__.update(self.get_string_tokens())
         self.tokens = tuple(t[2:] for t in dir(self)
                             if t.startswith('t_') and t[2:].isupper())
@@ -19,6 +16,12 @@ class JELLexer(object):
         self.tokens += tuple(k.upper() for k in self.keywords)
 
         self.t_ignore = self.get_ignore()
+
+        self.errors = collections.deque()
+        self.print_errors = print_errors
+
+    def build(self, **kwargs):
+        return lex.lex(object=self, **kwargs)
 
     def get_string_tokens(self):
         return {
@@ -82,9 +85,19 @@ class JELLexer(object):
         return t
 
     def t_error(self, t):
-        print('illegal character: %r' % t.value[0])
+        info = (t.value[0], t.lexer.lineno, t.lexer.lexpos)
+        self.errors.append(info)
+        if self.print_errors:
+            print('Illegal character %r at line %d position %d' % info)
         t.lexer.skip(1)
 
 
 if __name__ == '__main__':
-    lex.runmain(JELLexer.build())
+    import sys
+
+    o = JELLexer()
+    l = o.build()
+    
+    if not sys.flags.interactive:
+        o.print_errors = True
+        lex.runmain(l)
