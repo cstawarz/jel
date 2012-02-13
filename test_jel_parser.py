@@ -1,5 +1,5 @@
 # All aspects of string and number REs
-# Correct line numbers with newlines and multiline strings
+# Correct line numbers with multiline strings
 # Identifiers vs keywords
 
 from contextlib import contextmanager
@@ -71,6 +71,33 @@ class TestJELLexer(unittest.TestCase):
             self.assertToken('NUMBER', '3')
             self.assertToken('NUMBER', '4')
             self.assertError('#')
+
+    def test_whitespace(self):
+        # Linefeed ('\n') is a token, space and horizontal tab ('\t')
+        # are ignored, and all others ('\f', '\r', '\v') are invalid
+        with self.input('  \n\t\t 1 2 \f 3 \r \v\r \n\n\n 4  \t'):
+            self.assertToken('NEWLINE', '\n', lineno=1)
+            self.assertToken('NUMBER', '1', lineno=2)
+            self.assertToken('NUMBER', '2')
+            self.assertError('\f')
+            self.assertToken('NUMBER', '3')
+            self.assertError('\r')
+            self.assertError('\v')
+            self.assertError('\r')
+            self.assertToken('NEWLINE', '\n\n\n', lineno=2)
+            self.assertToken('NUMBER', '4', lineno=5)
+
+    def test_escaped_newline(self):
+        with self.input('\n \n\n \\\n\n \\   \t  \n 3  \\  \r  \n'):
+            self.assertToken('NEWLINE', '\n', lineno=1)
+            self.assertToken('NEWLINE', '\n\n', lineno=2)
+            # Escaped newline, no token
+            self.assertToken('NEWLINE', '\n', lineno=5)
+            # Escaped newline, no token
+            self.assertToken('NUMBER', '3', lineno=7)
+            self.assertError('\\')
+            self.assertError('\r')
+            self.assertToken('NEWLINE', '\n', lineno=7)
 
     def test_operators(self):
         with self.input(': , / . == > >= { [ < <= ( - % != + ** } ] ) *'):

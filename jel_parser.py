@@ -80,8 +80,11 @@ class JELLexer(object):
         return t
        
     def t_NEWLINE(self, t):
-        r'\n+'
-        t.lexer.lineno += len(t.value)
+        r'(\\[ \t]*\n)|(\n+)'
+        t.lexer.lineno += t.value.count('\n')
+        if t.value[0] == '\\':
+            # Discard escaped newlines
+            return None
         return t
 
     def t_error(self, t):
