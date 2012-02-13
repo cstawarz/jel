@@ -1,6 +1,5 @@
 # All aspects of string and number REs
 # Correct line numbers with multiline strings
-# Identifiers vs keywords
 
 from contextlib import contextmanager
 import unittest
@@ -122,6 +121,37 @@ class TestJELLexer(unittest.TestCase):
             self.assertToken('RBRACKET', ']')
             self.assertToken('RPAREN', ')')
             self.assertToken('TIMES', '*')
+
+    def test_identifiers(self):
+        with self.input('a A z Z foo Bar12 FOO_bar _ _foo _f1 F_0_9 2_ 23foo'):
+            self.assertToken('IDENTIFIER', 'a')
+            self.assertToken('IDENTIFIER', 'A')
+            self.assertToken('IDENTIFIER', 'z')
+            self.assertToken('IDENTIFIER', 'Z')
+            self.assertToken('IDENTIFIER', 'foo')
+            self.assertToken('IDENTIFIER', 'Bar12')
+            self.assertToken('IDENTIFIER', 'FOO_bar')
+            self.assertToken('IDENTIFIER', '_')
+            self.assertToken('IDENTIFIER', '_foo')
+            self.assertToken('IDENTIFIER', '_f1')
+            self.assertToken('IDENTIFIER', 'F_0_9')
+            self.assertToken('NUMBER', '2')
+            self.assertToken('IDENTIFIER', '_')
+            self.assertToken('NUMBER', '23')
+            self.assertToken('IDENTIFIER', 'foo')
+
+    def test_keywords(self):
+        with self.input('and false in not null or true And andyet andnot'):
+            self.assertToken('AND', 'and')
+            self.assertToken('FALSE', 'false')
+            self.assertToken('IN', 'in')
+            self.assertToken('NOT', 'not')
+            self.assertToken('NULL', 'null')
+            self.assertToken('OR', 'or')
+            self.assertToken('TRUE', 'true')
+            self.assertToken('IDENTIFIER', 'And')
+            self.assertToken('IDENTIFIER', 'andyet')
+            self.assertToken('IDENTIFIER', 'andnot')
 
 
 if __name__ == '__main__':
