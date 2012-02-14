@@ -1,7 +1,7 @@
 from __future__ import division, print_function, unicode_literals
 import collections
 
-import ply.lex as lex
+from ply import lex, yacc
 from ply.lex import TOKEN
 
 
@@ -31,7 +31,7 @@ class JELLexer(object):
         self.print_errors = print_errors
 
     def build(self, **kwargs):
-        return lex.lex(object=self, **kwargs)
+        return lex.lex(module=self, **kwargs)
 
     def get_string_tokens(self):
         return {
@@ -109,6 +109,19 @@ class JELLexer(object):
         if self.print_errors:
             print('Illegal character %r at line %d position %d' % info)
         t.lexer.skip(1)
+
+
+class JELParser(object):
+
+    def __init__(self):
+        self.start = self.get_start()
+
+    def build(self, **kwargs):
+        return yacc.yacc(module=self, **kwargs)
+
+    def get_start(self):
+        raise NotImplementedError
+
 
 
 if __name__ == '__main__':
