@@ -3,7 +3,7 @@
 
 from contextlib import contextmanager
 import unittest
-from jel_parser import JELLexer
+from jel_parser import JELLexer, MatchString
 
 
 class TestJELLexer(unittest.TestCase):
@@ -37,7 +37,7 @@ class TestJELLexer(unittest.TestCase):
     def advance(self):
         self.next_token = self.lexer.token()
 
-    def assertToken(self, type, value, lineno=None, lexpos=None):
+    def assertToken(self, type, value, lineno=None):
         t = self.next_token
         
         self.assertIsNotNone(t)
@@ -45,20 +45,25 @@ class TestJELLexer(unittest.TestCase):
         self.assertEqual(value, t.value)
         if lineno:
             self.assertEqual(lineno, t.lineno)
-        if lexpos:
-            self.assertEqual(lexpos, t.lexpos)
 
         self.advance()
 
-    def assertError(self, value, lineno=None, lexpos=None):
+        return t
+
+    def assertError(self, value, lineno=None):
         self.assertTrue(self.jl.errors, 'expected error was not detected')
         e = self.jl.errors.popleft()
         
         self.assertEqual(value, e[0])
         if lineno:
             self.assertEqual(lineno, e[1])
-        if lexpos:
-            self.assertEqual(lexpos, e[2])
+
+    def assertNumber(self, value, int='', frac='', exp='', lineno=None):
+        t = self.assertToken('NUMBER', value, lineno=lineno)
+        self.assertIsInstance(t.value, MatchString)
+        self.assertEqual(int, t.value.int)
+        self.assertEqual(frac, t.value.frac)
+        self.assertEqual(exp, t.value.exp)
 
     def test_errors(self):
         with self.input('1 2 $@ & 3 4 #'):
@@ -152,6 +157,50 @@ class TestJELLexer(unittest.TestCase):
             self.assertToken('IDENTIFIER', 'And')
             self.assertToken('IDENTIFIER', 'andyet')
             self.assertToken('IDENTIFIER', 'andnot')
+
+    def test_numbers(self):
+        with self.input(
+                '1 -2 0 -0 12 +123 012 '
+                '0.0 -1.23 +34.0567 .1 2. '
+                '0e0 1E23 1.2e+123 -2.3E-00089 1.2e -2.4E 5'
+                ):
+            self.assertNumber('1', int='1')
+            self.assertNumber('-2', int='-2')
+            self.assertNumber('0', int='0')
+            self.assertNumber('-0', int='-0')
+            self.assertNumber('12', int='12')
+            self.assertNumber('+123', int='+123')
+
+            # Zero is the only number whose integer part can have a
+            # leading '0', so '012' is lexed as '0' and '12'
+            self.assertNumber('0', int='0')
+            self.assertNumber('12', int='12')
+
+            self.assertNumber('0.0', int='0', frac='0')
+            self.assertNumber('-1.23', int='-1', frac='23')
+            self.assertNumber('+34.0567', int='+34', frac='0567')
+
+            # There must be at least one digit on either side of a
+            # decimal point, so the '.' in '.1' and '2.' is lexed as
+            # DOT
+            self.assertToken('DOT', '.')
+            self.assertNumber('1', int='1')
+            self.assertNumber('2', int='2')
+            self.assertToken('DOT', '.')
+            
+            self.assertNumber('0e0', int='0', exp='0')
+            self.assertNumber('1E23', int='1', exp='23')
+            self.assertNumber('1.2e+123', int='1', frac='2', exp='+123')
+            self.assertNumber('-2.3E-00089', int='-2', frac='3', exp='-00089')
+
+            # There must be at least one digit after the 'e' or 'E',
+            # so the letter is lexed as an identifier in '1.2e' and
+            # '-2.4E'
+            self.assertNumber('1.2', int='1', frac='2')
+            self.assertToken('IDENTIFIER', 'e')
+            self.assertNumber('-2.4', int='-2', frac='4')
+            self.assertToken('IDENTIFIER', 'E')
+            self.assertNumber('5', int='5')
 
 
 if __name__ == '__main__':

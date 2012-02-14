@@ -5,6 +5,16 @@ import ply.lex as lex
 from ply.lex import TOKEN
 
 
+class MatchString(unicode):
+
+    def __new__(cls, value, groupdict):
+        return super(MatchString, cls).__new__(cls, value)
+
+    def __init__(self, value, groupdict):
+        super(MatchString, self).__init__(value)
+        self.__dict__.update(groupdict)
+
+
 class JELLexer(object):
         
     def __init__(self, print_errors=False):
@@ -25,13 +35,6 @@ class JELLexer(object):
 
     def get_string_tokens(self):
         return {
-            't_NUMBER': (
-                r'-?'				# Sign
-                r'(([1-9][0-9]+)|[0-9])'	# Integer
-                r'(\.[0-9]+)?'			# Fraction
-                r'([eE][+-]?[0-9]+)?'		# Exponent
-                ),
-            
             't_COLON'			: r':',
             't_COMMA'			: r',',
             't_DIVIDE'			: r'/',
@@ -69,6 +72,18 @@ class JELLexer(object):
         )
     def t_STRING(self, t):
         t.lexer.lineno += t.value.count('\n')
+        return t
+
+    @TOKEN(
+        r'(?P<t_NUMBER_int>[+-]?(([1-9][0-9]+)|[0-9]))'	# Integer
+        r'(\.(?P<t_NUMBER_frac>[0-9]+))?'		# Fraction
+        r'([eE](?P<t_NUMBER_exp>[+-]?[0-9]+))?'		# Exponent
+        )
+    def t_NUMBER(self, t):
+        groupdict = dict((k.split('_')[2], v) for (k, v) in
+                         t.lexer.lexmatch.groupdict('').iteritems()
+                         if k.startswith('t_NUMBER_'))
+        t.value = MatchString(t.value, groupdict)
         return t
         
     def t_IDENTIFIER(self, t):
