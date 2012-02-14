@@ -1,4 +1,4 @@
-# All aspects of string and number REs
+# All aspects of string RE
 # Correct line numbers with multiline strings
 
 from contextlib import contextmanager
@@ -58,12 +58,13 @@ class TestJELLexer(unittest.TestCase):
         if lineno:
             self.assertEqual(lineno, e[1])
 
-    def assertNumber(self, value, int='', frac='', exp='', lineno=None):
-        t = self.assertToken('NUMBER', value, lineno=lineno)
+    def assertNumber(self, value, int='', frac='', exp='', units=''):
+        t = self.assertToken('NUMBER', value)
         self.assertIsInstance(t.value, MatchString)
         self.assertEqual(int, t.value.int)
         self.assertEqual(frac, t.value.frac)
         self.assertEqual(exp, t.value.exp)
+        self.assertEqual(units, t.value.units)
 
     def test_errors(self):
         with self.input('1 2 $@ & 3 4 #'):
@@ -142,8 +143,7 @@ class TestJELLexer(unittest.TestCase):
             self.assertToken('IDENTIFIER', 'F_0_9')
             self.assertToken('NUMBER', '2')
             self.assertToken('IDENTIFIER', '_')
-            self.assertToken('NUMBER', '23')
-            self.assertToken('IDENTIFIER', 'foo')
+            self.assertToken('NUMBER', '23foo')  # 'foo' is units
 
     def test_keywords(self):
         with self.input('and false in not null or true And andyet andnot'):
@@ -194,13 +194,25 @@ class TestJELLexer(unittest.TestCase):
             self.assertNumber('-2.3E-00089', int='-2', frac='3', exp='-00089')
 
             # There must be at least one digit after the 'e' or 'E',
-            # so the letter is lexed as an identifier in '1.2e' and
-            # '-2.4E'
-            self.assertNumber('1.2', int='1', frac='2')
-            self.assertToken('IDENTIFIER', 'e')
-            self.assertNumber('-2.4', int='-2', frac='4')
-            self.assertToken('IDENTIFIER', 'E')
+            # so the letter is lexed as units in '1.2e' and '-2.4E'
+            self.assertNumber('1.2e', int='1', frac='2', units='e')
+            self.assertNumber('-2.4E', int='-2', frac='4', units='E')
             self.assertNumber('5', int='5')
+
+    def test_numbers_with_units(self):
+        with self.input(
+                '0s -1ms +2.3us 0.1e23MpS2 '
+                '12a1B2c345 -1.23E123E123'
+                ):
+            self.assertNumber('0s', int='0', units='s')
+            self.assertNumber('-1ms', int='-1', units='ms')
+            self.assertNumber('+2.3us', int='+2', frac='3', units='us')
+            self.assertNumber('0.1e23MpS2', int='0', frac='1', exp='23',
+                              units='MpS2')
+            
+            self.assertNumber('12a1B2c345', int='12', units='a1B2c345')
+            self.assertNumber('-1.23E123E123', int='-1', frac='23', exp='123',
+                              units='E123')  # Poor choice of units
 
 
 if __name__ == '__main__':

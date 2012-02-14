@@ -26,13 +26,13 @@ Dictionary: {"a":1, "b":2, c:"foo", "1 2 3":"bar"}, {'x': null,}, {}
 All values are immutable.
 
 Number literals can include a unit suffix.  A unit suffix consists of
-one or more letters (A-Z, a-z).  The suffix is interpreted as a
-scaling factor for the preceding number; the parser will query the
-embedding application for the appropriate scale factor and then
-multiply the preceding number by it.  For example, if the base time
-unit for an application is microseconds, then the scale factor for the
-unit suffix "ms" (denoting milliseconds) is 1000, and the literal 5ms
-is eqivalent to 5000.
+a letter (A-Z, a-z), followed by one or more letters or digits (0-9).
+The suffix is interpreted as a scaling factor for the preceding
+number; the parser will query the embedding application for the
+appropriate scale factor and then multiply the preceding number by it.
+For example, if the base time unit for an application is microseconds,
+then the scale factor for the unit suffix "ms" (denoting milliseconds)
+is 1000, and the literal 5ms is eqivalent to 5000.
 
 Strings are Unicode.
 
