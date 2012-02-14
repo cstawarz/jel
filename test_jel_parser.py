@@ -260,6 +260,10 @@ class TestJELLexer(unittest.TestCase):
             self.assertToken('STRING', '"""foo\nbar\nblah"""', lineno=3)
             self.assertToken('STRING', '"""foo\\"""bar"""', lineno=5)
 
+    @unittest.expectedFailure
+    def test_string_escape_sequences(self):
+        self.fail('escape sequences have not been implemented yet')
+
 
 if __name__ == '__main__':
     unittest.main()
