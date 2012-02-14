@@ -1,6 +1,3 @@
-# All aspects of string RE
-# Correct line numbers with multiline strings
-
 from contextlib import contextmanager
 import unittest
 from jel_parser import JELLexer, MatchString
@@ -213,6 +210,55 @@ class TestJELLexer(unittest.TestCase):
             self.assertNumber('12a1B2c345', int='12', units='a1B2c345')
             self.assertNumber('-1.23E123E123', int='-1', frac='23', exp='123',
                               units='E123')  # Poor choice of units
+
+    def test_string(self):
+        with self.input(
+                "'' ' ' 'foo' 'foo bar blah' 'can\\'t' 'foo\nbar' "
+                '"" " " "foo" "foo bar blah" "can\\"t" "foo\nbar" '
+                ):
+            self.assertToken('STRING', "''")
+            self.assertToken('STRING', "' '")
+            self.assertToken('STRING', "'foo'")
+            self.assertToken('STRING', "'foo bar blah'")
+            self.assertToken('STRING', "'can\\'t'")
+            
+            self.assertError("'")
+            self.assertToken('IDENTIFIER', 'foo')
+            self.assertToken('NEWLINE', '\n')
+            self.assertToken('IDENTIFIER', 'bar')
+            self.assertError("'")
+            
+            self.assertToken('STRING', '""')
+            self.assertToken('STRING', '" "')
+            self.assertToken('STRING', '"foo"')
+            self.assertToken('STRING', '"foo bar blah"')
+            self.assertToken('STRING', '"can\\"t"')
+            
+            self.assertError('"')
+            self.assertToken('IDENTIFIER', 'foo')
+            self.assertToken('NEWLINE', '\n')
+            self.assertToken('IDENTIFIER', 'bar')
+            self.assertError('"')
+
+    def test_multiline_string(self):
+        with self.input(
+                "'''''' ''' ''' '''foo''' '''foo\nbar\nblah''' "
+                "'''foo\\'''bar''' "
+                
+                '"""""" """ """ """foo""" """foo\nbar\nblah""" '
+                '"""foo\\"""bar""" '
+                ):
+            self.assertToken('STRING', "''''''")
+            self.assertToken('STRING', "''' '''")
+            self.assertToken('STRING', "'''foo'''")
+            self.assertToken('STRING', "'''foo\nbar\nblah'''", lineno=1)
+            self.assertToken('STRING', "'''foo\\'''bar'''", lineno=3)
+            
+            self.assertToken('STRING', '""""""')
+            self.assertToken('STRING', '""" """')
+            self.assertToken('STRING', '"""foo"""')
+            self.assertToken('STRING', '"""foo\nbar\nblah"""', lineno=3)
+            self.assertToken('STRING', '"""foo\\"""bar"""', lineno=5)
 
 
 if __name__ == '__main__':
