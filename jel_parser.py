@@ -94,7 +94,7 @@ class JELLexer(object):
             t.type = t.value.upper()
             
         return t
-       
+        
     def t_NEWLINE(self, t):
         r'(\\[ \t]*\n)|(\n+)'
         t.lexer.lineno += t.value.count('\n')
@@ -120,8 +120,229 @@ class JELParser(object):
         return yacc.yacc(module=self, **kwargs)
 
     def get_start(self):
+        return 'expr'
+
+    def p_expr(self, p):
+        '''
+        expr : or_expr
+        '''
+        pass
+
+    def p_or_expr(self, p):
+        '''
+        or_expr
+            : or_expr OR and_expr
+            | and_expr
+        '''
+        pass
+
+    def p_and_expr(self, p):
+        '''
+        and_expr
+            : and_expr AND not_expr
+            | not_expr
+        '''
+        pass
+
+    def p_not_expr(self, p):
+        '''
+        not_expr
+            : NOT not_expr
+            | comparison_expr
+        '''
+        pass
+
+    def p_comparison_expr(self, p):
+        '''
+        comparison_expr
+            : comparison_expr comparison_op additive_expr
+            | additive_expr
+        '''
+        pass
+
+    def p_comparison_op(self, p):
+        '''
+        comparison_op
+            : LESSTHAN
+            | LESSTHANOREQUAL
+            | GREATERTHAN
+            | GREATERTHANOREQUAL
+            | NOTEQUAL
+            | EQUAL
+            | IN
+            | NOT IN
+        '''
+        pass
+
+    def p_additive_expr(self, p):
+        '''
+        additive_expr
+            : additive_expr PLUS multiplicative_expr
+            | additive_expr MINUS multiplicative_expr
+            | multiplicative_expr
+        '''
+        pass
+
+    def p_multiplicative_expr(self, p):
+        '''
+        multiplicative_expr
+            : multiplicative_expr multiplicative_op unary_expr
+            | unary_expr
+        '''
+        pass
+
+    def p_multiplicative_op(self, p):
+        '''
+        multiplicative_op : TIMES | DIVIDE | MODULO
+        '''
+        pass
+
+    def p_unary_expr(self, p):
+        '''
+        unary_expr
+            : PLUS unary_expr
+            | MINUS unary_expr
+            | exponentiation_expr
+        '''
+        pass
+
+    def p_exponentiation_expr(self, p):
+        '''
+        exponentiation_expr
+            : postfix_expr POWER exponentiation_expr
+            | postfix_expr
+        '''
+        pass
+
+    def p_postfix_expr(self, p):
+        '''
+        postfix_expr
+            : function_call_expr
+            | subscript_expr
+            | attribute_expr
+            | primary_expr
+        '''
+        pass
+
+    def p_function_call_expr(self, p):
+        '''
+        function_call_expr : IDENTIFIER LPAREN expr_list RPAREN
+        '''
+        pass
+
+    def p_subscript_expr(self, p):
+        '''
+        subscript_expr : postfix_expr LBRACKET expr RBRACKET
+        '''
+        pass
+
+    def p_attribute_expr(self, p):
+        '''
+        attribute_expr : postfix_expr DOT IDENTIFIER
+        '''
+        pass
+
+    def p_primary_expr(self, p):
+        '''
+        primary_expr
+            : parenthetic_expr
+            | literal_expr
+            | IDENTIFIER
+        '''
+        pass
+
+    def p_parenthetic_expr(self, p):
+        '''
+        parenthetic_expr : LPAREN expr RPAREN
+        '''
+        pass
+
+    def p_literal_expr(self, p):
+        '''
+        literal_expr
+            : dict_literal_expr
+            | list_literal_expr
+            | string_literal_expr
+            | NUMBER
+            | TRUE
+            | FALSE
+            | NULL
+        '''
+        pass
+
+    def p_dict_literal_expr(self, p):
+        '''
+        dict_literal_expr : LBRACE dict_item_list RBRACE
+        '''
+        pass
+
+    def p_dict_item_list(self, p):
+        '''
+        dict_item_list
+            : dict_item COMMA dict_item_list
+            | dict_item
+            | empty
+        '''
+        pass
+
+    def p_dict_item(self, p):
+        '''
+        dict_item : dict_key COLON expr
+        '''
+        pass
+
+    def p_dict_key(self, p):
+        '''
+        dict_key
+            : string_literal_expr
+            | IDENTIFIER
+        '''
+        pass
+
+    def p_list_literal_expr(self, p):
+        '''
+        list_literal_expr : LBRACKET expr_list RBRACKET
+        '''
+        pass
+
+    def p_expr_list(self, p):
+        '''
+        expr_list
+            : expr COMMA expr_list
+            | expr
+            | empty
+        '''
+        pass
+
+    def p_string_literal_expr(self, p):
+        '''
+        string_literal_expr
+            : STRING string_literal_expr
+            | STRING
+        '''
+        pass
+
+    def p_empty(self, p):
+        '''
+        empty :
+        '''
+        pass
+
+    def p_error(self, p):
         raise NotImplementedError
 
+    @classmethod
+    def print_grammar(cls):
+        p_funcs = sorted((getattr(cls, f) for f in dir(cls)
+                          if f.startswith('p_')),
+                         key = (lambda f: f.im_func.func_code.co_firstlineno))
+
+        for prod in (f.__doc__ for f in p_funcs if f.__doc__):
+            for line in prod.split('\n'):
+                line = line[8:]  # Remove indentation
+                if line:
+                    print(line)
+            print()
 
 
 if __name__ == '__main__':
