@@ -113,7 +113,9 @@ class JELLexer(object):
 
 class JELParser(object):
 
-    def __init__(self):
+    def __init__(self, tokens):
+        self.tokens = tokens
+        
         # PLY demands that start be str, not unicode
         self.start = str(self.get_start())
 
@@ -346,8 +348,10 @@ if __name__ == '__main__':
     import sys
 
     jl = JELLexer()
-    lexer = jl.build()
+    jp = JELParser(jl.tokens)
 
-    jp = JELParser()
-    jp.tokens = jl.tokens
+    lexer = jl.build()
     parser = jp.build(write_tables=False)
+
+    def parse(text):
+        return parser.parse(text, lexer=lexer)
