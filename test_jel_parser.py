@@ -157,16 +157,15 @@ class TestJELLexer(unittest.TestCase):
 
     def test_numbers(self):
         with self.input(
-                '1 -2 0 -0 12 +123 012 '
-                '0.0 -1.23 +34.0567 .1 2. '
-                '0e0 1E23 1.2e+123 -2.3E-00089 1.2e -2.4E 5'
+                '1 2 0 12 123 012 '
+                '0.0 1.23 34.0567 .1 2. '
+                '0e0 1E23 1.2e+123 2.3E-00089 1.2e 2.4E 5'
                 ):
             self.assertNumber('1', int='1')
-            self.assertNumber('-2', int='-2')
+            self.assertNumber('2', int='2')
             self.assertNumber('0', int='0')
-            self.assertNumber('-0', int='-0')
             self.assertNumber('12', int='12')
-            self.assertNumber('+123', int='+123')
+            self.assertNumber('123', int='123')
 
             # Zero is the only number whose integer part can have a
             # leading '0', so '012' is lexed as '0' and '12'
@@ -174,8 +173,8 @@ class TestJELLexer(unittest.TestCase):
             self.assertNumber('12', int='12')
 
             self.assertNumber('0.0', int='0', frac='0')
-            self.assertNumber('-1.23', int='-1', frac='23')
-            self.assertNumber('+34.0567', int='+34', frac='0567')
+            self.assertNumber('1.23', int='1', frac='23')
+            self.assertNumber('34.0567', int='34', frac='0567')
 
             # There must be at least one digit on either side of a
             # decimal point, so the '.' in '.1' and '2.' is lexed as
@@ -188,27 +187,27 @@ class TestJELLexer(unittest.TestCase):
             self.assertNumber('0e0', int='0', exp='0')
             self.assertNumber('1E23', int='1', exp='23')
             self.assertNumber('1.2e+123', int='1', frac='2', exp='+123')
-            self.assertNumber('-2.3E-00089', int='-2', frac='3', exp='-00089')
+            self.assertNumber('2.3E-00089', int='2', frac='3', exp='-00089')
 
             # There must be at least one digit after the 'e' or 'E',
             # so the letter is lexed as units in '1.2e' and '-2.4E'
             self.assertNumber('1.2e', int='1', frac='2', units='e')
-            self.assertNumber('-2.4E', int='-2', frac='4', units='E')
+            self.assertNumber('2.4E', int='2', frac='4', units='E')
             self.assertNumber('5', int='5')
 
     def test_numbers_with_units(self):
         with self.input(
-                '0s -1ms +2.3us 0.1e23MpS2 '
-                '12a1B2c345 -1.23E123E123'
+                '0s 1ms 2.3us 0.1e23MpS2 '
+                '12a1B2c345 1.23E123E123'
                 ):
             self.assertNumber('0s', int='0', units='s')
-            self.assertNumber('-1ms', int='-1', units='ms')
-            self.assertNumber('+2.3us', int='+2', frac='3', units='us')
+            self.assertNumber('1ms', int='1', units='ms')
+            self.assertNumber('2.3us', int='2', frac='3', units='us')
             self.assertNumber('0.1e23MpS2', int='0', frac='1', exp='23',
                               units='MpS2')
             
             self.assertNumber('12a1B2c345', int='12', units='a1B2c345')
-            self.assertNumber('-1.23E123E123', int='-1', frac='23', exp='123',
+            self.assertNumber('1.23E123E123', int='1', frac='23', exp='123',
                               units='E123')  # Poor choice of units
 
     def test_string(self):

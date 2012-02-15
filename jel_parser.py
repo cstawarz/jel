@@ -75,7 +75,7 @@ class JELLexer(object):
         return t
 
     @TOKEN(
-        r'(?P<t_NUMBER_int>[+-]?(([1-9][0-9]+)|[0-9]))'	# Integer
+        r'(?P<t_NUMBER_int>([1-9][0-9]+)|[0-9])'	# Integer
         r'(\.(?P<t_NUMBER_frac>[0-9]+))?'		# Fraction
         r'([eE](?P<t_NUMBER_exp>[+-]?[0-9]+))?'		# Exponent
         r'(?P<t_NUMBER_units>[a-zA-Z][a-zA-Z0-9]*)?'	# Units

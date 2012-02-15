@@ -55,7 +55,7 @@ From highest to lowest precedence:
 (expression)                       Subexpression
 x[index], x(args...), x.name       Indexing, function call, attribute access
 **                                 Exponentiation
--x                                 Negation
++x, -x                             Positive, negative
 *, /, %                            Multiplication, division, remainder
 +, -                               Addition, subtraction
 <, <=, >, >=, !=, ==, in, not in   Comparisons
