@@ -36,14 +36,15 @@ is 1000, and the literal 5ms is eqivalent to 5000.
 
 Strings are Unicode.
 
-Any valid JSON document is a valid JEL expression (i.e. JEL is a
-proper superset of JSON).
-
 Dictionary keys must be strings.  As in JavaScript, if a key is a
 valid identifier, then the quotes around it may be omitted.  Because
 of this, key names in dictionary literals must always be literal
 strings (i.e. they can't be arbitrary expressions as in Python).
 However, the associated values can be any expression.
+
+Every valid JSON document is a valid JEL expression (i.e. JEL is a
+proper superset of JSON).  Every JEL value can be serialized as a JSON
+document (importantly, with no loss of type info).
 
 
 
@@ -75,6 +76,9 @@ chain is always a boolean.
 Every data type can be tested for (in)equality with any other data
 type.  Values of different types always compare not equal.  However,
 ordering comparisons are *not* valid between different data types.
+
+As in Python, exponentiation groups from right to left.  That is,
+2**3**4 is equivalent to 2**(3**4), not (2**3)**4.
 
 Only dictionaries support attribute access, and only for keys that are
 valid identifiers.  For example, if dictionary d has key 'abc123',

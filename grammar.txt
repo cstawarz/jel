@@ -1,0 +1,101 @@
+expr : or_expr
+
+or_expr
+    : or_expr OR and_expr
+    | and_expr
+
+and_expr
+    : and_expr AND not_expr
+    | not_expr
+
+not_expr
+    : NOT not_expr
+    | comparison_expr
+
+comparison_expr
+    : comparison_expr comparison_op additive_expr
+    | additive_expr
+
+comparison_op
+    : LESSTHAN
+    | LESSTHANOREQUAL
+    | GREATERTHAN
+    | GREATERTHANOREQUAL
+    | NOTEQUAL
+    | EQUAL
+    | IN
+    | NOT IN
+
+additive_expr
+    : additive_expr PLUS multiplicative_expr
+    | additive_expr MINUS multiplicative_expr
+    | multiplicative_expr
+
+multiplicative_expr
+    : multiplicative_expr multiplicative_op unary_expr
+    | unary_expr
+
+multiplicative_op : TIMES | DIVIDE | MODULO
+
+unary_expr
+    : PLUS unary_expr
+    | MINUS unary_expr
+    | exponentiation_expr
+
+exponentiation_expr
+    : postfix_expr POWER exponentiation_expr
+    | postfix_expr
+
+postfix_expr
+    : function_call_expr
+    | subscript_expr
+    | attribute_expr
+    | primary_expr
+
+function_call_expr : IDENTIFIER LPAREN expr_list RPAREN
+
+subscript_expr : postfix_expr LBRACKET expr RBRACKET
+
+attribute_expr : postfix_expr DOT IDENTIFIER
+
+primary_expr
+    : parenthetic_expr
+    | literal_expr
+    | IDENTIFIER
+
+parenthetic_expr : LPAREN expr RPAREN
+
+literal_expr
+    : dict_literal_expr
+    | list_literal_expr
+    | string_literal_expr
+    | NUMBER
+    | TRUE
+    | FALSE
+    | NULL
+
+dict_literal_expr : LBRACE dict_item_list RBRACE
+
+dict_item_list
+    : dict_item COMMA dict_item_list
+    | dict_item
+    | empty
+
+dict_item : dict_key COLON expr
+
+dict_key
+    : string_literal_expr
+    | IDENTIFIER
+
+list_literal_expr : LBRACKET expr_list RBRACKET
+
+expr_list
+    : expr COMMA expr_list
+    | expr
+    | empty
+
+string_literal_expr
+    : STRING string_literal_expr
+    | STRING
+
+empty :
