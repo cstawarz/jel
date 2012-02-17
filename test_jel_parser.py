@@ -101,6 +101,55 @@ class TestJELLexer(unittest.TestCase):
             self.assertError('\r')
             self.assertToken('NEWLINE', '\n', lineno=7)
 
+    def test_newline_in_grouping(self):
+        with self.input(
+                '\n ( \n ) \n [ \n\n ] \n { \n \n \n } \n '
+                '\n ( \n [ \n { \n } \n ] \n ) \n '
+                '\n ( \n ] \n } \n ) \n '
+                '\n [ \n ) \n } \n ] \n '
+                '\n { \n ) \n ] \n } \n '
+            ):
+            self.assertToken('NEWLINE', '\n')
+            self.assertToken('LPAREN', '(')
+            self.assertToken('RPAREN', ')')
+            self.assertToken('NEWLINE', '\n')
+            self.assertToken('LBRACKET', '[')
+            self.assertToken('RBRACKET', ']')
+            self.assertToken('NEWLINE', '\n')
+            self.assertToken('LBRACE', '{')
+            self.assertToken('RBRACE', '}')
+            self.assertToken('NEWLINE', '\n')
+            
+            self.assertToken('NEWLINE', '\n')
+            self.assertToken('LPAREN', '(')
+            self.assertToken('LBRACKET', '[')
+            self.assertToken('LBRACE', '{')
+            self.assertToken('RBRACE', '}')
+            self.assertToken('RBRACKET', ']')
+            self.assertToken('RPAREN', ')')
+            self.assertToken('NEWLINE', '\n')
+            
+            self.assertToken('NEWLINE', '\n')
+            self.assertToken('LPAREN', '(')
+            self.assertToken('RBRACKET', ']')
+            self.assertToken('RBRACE', '}')
+            self.assertToken('RPAREN', ')')
+            self.assertToken('NEWLINE', '\n')
+            
+            self.assertToken('NEWLINE', '\n')
+            self.assertToken('LBRACKET', '[')
+            self.assertToken('RPAREN', ')')
+            self.assertToken('RBRACE', '}')
+            self.assertToken('RBRACKET', ']')
+            self.assertToken('NEWLINE', '\n')
+            
+            self.assertToken('NEWLINE', '\n')
+            self.assertToken('LBRACE', '{')
+            self.assertToken('RPAREN', ')')
+            self.assertToken('RBRACKET', ']')
+            self.assertToken('RBRACE', '}')
+            self.assertToken('NEWLINE', '\n')
+
     def test_operators(self):
         with self.input(': , / . == > >= { [ < <= ( - % != + ** } ] ) *'):
             self.assertToken('COLON', ':')

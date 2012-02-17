@@ -27,6 +27,7 @@ class JELLexer(object):
 
         self.t_ignore = self.get_ignore()
 
+        self.groupings = []
         self.errors = collections.deque()
         self.print_errors = print_errors
 
@@ -42,19 +43,13 @@ class JELLexer(object):
             't_EQUAL'			: r'==',
             't_GREATERTHAN'		: r'>',
             't_GREATERTHANOREQUAL'	: r'>=',
-            't_LBRACE'			: r'\{',
-            't_LBRACKET'		: r'\[',
             't_LESSTHAN'		: r'<',
             't_LESSTHANOREQUAL'		: r'<=',
-            't_LPAREN'			: r'\(',
             't_MINUS'			: r'-',
             't_MODULO'			: r'%',
             't_NOTEQUAL'		: r'!=',
             't_PLUS'			: r'\+',
             't_POWER'			: r'\*\*',
-            't_RBRACE'			: r'\}',
-            't_RBRACKET'		: r'\]',
-            't_RPAREN'			: r'\)',
             't_TIMES'			: r'\*',
             }
 
@@ -94,12 +89,45 @@ class JELLexer(object):
             t.type = t.value.upper()
             
         return t
-        
+
+    def begin_grouping(self, t):
+        self.groupings.append(t.value)
+        return t
+
+    def end_grouping(self, t, start_token):
+        if self.groupings and (self.groupings[-1] == start_token):
+            self.groupings.pop()
+        return t
+
+    def t_LBRACE(self, t):
+        r'\{'
+        return self.begin_grouping(t)
+
+    def t_LBRACKET(self, t):
+        r'\['
+        return self.begin_grouping(t)
+
+    def t_LPAREN(self, t):
+        r'\('
+        return self.begin_grouping(t)
+
+    def t_RBRACE(self, t):
+        r'\}'
+        return self.end_grouping(t, '{')
+
+    def t_RBRACKET(self, t):
+        r'\]'
+        return self.end_grouping(t, '[')
+
+    def t_RPAREN(self, t):
+        r'\)'
+        return self.end_grouping(t, '(')
+
     def t_NEWLINE(self, t):
         r'(\\[ \t]*\n)|(\n+)'
         t.lexer.lineno += t.value.count('\n')
-        if t.value[0] == '\\':
-            # Discard escaped newlines
+        if self.groupings or (t.value[0] == '\\'):
+            # Discard newlines inside groupings and escaped newlines
             return None
         return t
 
