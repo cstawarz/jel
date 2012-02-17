@@ -365,10 +365,12 @@ class JELParser(object):
                          key = (lambda f: f.im_func.func_code.co_firstlineno))
 
         for prod in (f.__doc__ for f in p_funcs if f.__doc__):
-            for line in prod.split('\n'):
-                line = line[8:]  # Remove indentation
-                if line:
-                    print(line)
+            prod = prod.split(':')
+            lhs = prod[0].strip()
+            rhs = [rule.strip() for rule in prod[1].split('|')]
+            
+            print(lhs, end=('\n    : ' if (len(rhs) > 1) else ' : '))
+            print('\n    | '.join(rhs))
             print()
 
 
