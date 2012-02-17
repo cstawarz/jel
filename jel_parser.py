@@ -257,7 +257,7 @@ class JELParser(object):
 
     def p_function_call_expr(self, p):
         '''
-        function_call_expr : IDENTIFIER LPAREN expr_list RPAREN
+        function_call_expr : identifier_expr LPAREN expr_list RPAREN
         '''
         raise NotImplementedError
 
@@ -269,7 +269,7 @@ class JELParser(object):
 
     def p_attribute_expr(self, p):
         '''
-        attribute_expr : postfix_expr DOT IDENTIFIER
+        attribute_expr : postfix_expr DOT identifier_expr
         '''
         raise NotImplementedError
 
@@ -277,7 +277,7 @@ class JELParser(object):
         '''
         primary_expr : parenthetic_expr
                      | literal_expr
-                     | IDENTIFIER
+                     | identifier_expr
         '''
         p[0] = p[1]
 
@@ -292,10 +292,9 @@ class JELParser(object):
         literal_expr : dict_literal_expr
                      | list_literal_expr
                      | string_literal_expr
-                     | NUMBER
-                     | TRUE
-                     | FALSE
-                     | NULL
+                     | number_literal_expr
+                     | boolean_literal_expr
+                     | null_literal_expr
         '''
         p[0] = p[1]
 
@@ -322,7 +321,7 @@ class JELParser(object):
     def p_dict_key(self, p):
         '''
         dict_key : string_literal_expr
-                 | IDENTIFIER
+                 | identifier_expr
         '''
         p[0] = p[1]
 
@@ -347,6 +346,31 @@ class JELParser(object):
                             | STRING
         '''
         assert len(p) == 2
+        p[0] = p[1]
+
+    def p_number_literal_expr(self, p):
+        '''
+        number_literal_expr : NUMBER
+        '''
+        p[0] = p[1]
+
+    def p_boolean_literal_expr(self, p):
+        '''
+        boolean_literal_expr : TRUE
+                             | FALSE
+        '''
+        p[0] = p[1]
+
+    def p_null_literal_expr(self, p):
+        '''
+        null_literal_expr : NULL
+        '''
+        p[0] = p[1]
+
+    def p_identifier_expr(self, p):
+        '''
+        identifier_expr : IDENTIFIER
+        '''
         p[0] = p[1]
 
     def p_empty(self, p):
@@ -376,6 +400,8 @@ class JELParser(object):
 
 if __name__ == '__main__':
     import sys
+
+    JELParser.print_grammar()
 
     jl = JELLexer()
     jp = JELParser(jl.tokens)
