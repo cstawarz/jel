@@ -139,6 +139,42 @@ class JELLexer(object):
         t.lexer.skip(1)
 
 
+class AST(object):
+
+    def repr(self, *args):
+        return '%s(%s)' % (type(self).__name__,
+                           ', '.join(repr(a) for a in args))
+
+
+class UnaryOpExpr(AST):
+
+    def __init__(self, op, operand):
+        self.op = op
+        self.operand = operand
+
+    def __repr__(self):
+        return self.repr(self.op, self.operand)
+
+
+class BinaryOpExpr(AST):
+
+    def __init__(self, op, left_operand, right_operand):
+        self.op = op
+        self.operands = (left_operand, right_operand) 
+
+    def __repr__(self):
+        return self.repr(self.op, *self.operands)
+
+
+class NumberLiteralExpr(AST):
+
+    def __init__(self, value):
+        self.value = value
+
+    def __repr__(self):
+        return self.repr(self.value)
+
+
 class JELParser(object):
 
     def __init__(self, tokens):
@@ -153,43 +189,55 @@ class JELParser(object):
     def get_start(self):
         return 'expr'
 
+    def same(self, p):
+        assert len(p) == 2
+        p[0] = p[1]
+
+    def unary_op(self, p):
+        if len(p) == 3:
+            p[0] = UnaryOpExpr(p[1], p[2])
+        else:
+            self.same(p)
+
+    def binary_op(self, p):
+        if len(p) == 4:
+            p[0] = BinaryOpExpr(p[2], p[1], p[3])
+        else:
+            self.same(p)
+
     def p_expr(self, p):
         '''
         expr : or_expr
         '''
-        p[0] = p[1]
+        self.same(p)
 
     def p_or_expr(self, p):
         '''
         or_expr : or_expr OR and_expr
                 | and_expr
         '''
-        assert len(p) == 2
-        p[0] = p[1]
+        self.binary_op(p)
 
     def p_and_expr(self, p):
         '''
         and_expr : and_expr AND not_expr
                  | not_expr
         '''
-        assert len(p) == 2
-        p[0] = p[1]
+        self.binary_op(p)
 
     def p_not_expr(self, p):
         '''
         not_expr : NOT not_expr
                  | comparison_expr
         '''
-        assert len(p) == 2
-        p[0] = p[1]
+        self.unary_op(p)
 
     def p_comparison_expr(self, p):
         '''
         comparison_expr : comparison_expr comparison_op additive_expr
                         | additive_expr
         '''
-        assert len(p) == 2
-        p[0] = p[1]
+        self.binary_op(p)
 
     def p_comparison_op(self, p):
         '''
@@ -202,7 +250,7 @@ class JELParser(object):
                       | IN
                       | NOT IN
         '''
-        raise NotImplementedError
+        p[0] = ' '.join(p[1:])
 
     def p_additive_expr(self, p):
         '''
@@ -210,16 +258,14 @@ class JELParser(object):
                       | additive_expr MINUS multiplicative_expr
                       | multiplicative_expr
         '''
-        assert len(p) == 2
-        p[0] = p[1]
+        self.binary_op(p)
 
     def p_multiplicative_expr(self, p):
         '''
         multiplicative_expr : multiplicative_expr multiplicative_op unary_expr
                             | unary_expr
         '''
-        assert len(p) == 2
-        p[0] = p[1]
+        self.binary_op(p)
 
     def p_multiplicative_op(self, p):
         '''
@@ -227,7 +273,7 @@ class JELParser(object):
                           | DIVIDE
                           | MODULO
         '''
-        raise NotImplementedError
+        self.same(p)
 
     def p_unary_expr(self, p):
         '''
@@ -235,16 +281,14 @@ class JELParser(object):
                    | MINUS unary_expr
                    | exponentiation_expr
         '''
-        assert len(p) == 2
-        p[0] = p[1]
+        self.unary_op(p)
 
     def p_exponentiation_expr(self, p):
         '''
         exponentiation_expr : postfix_expr POWER exponentiation_expr
                             | postfix_expr
         '''
-        assert len(p) == 2
-        p[0] = p[1]
+        self.binary_op(p)
 
     def p_postfix_expr(self, p):
         '''
@@ -253,7 +297,7 @@ class JELParser(object):
                      | attribute_expr
                      | primary_expr
         '''
-        p[0] = p[1]
+        self.same(p)
 
     def p_function_call_expr(self, p):
         '''
@@ -279,13 +323,13 @@ class JELParser(object):
                      | literal_expr
                      | identifier_expr
         '''
-        p[0] = p[1]
+        self.same(p)
 
     def p_parenthetic_expr(self, p):
         '''
         parenthetic_expr : LPAREN expr RPAREN
         '''
-        raise NotImplementedError
+        p[0] = p[2]
 
     def p_literal_expr(self, p):
         '''
@@ -296,7 +340,7 @@ class JELParser(object):
                      | boolean_literal_expr
                      | null_literal_expr
         '''
-        p[0] = p[1]
+        self.same(p)
 
     def p_dict_literal_expr(self, p):
         '''
@@ -323,7 +367,7 @@ class JELParser(object):
         dict_key : string_literal_expr
                  | identifier_expr
         '''
-        p[0] = p[1]
+        self.same(p)
 
     def p_list_literal_expr(self, p):
         '''
@@ -352,26 +396,26 @@ class JELParser(object):
         '''
         number_literal_expr : NUMBER
         '''
-        p[0] = p[1]
+        p[0] = NumberLiteralExpr(p[1])
 
     def p_boolean_literal_expr(self, p):
         '''
         boolean_literal_expr : TRUE
                              | FALSE
         '''
-        p[0] = p[1]
+        self.same(p)
 
     def p_null_literal_expr(self, p):
         '''
         null_literal_expr : NULL
         '''
-        p[0] = p[1]
+        self.same(p)
 
     def p_identifier_expr(self, p):
         '''
         identifier_expr : IDENTIFIER
         '''
-        p[0] = p[1]
+        self.same(p)
 
     def p_empty(self, p):
         '''
@@ -403,11 +447,11 @@ if __name__ == '__main__':
 
     JELParser.print_grammar()
 
-    jl = JELLexer()
-    jp = JELParser(jl.tokens)
-
-    lexer = jl.build()
-    parser = jp.build(write_tables=False)
-
     def parse(text):
+        jl = JELLexer()
+        jp = JELParser(jl.tokens)
+
+        lexer = jl.build()
+        parser = jp.build()
+
         return parser.parse(text, lexer=lexer)
