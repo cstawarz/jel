@@ -141,38 +141,35 @@ class JELLexer(object):
 
 class AST(object):
 
-    def repr(self, *args):
-        return '%s(%s)' % (type(self).__name__,
-                           ', '.join(repr(a) for a in args))
+    @property
+    def _name(self):
+        return type(self).__name__
+
+    def __init__(self, **kwargs):
+        for field in self._fields:
+            setattr(self, field, kwargs.pop(field))
+        if kwargs:
+            raise TypeError('%s has no field %r' %
+                            (self._name, kwargs.popitem()[0]))
+
+    def __repr__(self):
+        args = ', '.join('%s=%r' % (f, getattr(self, f)) for f in self._fields)
+        return '%s(%s)' % (self._name, args)
 
 
 class UnaryOpExpr(AST):
 
-    def __init__(self, op, operand):
-        self.op = op
-        self.operand = operand
-
-    def __repr__(self):
-        return self.repr(self.op, self.operand)
+    _fields = ('op', 'operand')
 
 
 class BinaryOpExpr(AST):
 
-    def __init__(self, op, left_operand, right_operand):
-        self.op = op
-        self.operands = (left_operand, right_operand) 
-
-    def __repr__(self):
-        return self.repr(self.op, *self.operands)
+    _fields = ('op', 'operands')
 
 
 class NumberLiteralExpr(AST):
 
-    def __init__(self, value):
-        self.value = value
-
-    def __repr__(self):
-        return self.repr(self.value)
+    _fields = ('value',)
 
 
 class JELParser(object):
@@ -195,13 +192,13 @@ class JELParser(object):
 
     def unary_op(self, p):
         if len(p) == 3:
-            p[0] = UnaryOpExpr(p[1], p[2])
+            p[0] = UnaryOpExpr(op=p[1], operand=p[2])
         else:
             self.same(p)
 
     def binary_op(self, p):
         if len(p) == 4:
-            p[0] = BinaryOpExpr(p[2], p[1], p[3])
+            p[0] = BinaryOpExpr(op=p[2], operands=(p[1], p[3]))
         else:
             self.same(p)
 
@@ -396,7 +393,7 @@ class JELParser(object):
         '''
         number_literal_expr : NUMBER
         '''
-        p[0] = NumberLiteralExpr(p[1])
+        p[0] = NumberLiteralExpr(value=p[1])
 
     def p_boolean_literal_expr(self, p):
         '''
