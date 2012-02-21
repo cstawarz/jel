@@ -1,175 +1,10 @@
 from __future__ import division, print_function, unicode_literals
-import collections
+import inspect
+import os
 
-from ply import lex, yacc
-from ply.lex import TOKEN
+from ply import yacc
 
-
-class MatchString(unicode):
-
-    def __new__(cls, value, groupdict):
-        return super(MatchString, cls).__new__(cls, value)
-
-    def __init__(self, value, groupdict):
-        super(MatchString, self).__init__(value)
-        self.__dict__.update(groupdict)
-
-
-class JELLexer(object):
-        
-    def __init__(self, print_errors=False):
-        self.__dict__.update(self.get_string_tokens())
-        self.tokens = tuple(t[2:] for t in dir(self)
-                            if t.startswith('t_') and t[2:].isupper())
-
-        self.keywords = self.get_keywords()
-        self.tokens += tuple(k.upper() for k in self.keywords)
-
-        self.t_ignore = self.get_ignore()
-
-        self.groupings = []
-        self.errors = collections.deque()
-        self.print_errors = print_errors
-
-    def build(self, **kwargs):
-        return lex.lex(module=self, **kwargs)
-
-    def get_string_tokens(self):
-        return {
-            't_COLON'			: r':',
-            't_COMMA'			: r',',
-            't_DIVIDE'			: r'/',
-            't_DOT'			: r'\.',
-            't_EQUAL'			: r'==',
-            't_GREATERTHAN'		: r'>',
-            't_GREATERTHANOREQUAL'	: r'>=',
-            't_LESSTHAN'		: r'<',
-            't_LESSTHANOREQUAL'		: r'<=',
-            't_MINUS'			: r'-',
-            't_MODULO'			: r'%',
-            't_NOTEQUAL'		: r'!=',
-            't_PLUS'			: r'\+',
-            't_POWER'			: r'\*\*',
-            't_TIMES'			: r'\*',
-            }
-
-    def get_keywords(self):
-        return ('and', 'false', 'in', 'not', 'null', 'or', 'true')
-
-    def get_ignore(self):
-        return ' \t'
-
-    @TOKEN(
-        r"('''(.|\n)*?(?<!\\)''')"	# Multiline single quotes
-        r'|("""(.|\n)*?(?<!\\)""")'	# Multiline double quotes
-        r"|('[^\n]*?(?<!\\)')"		# Single quotes
-        r'|("[^\n]*?(?<!\\)")'		# Double quotes
-        )
-    def t_STRING(self, t):
-        t.lexer.lineno += t.value.count('\n')
-        return t
-
-    @TOKEN(
-        r'(?P<t_NUMBER_int>([1-9][0-9]+)|[0-9])'	# Integer
-        r'(\.(?P<t_NUMBER_frac>[0-9]+))?'		# Fraction
-        r'([eE](?P<t_NUMBER_exp>[+-]?[0-9]+))?'		# Exponent
-        r'(?P<t_NUMBER_units>[a-zA-Z][a-zA-Z0-9]*)?'	# Units
-        )
-    def t_NUMBER(self, t):
-        groupdict = dict((k.split('_')[2], v) for (k, v) in
-                         t.lexer.lexmatch.groupdict('').iteritems()
-                         if k.startswith('t_NUMBER_'))
-        t.value = MatchString(t.value, groupdict)
-        return t
-        
-    def t_IDENTIFIER(self, t):
-        r'[a-zA-Z_][a-zA-Z0-9_]*'
-        
-        if t.value in self.keywords:
-            t.type = t.value.upper()
-            
-        return t
-
-    def begin_grouping(self, t):
-        self.groupings.append(t.value)
-        return t
-
-    def end_grouping(self, t, start_token):
-        if self.groupings and (self.groupings[-1] == start_token):
-            self.groupings.pop()
-        return t
-
-    def t_LBRACE(self, t):
-        r'\{'
-        return self.begin_grouping(t)
-
-    def t_LBRACKET(self, t):
-        r'\['
-        return self.begin_grouping(t)
-
-    def t_LPAREN(self, t):
-        r'\('
-        return self.begin_grouping(t)
-
-    def t_RBRACE(self, t):
-        r'\}'
-        return self.end_grouping(t, '{')
-
-    def t_RBRACKET(self, t):
-        r'\]'
-        return self.end_grouping(t, '[')
-
-    def t_RPAREN(self, t):
-        r'\)'
-        return self.end_grouping(t, '(')
-
-    def t_NEWLINE(self, t):
-        r'(\\[ \t]*\n)|(\n+)'
-        t.lexer.lineno += t.value.count('\n')
-        if self.groupings or (t.value[0] == '\\'):
-            # Discard newlines inside groupings and escaped newlines
-            return None
-        return t
-
-    def t_error(self, t):
-        info = (t.value[0], t.lexer.lineno, t.lexer.lexpos)
-        self.errors.append(info)
-        if self.print_errors:
-            print('Illegal character %r at line %d position %d' % info)
-        t.lexer.skip(1)
-
-
-class AST(object):
-
-    @property
-    def _name(self):
-        return type(self).__name__
-
-    def __init__(self, **kwargs):
-        for field in self._fields:
-            setattr(self, field, kwargs.pop(field))
-        if kwargs:
-            raise TypeError('%s has no field %r' %
-                            (self._name, kwargs.popitem()[0]))
-
-    def __repr__(self):
-        args = ', '.join('%s=%r' % (f, getattr(self, f)) for f in self._fields)
-        return '%s(%s)' % (self._name, args)
-
-
-class UnaryOpExpr(AST):
-
-    _fields = ('op', 'operand')
-
-
-class BinaryOpExpr(AST):
-
-    _fields = ('op', 'operands')
-
-
-class NumberLiteralExpr(AST):
-
-    _fields = ('value',)
+from . import ast
 
 
 class JELParser(object):
@@ -180,8 +15,22 @@ class JELParser(object):
         # PLY demands that start be str, not unicode
         self.start = str(self.get_start())
 
-    def build(self, **kwargs):
-        return yacc.yacc(module=self, **kwargs)
+    def build(self, debug=False, **kwargs):
+        # Name the parsing table module 'yacctab' and store it in the
+        # same directory as the file where the current class is
+        # defined
+        tabmodule = type(self).__module__.split('.')
+        tabmodule[-1] = 'yacctab'
+        tabmodule = '.'.join(tabmodule)
+        outputdir = os.path.dirname(inspect.getfile(type(self)))
+        
+        return yacc.yacc(
+            debug = debug,
+            module = self,
+            tabmodule = tabmodule,
+            outputdir = outputdir,
+            **kwargs
+            )
 
     def get_start(self):
         return 'expr'
@@ -192,13 +41,13 @@ class JELParser(object):
 
     def unary_op(self, p):
         if len(p) == 3:
-            p[0] = UnaryOpExpr(op=p[1], operand=p[2])
+            p[0] = ast.UnaryOpExpr(op=p[1], operand=p[2])
         else:
             self.same(p)
 
     def binary_op(self, p):
         if len(p) == 4:
-            p[0] = BinaryOpExpr(op=p[2], operands=(p[1], p[3]))
+            p[0] = ast.BinaryOpExpr(op=p[2], operands=(p[1], p[3]))
         else:
             self.same(p)
 
@@ -393,7 +242,7 @@ class JELParser(object):
         '''
         number_literal_expr : NUMBER
         '''
-        p[0] = NumberLiteralExpr(value=p[1])
+        p[0] = ast.NumberLiteralExpr(value=p[1])
 
     def p_boolean_literal_expr(self, p):
         '''
@@ -437,18 +286,3 @@ class JELParser(object):
             print(lhs, end=('\n    : ' if (len(rhs) > 1) else ' : '))
             print('\n    | '.join(rhs))
             print()
-
-
-if __name__ == '__main__':
-    import sys
-
-    JELParser.print_grammar()
-
-    def parse(text):
-        jl = JELLexer()
-        jp = JELParser(jl.tokens)
-
-        lexer = jl.build()
-        parser = jp.build()
-
-        return parser.parse(text, lexer=lexer)

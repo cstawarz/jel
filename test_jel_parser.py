@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 import unittest
-from jel_parser import JELLexer, MatchString
+
+from jel.lexer import JELLexer, MatchString
 
 
 class TestJELLexer(unittest.TestCase):

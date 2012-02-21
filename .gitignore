@@ -1,3 +1,2 @@
 *.pyc
-parser.out
-parsetab.py
+jel/yacctab.py
