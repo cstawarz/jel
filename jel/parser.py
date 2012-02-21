@@ -100,8 +100,7 @@ class JELParser(object):
 
     def p_additive_expr(self, p):
         '''
-        additive_expr : additive_expr PLUS multiplicative_expr
-                      | additive_expr MINUS multiplicative_expr
+        additive_expr : additive_expr plus_or_minus multiplicative_expr
                       | multiplicative_expr
         '''
         self.binary_op(p)
@@ -123,11 +122,17 @@ class JELParser(object):
 
     def p_unary_expr(self, p):
         '''
-        unary_expr : PLUS unary_expr
-                   | MINUS unary_expr
+        unary_expr : plus_or_minus unary_expr
                    | exponentiation_expr
         '''
         self.unary_op(p)
+
+    def p_plus_or_minus(self, p):
+        '''
+        plus_or_minus : PLUS
+                      | MINUS
+        '''
+        self.same(p)
 
     def p_exponentiation_expr(self, p):
         '''
