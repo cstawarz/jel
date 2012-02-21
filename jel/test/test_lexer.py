@@ -1,7 +1,8 @@
+from __future__ import division, print_function, unicode_literals
 from contextlib import contextmanager
 import unittest
 
-from jel.lexer import JELLexer, MatchString
+from ..lexer import JELLexer, MatchString
 
 
 class TestJELLexer(unittest.TestCase):
@@ -312,7 +313,3 @@ class TestJELLexer(unittest.TestCase):
     @unittest.expectedFailure
     def test_string_escape_sequences(self):
         self.fail('escape sequences have not been implemented yet')
-
-
-if __name__ == '__main__':
-    unittest.main()

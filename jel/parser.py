@@ -286,3 +286,7 @@ class JELParser(object):
             print(lhs, end=('\n    : ' if (len(rhs) > 1) else ' : '))
             print('\n    | '.join(rhs))
             print()
+
+
+if __name__ == '__main__':
+    JELParser.print_grammar()
