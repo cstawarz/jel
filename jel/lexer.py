@@ -25,8 +25,6 @@ class JELLexer(object):
         self.keywords = self.get_keywords()
         self.tokens += tuple(k.upper() for k in self.keywords)
 
-        self.t_ignore = self.get_ignore()
-
         self.groupings = []
         self.errors = collections.deque()
         self.print_errors = print_errors
@@ -55,9 +53,6 @@ class JELLexer(object):
 
     def get_keywords(self):
         return ('and', 'false', 'in', 'not', 'null', 'or', 'true')
-
-    def get_ignore(self):
-        return ' \t'
 
     @TOKEN(
         r"('''(.|\n)*?(?<!\\)''')"	# Multiline single quotes
@@ -123,8 +118,10 @@ class JELLexer(object):
         r'\)'
         return self.end_grouping(t, '(')
 
+    t_ignore = ' \t'
+
+    @TOKEN(r'(\\[%s]*\n)|(\n+)' % repr(t_ignore)[1:-1])
     def t_NEWLINE(self, t):
-        r'(\\[ \t]*\n)|(\n+)'
         t.lexer.lineno += t.value.count('\n')
         if self.groupings or (t.value[0] == '\\'):
             # Discard newlines inside groupings and escaped newlines
