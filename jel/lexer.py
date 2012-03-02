@@ -18,16 +18,23 @@ class MatchString(unicode):
 class JELLexer(object):
 
     def __init__(self, print_errors=False):
-        self.tokens = tuple(t[2:] for t in dir(self)
-                            if t.startswith('t_') and t[2:].isupper())
+        self.tokens = tuple(t for t in
+                            (t.split('_')[-1] for t in dir(self)
+                             if t.startswith('t_'))
+                            if t.isupper())
         self.tokens += tuple(k.upper() for k in self.keywords)
 
-        self.groupings = []
         self.errors = collections.deque()
         self.print_errors = print_errors
 
     def build(self, **kwargs):
         return lex.lex(module=self, **kwargs)
+
+    states = (
+        ('lbrace', 'inclusive'),
+        ('lbracket', 'inclusive'),
+        ('lparen', 'inclusive'),
+        )
 
     t_COLON = r':'
     t_COMMA = r','
@@ -49,6 +56,9 @@ class JELLexer(object):
 
     keywords = ('and', 'false', 'in', 'not', 'null', 'or', 'true')
 
+    def update_lineno(self, t):
+        t.lexer.lineno += t.value.count('\n')
+
     @TOKEN(
         r"('''(.|\n)*?(?<!\\)''')"	# Multiline single quotes
         r'|("""(.|\n)*?(?<!\\)""")'	# Multiline double quotes
@@ -56,7 +66,7 @@ class JELLexer(object):
         r'|("[^\n]*?(?<!\\)")'		# Double quotes
         )
     def t_STRING(self, t):
-        t.lexer.lineno += t.value.count('\n')
+        self.update_lineno(t)
         return t
 
     @TOKEN(
@@ -81,12 +91,11 @@ class JELLexer(object):
         return t
 
     def begin_grouping(self, t):
-        self.groupings.append(t.value)
+        t.lexer.push_state(t.type.lower())
         return t
 
-    def end_grouping(self, t, start_token):
-        if self.groupings and (self.groupings[-1] == start_token):
-            self.groupings.pop()
+    def end_grouping(self, t):
+        t.lexer.pop_state()
         return t
 
     def t_LBRACE(self, t):
@@ -101,25 +110,30 @@ class JELLexer(object):
         r'\('
         return self.begin_grouping(t)
 
-    def t_RBRACE(self, t):
+    def t_lbrace_RBRACE(self, t):
         r'\}'
-        return self.end_grouping(t, '{')
+        return self.end_grouping(t)
 
-    def t_RBRACKET(self, t):
+    def t_lbracket_RBRACKET(self, t):
         r'\]'
-        return self.end_grouping(t, '[')
+        return self.end_grouping(t)
 
-    def t_RPAREN(self, t):
+    def t_lparen_RPAREN(self, t):
         r'\)'
-        return self.end_grouping(t, '(')
+        return self.end_grouping(t)
 
-    @TOKEN(r'(\\[%s]*\n)|(\n+)' % repr(t_ignore)[1:-1])
+    newline_re = r'(\\[%s]*\n)|(\n+)' % repr(t_ignore)[1:-1]
+
+    @TOKEN(newline_re)
+    def t_lbrace_lbracket_lparen_newline(self, t):
+        self.update_lineno(t)
+
+    @TOKEN(newline_re)
     def t_NEWLINE(self, t):
-        t.lexer.lineno += t.value.count('\n')
-        if self.groupings or (t.value[0] == '\\'):
-            # Discard newlines inside groupings and escaped newlines
-            return None
-        return t
+        self.update_lineno(t)
+        # Discard escaped newlines
+        if t.value[0] != '\\':
+            return t
 
     def t_error(self, t):
         info = (t.value[0], t.lexer.lineno, t.lexer.lexpos)

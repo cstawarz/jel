@@ -111,16 +111,16 @@ class TestJELLexer(unittest.TestCase):
                 '\n [ \n ) \n } \n ] \n '
                 '\n { \n ) \n ] \n } \n '
             ):
-            self.assertToken('NEWLINE', '\n')
-            self.assertToken('LPAREN', '(')
-            self.assertToken('RPAREN', ')')
-            self.assertToken('NEWLINE', '\n')
-            self.assertToken('LBRACKET', '[')
-            self.assertToken('RBRACKET', ']')
-            self.assertToken('NEWLINE', '\n')
-            self.assertToken('LBRACE', '{')
-            self.assertToken('RBRACE', '}')
-            self.assertToken('NEWLINE', '\n')
+            self.assertToken('NEWLINE', '\n', lineno=1)
+            self.assertToken('LPAREN', '(', lineno=2)
+            self.assertToken('RPAREN', ')', lineno=3)
+            self.assertToken('NEWLINE', '\n', lineno=3)
+            self.assertToken('LBRACKET', '[', lineno=4)
+            self.assertToken('RBRACKET', ']', lineno=6)
+            self.assertToken('NEWLINE', '\n', lineno=6)
+            self.assertToken('LBRACE', '{', lineno=7)
+            self.assertToken('RBRACE', '}', lineno=10)
+            self.assertToken('NEWLINE', '\n', lineno=10)
             
             self.assertToken('NEWLINE', '\n')
             self.assertToken('LPAREN', '(')
@@ -133,27 +133,27 @@ class TestJELLexer(unittest.TestCase):
             
             self.assertToken('NEWLINE', '\n')
             self.assertToken('LPAREN', '(')
-            self.assertToken('RBRACKET', ']')
-            self.assertToken('RBRACE', '}')
+            self.assertError(']')
+            self.assertError('}')
             self.assertToken('RPAREN', ')')
             self.assertToken('NEWLINE', '\n')
             
             self.assertToken('NEWLINE', '\n')
             self.assertToken('LBRACKET', '[')
-            self.assertToken('RPAREN', ')')
-            self.assertToken('RBRACE', '}')
+            self.assertError(')')
+            self.assertError('}')
             self.assertToken('RBRACKET', ']')
             self.assertToken('NEWLINE', '\n')
             
             self.assertToken('NEWLINE', '\n')
             self.assertToken('LBRACE', '{')
-            self.assertToken('RPAREN', ')')
-            self.assertToken('RBRACKET', ']')
+            self.assertError(')')
+            self.assertError(']')
             self.assertToken('RBRACE', '}')
             self.assertToken('NEWLINE', '\n')
 
     def test_operators(self):
-        with self.input(': , / . == > >= { [ < <= ( - % != + ** } ] ) *'):
+        with self.input(': , / . == > >= { [ < <= ( - % != + ** ) ] } *'):
             self.assertToken('COLON', ':')
             self.assertToken('COMMA', ',')
             self.assertToken('DIVIDE', '/')
@@ -171,9 +171,9 @@ class TestJELLexer(unittest.TestCase):
             self.assertToken('NOTEQUAL', '!=')
             self.assertToken('PLUS', '+')
             self.assertToken('POWER', '**')
-            self.assertToken('RBRACE', '}')
-            self.assertToken('RBRACKET', ']')
             self.assertToken('RPAREN', ')')
+            self.assertToken('RBRACKET', ']')
+            self.assertToken('RBRACE', '}')
             self.assertToken('TIMES', '*')
 
     def test_identifiers(self):
