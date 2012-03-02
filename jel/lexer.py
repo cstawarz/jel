@@ -16,13 +16,10 @@ class MatchString(unicode):
 
 
 class JELLexer(object):
-        
+
     def __init__(self, print_errors=False):
-        self.__dict__.update(self.get_string_tokens())
         self.tokens = tuple(t[2:] for t in dir(self)
                             if t.startswith('t_') and t[2:].isupper())
-
-        self.keywords = self.get_keywords()
         self.tokens += tuple(k.upper() for k in self.keywords)
 
         self.groupings = []
@@ -32,27 +29,25 @@ class JELLexer(object):
     def build(self, **kwargs):
         return lex.lex(module=self, **kwargs)
 
-    def get_string_tokens(self):
-        return {
-            't_COLON'			: r':',
-            't_COMMA'			: r',',
-            't_DIVIDE'			: r'/',
-            't_DOT'			: r'\.',
-            't_EQUAL'			: r'==',
-            't_GREATERTHAN'		: r'>',
-            't_GREATERTHANOREQUAL'	: r'>=',
-            't_LESSTHAN'		: r'<',
-            't_LESSTHANOREQUAL'		: r'<=',
-            't_MINUS'			: r'-',
-            't_MODULO'			: r'%',
-            't_NOTEQUAL'		: r'!=',
-            't_PLUS'			: r'\+',
-            't_POWER'			: r'\*\*',
-            't_TIMES'			: r'\*',
-            }
+    t_COLON = r':'
+    t_COMMA = r','
+    t_DIVIDE = r'/'
+    t_DOT = r'\.'
+    t_EQUAL = r'=='
+    t_GREATERTHAN = r'>'
+    t_GREATERTHANOREQUAL = r'>='
+    t_LESSTHAN = r'<'
+    t_LESSTHANOREQUAL = r'<='
+    t_MINUS = r'-'
+    t_MODULO = r'%'
+    t_NOTEQUAL = r'!='
+    t_PLUS = r'\+'
+    t_POWER = r'\*\*'
+    t_TIMES = r'\*'
 
-    def get_keywords(self):
-        return ('and', 'false', 'in', 'not', 'null', 'or', 'true')
+    t_ignore = ' \t'
+
+    keywords = ('and', 'false', 'in', 'not', 'null', 'or', 'true')
 
     @TOKEN(
         r"('''(.|\n)*?(?<!\\)''')"	# Multiline single quotes
@@ -117,8 +112,6 @@ class JELLexer(object):
     def t_RPAREN(self, t):
         r'\)'
         return self.end_grouping(t, '(')
-
-    t_ignore = ' \t'
 
     @TOKEN(r'(\\[%s]*\n)|(\n+)' % repr(t_ignore)[1:-1])
     def t_NEWLINE(self, t):

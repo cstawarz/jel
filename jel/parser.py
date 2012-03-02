@@ -11,9 +11,6 @@ class JELParser(object):
 
     def __init__(self, tokens):
         self.tokens = tokens
-        
-        # PLY demands that start be str, not unicode
-        self.start = str(self.get_start())
 
     def build(self, debug=False, **kwargs):
         # Name the parsing table module 'yacctab' and store it in the
@@ -31,9 +28,6 @@ class JELParser(object):
             outputdir = outputdir,
             **kwargs
             )
-
-    def get_start(self):
-        return 'expr'
 
     def same(self, p):
         assert len(p) == 2
