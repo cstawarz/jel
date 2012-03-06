@@ -5,8 +5,11 @@ from .parser import JELParser
 
 
 def parse(text):
-    jl = JELLexer()
-    jp = JELParser(jl.tokens)
+    def error_logger(token, lineno, lexpos, msg):
+        print('%s (line %d, position %d)' % (msg, lineno, lexpos))
+        
+    jl = JELLexer(error_logger)
+    jp = JELParser(jl.tokens, error_logger)
 
     lexer = jl.build()
     parser = jp.build()

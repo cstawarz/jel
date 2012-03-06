@@ -1,4 +1,5 @@
 from __future__ import division, print_function, unicode_literals
+import collections
 from contextlib import contextmanager
 import unittest
 
@@ -8,7 +9,11 @@ from ..lexer import JELLexer, MatchString
 class TestJELLexer(unittest.TestCase):
 
     def setUp(self):
-        self.jl = JELLexer()
+        self.errors = collections.deque()
+        def error_logger(*info):
+            self.errors.append(info)
+            
+        self.jl = JELLexer(error_logger)
         self.lexer = self.jl.build()
 
         @contextmanager
@@ -27,9 +32,9 @@ class TestJELLexer(unittest.TestCase):
                 self.fail('input contained unexpected tokens: ' +
                           ', '.join(repr(t) for t in extra_tokens))
                 
-            if self.jl.errors:
+            if self.errors:
                 self.fail('input contained unexpected errors: ' +
-                          ', '.join(repr(e) for e in self.jl.errors))
+                          ', '.join(repr(e) for e in self.errors))
 
         self.input = input_wrapper
 
@@ -50,8 +55,8 @@ class TestJELLexer(unittest.TestCase):
         return t
 
     def assertError(self, value, lineno=None):
-        self.assertTrue(self.jl.errors, 'expected error was not detected')
-        e = self.jl.errors.popleft()
+        self.assertTrue(self.errors, 'expected error was not detected')
+        e = self.errors.popleft()
         
         self.assertEqual(value, e[0])
         if lineno:

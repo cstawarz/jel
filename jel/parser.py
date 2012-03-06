@@ -9,8 +9,9 @@ from . import ast
 
 class JELParser(object):
 
-    def __init__(self, tokens):
+    def __init__(self, tokens, error_logger):
         self.tokens = tokens
+        self.error_logger = error_logger
 
     def build(self, debug=False, **kwargs):
         # Name the parsing table module 'yacctab' and store it in the
@@ -269,7 +270,9 @@ class JELParser(object):
         pass
 
     def p_error(self, p):
-        raise NotImplementedError
+        bad_token = p.value
+        self.error_logger(bad_token, p.lexer.lineno, p.lexer.lexpos,
+                          'Invalid syntax at %r' % str(bad_token))
 
     @classmethod
     def print_grammar(cls):

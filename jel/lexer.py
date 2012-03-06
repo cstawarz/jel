@@ -1,5 +1,4 @@
 from __future__ import division, print_function, unicode_literals
-import collections
 
 from ply import lex
 from ply.lex import TOKEN
@@ -17,15 +16,14 @@ class MatchString(unicode):
 
 class JELLexer(object):
 
-    def __init__(self, print_errors=False):
+    def __init__(self, error_logger):
+        self.error_logger = error_logger
+        
         self.tokens = tuple(t for t in
                             (t.split('_')[-1] for t in dir(self)
                              if t.startswith('t_'))
                             if t.isupper())
         self.tokens += tuple(k.upper() for k in self.keywords)
-
-        self.errors = collections.deque()
-        self.print_errors = print_errors
 
     def build(self, **kwargs):
         return lex.lex(module=self, **kwargs)
@@ -136,8 +134,7 @@ class JELLexer(object):
             return t
 
     def t_error(self, t):
-        info = (t.value[0], t.lexer.lineno, t.lexer.lexpos)
-        self.errors.append(info)
-        if self.print_errors:
-            print('Illegal character %r at line %d position %d' % info)
+        bad_char = t.value[0]
+        self.error_logger(bad_char, t.lexer.lineno, t.lexer.lexpos,
+                          'Illegal character: %r' % bad_char)
         t.lexer.skip(1)
