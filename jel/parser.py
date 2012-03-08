@@ -270,9 +270,12 @@ class JELParser(object):
         pass
 
     def p_error(self, p):
-        bad_token = p.value
-        self.error_logger(bad_token, p.lexer.lineno, p.lexer.lexpos,
-                          'Invalid syntax at %r' % str(bad_token))
+        if p is None:
+            self.error_logger('Input ended unexpectedly')
+        else:
+            bad_token = p.value
+            self.error_logger('Invalid syntax at %r' % str(bad_token),
+                              bad_token, p.lexer.lineno, p.lexer.lexpos)
 
     @classmethod
     def print_grammar(cls):

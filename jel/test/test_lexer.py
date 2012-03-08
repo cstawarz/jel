@@ -58,9 +58,9 @@ class TestJELLexer(unittest.TestCase):
         self.assertTrue(self.errors, 'expected error was not detected')
         e = self.errors.popleft()
         
-        self.assertEqual(value, e[0])
+        self.assertEqual(value, e[1])
         if lineno:
-            self.assertEqual(lineno, e[1])
+            self.assertEqual(lineno, e[2])
 
     def assertNumber(self, value, int='', frac='', exp='', units=''):
         t = self.assertToken('NUMBER', value)

@@ -17,13 +17,13 @@ class MatchString(unicode):
 class JELLexer(object):
 
     def __init__(self, error_logger):
-        self.error_logger = error_logger
-        
         self.tokens = tuple(t for t in
                             (t.split('_')[-1] for t in dir(self)
                              if t.startswith('t_'))
                             if t.isupper())
         self.tokens += tuple(k.upper() for k in self.keywords)
+        
+        self.error_logger = error_logger
 
     def build(self, **kwargs):
         return lex.lex(module=self, **kwargs)
@@ -135,6 +135,6 @@ class JELLexer(object):
 
     def t_error(self, t):
         bad_char = t.value[0]
-        self.error_logger(bad_char, t.lexer.lineno, t.lexer.lexpos,
-                          'Illegal character: %r' % bad_char)
+        self.error_logger('Illegal character: %r' % bad_char,
+                          bad_char, t.lexer.lineno, t.lexer.lexpos)
         t.lexer.skip(1)

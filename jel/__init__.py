@@ -4,12 +4,16 @@ from .lexer import JELLexer
 from .parser import JELParser
 
 
+def print_error(msg, token=None, lineno=None, lexpos=None):
+    print(msg, end='')
+    if token:
+        print(' (line %d, position %d)' % (lineno, lexpos), end='')
+    print()
+
+
 def parse(text):
-    def error_logger(token, lineno, lexpos, msg):
-        print('%s (line %d, position %d)' % (msg, lineno, lexpos))
-        
-    jl = JELLexer(error_logger)
-    jp = JELParser(jl.tokens, error_logger)
+    jl = JELLexer(print_error)
+    jp = JELParser(jl.tokens, print_error)
 
     lexer = jl.build()
     parser = jp.build()
