@@ -13,8 +13,7 @@ class TestJELLexer(unittest.TestCase):
         def error_logger(*info):
             self.errors.append(info)
             
-        self.jl = JELLexer(error_logger)
-        self.lexer = self.jl.build()
+        self.lexer = JELLexer(error_logger).build()
 
         @contextmanager
         def input_wrapper(s):

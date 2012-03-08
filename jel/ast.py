@@ -3,6 +3,8 @@ from __future__ import division, print_function, unicode_literals
 
 class AST(object):
 
+    _fields = ()
+
     @property
     def _name(self):
         return type(self).__name__
@@ -29,6 +31,22 @@ class BinaryOpExpr(AST):
     _fields = ('op', 'operands')
 
 
-class NumberLiteralExpr(AST):
+class _AtomicLiteralExpr(AST):
 
     _fields = ('value',)
+
+
+class NumberLiteralExpr(_AtomicLiteralExpr):
+    pass
+
+
+class BooleanLiteralExpr(_AtomicLiteralExpr):
+    pass
+
+
+class NullLiteralExpr(AST):
+    pass
+
+
+class IdentifierExpr(_AtomicLiteralExpr):
+    pass

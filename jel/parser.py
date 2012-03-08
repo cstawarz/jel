@@ -183,7 +183,8 @@ class JELParser(object):
                      | list_literal_expr
                      | string_literal_expr
                      | number_literal_expr
-                     | boolean_literal_expr
+                     | true_literal_expr
+                     | false_literal_expr
                      | null_literal_expr
         '''
         self.same(p)
@@ -244,24 +245,29 @@ class JELParser(object):
         '''
         p[0] = ast.NumberLiteralExpr(value=p[1])
 
-    def p_boolean_literal_expr(self, p):
+    def p_true_literal_expr(self, p):
         '''
-        boolean_literal_expr : TRUE
-                             | FALSE
+        true_literal_expr : TRUE
         '''
-        self.same(p)
+        p[0] = ast.BooleanLiteralExpr(value=True)
+
+    def p_false_literal_expr(self, p):
+        '''
+        false_literal_expr : FALSE
+        '''
+        p[0] = ast.BooleanLiteralExpr(value=False)
 
     def p_null_literal_expr(self, p):
         '''
         null_literal_expr : NULL
         '''
-        self.same(p)
+        p[0] = ast.NullLiteralExpr()
 
     def p_identifier_expr(self, p):
         '''
         identifier_expr : IDENTIFIER
         '''
-        self.same(p)
+        p[0] = ast.IdentifierExpr(value=p[1])
 
     def p_empty(self, p):
         '''
