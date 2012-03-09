@@ -270,29 +270,23 @@ class TestJELLexer(unittest.TestCase):
                 "'' ' ' 'foo' 'foo bar blah' 'can\\'t' 'foo\nbar' "
                 '"" " " "foo" "foo bar blah" "can\\"t" "foo\nbar" '
                 ):
-            self.assertToken('STRING', "''")
-            self.assertToken('STRING', "' '")
-            self.assertToken('STRING', "'foo'")
-            self.assertToken('STRING', "'foo bar blah'")
-            self.assertToken('STRING', "'can\\'t'")
+            self.assertToken('STRING', "")
+            self.assertToken('STRING', " ")
+            self.assertToken('STRING', "foo")
+            self.assertToken('STRING', "foo bar blah")
+            self.assertToken('STRING', "can't")
             
-            self.assertError("'")
-            self.assertToken('IDENTIFIER', 'foo')
-            self.assertToken('NEWLINE', '\n')
-            self.assertToken('IDENTIFIER', 'bar')
-            self.assertError("'")
+            self.assertError('\n')
+            self.assertToken('STRING', 'foobar')
             
-            self.assertToken('STRING', '""')
-            self.assertToken('STRING', '" "')
-            self.assertToken('STRING', '"foo"')
-            self.assertToken('STRING', '"foo bar blah"')
-            self.assertToken('STRING', '"can\\"t"')
+            self.assertToken('STRING', '')
+            self.assertToken('STRING', ' ')
+            self.assertToken('STRING', 'foo')
+            self.assertToken('STRING', 'foo bar blah')
+            self.assertToken('STRING', 'can"t')
             
-            self.assertError('"')
-            self.assertToken('IDENTIFIER', 'foo')
-            self.assertToken('NEWLINE', '\n')
-            self.assertToken('IDENTIFIER', 'bar')
-            self.assertError('"')
+            self.assertError('\n')
+            self.assertToken('STRING', 'foobar')
 
     def test_multiline_string(self):
         with self.input(
@@ -302,17 +296,17 @@ class TestJELLexer(unittest.TestCase):
                 '"""""" """ """ """foo""" """foo\nbar\nblah""" '
                 '"""foo\\"""bar""" '
                 ):
-            self.assertToken('STRING', "''''''")
-            self.assertToken('STRING', "''' '''")
-            self.assertToken('STRING', "'''foo'''")
-            self.assertToken('STRING', "'''foo\nbar\nblah'''", lineno=1)
-            self.assertToken('STRING', "'''foo\\'''bar'''", lineno=3)
+            self.assertToken('STRING', "")
+            self.assertToken('STRING', " ")
+            self.assertToken('STRING', "foo")
+            self.assertToken('STRING', "foo\nbar\nblah", lineno=1)
+            self.assertToken('STRING', "foo'''bar", lineno=3)
             
-            self.assertToken('STRING', '""""""')
-            self.assertToken('STRING', '""" """')
-            self.assertToken('STRING', '"""foo"""')
-            self.assertToken('STRING', '"""foo\nbar\nblah"""', lineno=3)
-            self.assertToken('STRING', '"""foo\\"""bar"""', lineno=5)
+            self.assertToken('STRING', '')
+            self.assertToken('STRING', ' ')
+            self.assertToken('STRING', 'foo')
+            self.assertToken('STRING', 'foo\nbar\nblah', lineno=3)
+            self.assertToken('STRING', 'foo"""bar', lineno=5)
 
     @unittest.expectedFailure
     def test_string_escape_sequences(self):

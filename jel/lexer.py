@@ -17,10 +17,10 @@ class MatchString(unicode):
 class JELLexer(object):
 
     def __init__(self, error_logger):
-        self.tokens = tuple(t for t in
-                            (t.split('_')[-1] for t in dir(self)
-                             if t.startswith('t_'))
-                            if t.isupper())
+        self.tokens += tuple(t for t in
+                             (t.split('_')[-1] for t in dir(self)
+                              if t.startswith('t_'))
+                             if t.isupper())
         self.tokens += tuple(k.upper() for k in self.keywords)
         
         self.error_logger = error_logger
@@ -32,7 +32,14 @@ class JELLexer(object):
         ('lbrace', 'inclusive'),
         ('lbracket', 'inclusive'),
         ('lparen', 'inclusive'),
+        
+        ('sstring', 'exclusive'),
+        ('dstring', 'exclusive'),
+        ('msstring', 'exclusive'),
+        ('mdstring', 'exclusive'),
         )
+
+    tokens = ('STRING',)
 
     t_COLON = r':'
     t_COMMA = r','
@@ -57,15 +64,81 @@ class JELLexer(object):
     def update_lineno(self, t):
         t.lexer.lineno += t.value.count('\n')
 
-    @TOKEN(
-        r"('''(.|\n)*?(?<!\\)''')"	# Multiline single quotes
-        r'|("""(.|\n)*?(?<!\\)""")'	# Multiline double quotes
-        r"|('[^\n]*?(?<!\\)')"		# Single quotes
-        r'|("[^\n]*?(?<!\\)")'		# Double quotes
-        )
-    def t_STRING(self, t):
+    t_sstring_dstring_msstring_mdstring_ignore = ''
+
+    sstring_re = r"'"
+    dstring_re = r'"'
+    msstring_re = r"'''"
+    mdstring_re = r'"""'
+
+    def begin_string(self, t):
+        t.lexer.push_state({
+            self.sstring_re: 'sstring',
+            self.dstring_re: 'dstring',
+            self.msstring_re: 'msstring',
+            self.mdstring_re: 'mdstring'
+            }[t.value])
+        
+        self.string_value = ''
+
+    def end_string(self, t):
+        t.lexer.pop_state()
+        t.type = 'STRING'
+        t.value = self.string_value
         self.update_lineno(t)
         return t
+
+    @TOKEN(msstring_re)
+    def t_begin_msstring(self, t):
+        self.begin_string(t)
+
+    @TOKEN(mdstring_re)
+    def t_begin_mdstring(self, t):
+        self.begin_string(t)
+
+    @TOKEN(sstring_re)
+    def t_begin_sstring(self, t):
+        self.begin_string(t)
+
+    @TOKEN(dstring_re)
+    def t_begin_dstring(self, t):
+        self.begin_string(t)
+
+    def t_sstring_dstring_msstring_mdstring_escape_sequence(self, t):
+        r'''\\['"]'''
+        self.string_value += t.value.decode('unicode_escape')
+
+    @TOKEN(msstring_re)
+    def t_msstring_end(self, t):
+        return self.end_string(t)
+
+    @TOKEN(mdstring_re)
+    def t_mdstring_end(self, t):
+        return self.end_string(t)
+
+    @TOKEN(sstring_re)
+    def t_sstring_end(self, t):
+        return self.end_string(t)
+
+    @TOKEN(dstring_re)
+    def t_dstring_end(self, t):
+        return self.end_string(t)
+
+    def t_msstring_body(self, t):
+        r"([^'\\]|('(?!'')))+"
+        self.string_value += t.value
+
+    def t_mdstring_body(self, t):
+        r'([^"\\]|("(?!"")))+'
+        self.string_value += t.value
+
+    def t_sstring_body(self, t):
+        r"[^'\\\n]+"
+        self.string_value += t.value
+
+    def t_dstring_body(self, t):
+        r'[^"\\\n]+'
+        self.string_value += t.value
 
     @TOKEN(
         r'(?P<t_NUMBER_int>([1-9][0-9]+)|[0-9])'	# Integer
@@ -133,7 +206,7 @@ class JELLexer(object):
         if t.value[0] != '\\':
             return t
 
-    def t_error(self, t):
+    def t_ANY_error(self, t):
         bad_char = t.value[0]
         self.error_logger('Illegal character: %r' % bad_char,
                           bad_char, t.lexer.lineno, t.lexer.lexpos)
