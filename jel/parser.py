@@ -1,4 +1,5 @@
 from __future__ import division, print_function, unicode_literals
+import collections
 import decimal
 import inspect
 import os
@@ -184,8 +185,7 @@ class JELParser(object):
                      | list_literal_expr
                      | string_literal_expr
                      | number_literal_expr
-                     | true_literal_expr
-                     | false_literal_expr
+                     | boolean_literal_expr
                      | null_literal_expr
         '''
         self.same(p)
@@ -247,15 +247,15 @@ class JELParser(object):
         p[0] = ast.NumberLiteralExpr(value = decimal.Decimal(p[1].value),
                                      unit = (p[1].unit or None))
 
-    def p_true_literal_expr(self, p):
+    def p_boolean_literal_expr_TRUE(self, p):
         '''
-        true_literal_expr : TRUE
+        boolean_literal_expr : TRUE
         '''
         p[0] = ast.BooleanLiteralExpr(value=True)
 
-    def p_false_literal_expr(self, p):
+    def p_boolean_literal_expr_FALSE(self, p):
         '''
-        false_literal_expr : FALSE
+        boolean_literal_expr : FALSE
         '''
         p[0] = ast.BooleanLiteralExpr(value=False)
 
@@ -291,11 +291,15 @@ class JELParser(object):
                           if f.startswith('p_')),
                          key = (lambda f: f.im_func.func_code.co_firstlineno))
 
-        for prod in (f.__doc__ for f in p_funcs if f.__doc__):
-            prod = prod.split(':')
-            lhs = prod[0].strip()
-            rhs = [rule.strip() for rule in prod[1].split('|')]
+        prods = collections.OrderedDict()
+
+        for p in (f.__doc__ for f in p_funcs if f.__doc__):
+            p = p.split(':')
+            lhs = p[0].strip()
+            rhs = [rule.strip() for rule in p[1].split('|')]
+            prods.setdefault(lhs, []).extend(rhs)
             
+        for lhs, rhs in prods.iteritems():
             print(lhs, end=('\n    : ' if (len(rhs) > 1) else ' : '))
             print('\n    | '.join(rhs))
             print()
