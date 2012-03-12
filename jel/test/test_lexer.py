@@ -325,6 +325,11 @@ class TestJELLexer(unittest.TestCase):
     def test_string_escape_sequences(self):
         @self.for_all_string_types
         def test_escapes(d):
-            with self.input(d + r''' \z \' \" \\ \/ \b \f \n \r \t ''' + d):
+            with self.input(d +
+                            r''' \z \' \" \\ \/ \b \f \n \r \t ''' +
+                            '\\u0061\\uD834\\udD1e\\u0062' +
+                            d):
                 self.assertError('\\')
-                self.assertToken('STRING', ''' z \' \" \\ / \b \f \n \r \t ''')
+                self.assertToken('STRING',
+                                 (''' z \' \" \\ / \b \f \n \r \t ''' +
+                                  'a\U0001d11eb'))

@@ -91,7 +91,7 @@ class JELLexer(object):
         self.begin_string(t, 'dstring')
 
     def t_msstring_mdstring_sstring_dstring_escape_sequence(self, t):
-        r'''\\['"\\/bfnrt]'''
+        r'''(\\['"\\/bfnrt])|((\\u[a-fA-F0-9]{4})+)'''
         self.string_value += ('/' if t.value[1] == '/' else
                               t.value.decode('unicode_escape'))
 
