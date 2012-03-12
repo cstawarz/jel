@@ -42,6 +42,10 @@ class JELLexer(object):
         )
 
     tokens = ('STRING',)
+    keywords = ('and', 'false', 'in', 'not', 'null', 'or', 'true')
+
+    t_INITIAL_nlescape_ignore = ' \t\r'
+    t_msstring_mdstring_sstring_dstring_ignore = ''
 
     t_COLON = r':'
     t_COMMA = r','
@@ -58,11 +62,6 @@ class JELLexer(object):
     t_PLUS = r'\+'
     t_POWER = r'\*\*'
     t_TIMES = r'\*'
-
-    t_INITIAL_nlescape_ignore = ' \t\r'
-    t_msstring_mdstring_sstring_dstring_ignore = ''
-
-    keywords = ('and', 'false', 'in', 'not', 'null', 'or', 'true')
 
     def begin_string(self, t, state):
         t.lexer.push_state(state)
@@ -110,6 +109,14 @@ class JELLexer(object):
     def t_dstring_body(self, t):
         r'[^"\\\n]+'
         self.string_value += t.value
+
+    def t_sstring_dstring_newline(self, t):
+        r'\n'
+        self.error_logger('Unterminated string literal',
+                          t.value[0], t.lexer.lineno, t.lexer.lexpos)
+        self.end_string(t)
+        t.lexer.lineno += 1
+        return t
 
     def t_msstring_end(self, t):
         r"'''"

@@ -107,7 +107,7 @@ class TestJELLexer(unittest.TestCase):
             # Escaped newline, no token
             self.assertToken('NUMBER', '5', lineno=8)
 
-    def test_newline_in_grouping(self):
+    def test_groupings(self):
         with self.input(
                 '\n ( \n ) \n [ \n\n ] \n { \n \n \n } \n '
                 '\n ( \n [ \n { \n } \n ] \n ) \n '
@@ -157,7 +157,7 @@ class TestJELLexer(unittest.TestCase):
             self.assertToken('NEWLINE', '\n')
 
     def test_operators(self):
-        with self.input(': , / . == > >= { [ < <= ( - % != + ** ) ] } *'):
+        with self.input(': , / . == > >= < <= - % != + ** *'):
             self.assertToken('COLON', ':')
             self.assertToken('COMMA', ',')
             self.assertToken('DIVIDE', '/')
@@ -165,19 +165,13 @@ class TestJELLexer(unittest.TestCase):
             self.assertToken('EQUAL', '==')
             self.assertToken('GREATERTHAN', '>')
             self.assertToken('GREATERTHANOREQUAL', '>=')
-            self.assertToken('LBRACE', '{')
-            self.assertToken('LBRACKET', '[')
             self.assertToken('LESSTHAN', '<')
             self.assertToken('LESSTHANOREQUAL', '<=')
-            self.assertToken('LPAREN', '(')
             self.assertToken('MINUS', '-')
             self.assertToken('MODULO', '%')
             self.assertToken('NOTEQUAL', '!=')
             self.assertToken('PLUS', '+')
             self.assertToken('POWER', '**')
-            self.assertToken('RPAREN', ')')
-            self.assertToken('RBRACKET', ']')
-            self.assertToken('RBRACE', '}')
             self.assertToken('TIMES', '*')
 
     def test_identifiers(self):
@@ -267,47 +261,70 @@ class TestJELLexer(unittest.TestCase):
 
     def test_string(self):
         with self.input(
-                "'' ' ' 'foo' 'foo bar blah' 'can\\'t' 'foo\nbar' "
-                '"" " " "foo" "foo bar blah" "can\\"t" "foo\nbar" '
+                "'' ' ' 'foo' 'foo bar blah' 'can\\'t' '\"baz\"' 'foo\nbar'' "
+                '"" " " "foo" "foo bar blah" "can\\"t" "\'baz\'" "foo\nbar""'
                 ):
             self.assertToken('STRING', "")
             self.assertToken('STRING', " ")
             self.assertToken('STRING', "foo")
             self.assertToken('STRING', "foo bar blah")
             self.assertToken('STRING', "can't")
+            self.assertToken('STRING', '"baz"')
             
+            self.assertToken('STRING', 'foo', lineno=1)
             self.assertError('\n')
-            self.assertToken('STRING', 'foobar')
+            self.assertToken('IDENTIFIER', 'bar', lineno=2)
+            self.assertToken('STRING', "")
             
             self.assertToken('STRING', '')
             self.assertToken('STRING', ' ')
             self.assertToken('STRING', 'foo')
             self.assertToken('STRING', 'foo bar blah')
             self.assertToken('STRING', 'can"t')
+            self.assertToken('STRING', "'baz'")
             
+            self.assertToken('STRING', 'foo', lineno=2)
             self.assertError('\n')
-            self.assertToken('STRING', 'foobar')
+            self.assertToken('IDENTIFIER', 'bar', lineno=3)
+            self.assertToken('STRING', '')
 
     def test_multiline_string(self):
         with self.input(
-                "'''''' ''' ''' '''foo''' '''foo\nbar\nblah''' "
-                "'''foo\\'''bar''' "
+                "'''''' ''' ''' '''foo''' '''foo\n'bar'\nblah''' "
+                "'''foo\\'''bar''' '''\"baz\"''' "
                 
-                '"""""" """ """ """foo""" """foo\nbar\nblah""" '
-                '"""foo\\"""bar""" '
+                '"""""" """ """ """foo""" """foo\n"bar"\nblah""" '
+                '"""foo\\"""bar"""  """\'baz\'"""'
                 ):
             self.assertToken('STRING', "")
             self.assertToken('STRING', " ")
             self.assertToken('STRING', "foo")
-            self.assertToken('STRING', "foo\nbar\nblah", lineno=1)
+            self.assertToken('STRING', "foo\n'bar'\nblah", lineno=1)
             self.assertToken('STRING', "foo'''bar", lineno=3)
-            
+            self.assertToken('STRING', '"baz"')
+           
             self.assertToken('STRING', '')
             self.assertToken('STRING', ' ')
             self.assertToken('STRING', 'foo')
-            self.assertToken('STRING', 'foo\nbar\nblah', lineno=3)
+            self.assertToken('STRING', 'foo\n"bar"\nblah', lineno=3)
             self.assertToken('STRING', 'foo"""bar', lineno=5)
+            self.assertToken('STRING', "'baz'")
 
-    @unittest.expectedFailure
+    def for_all_string_types(self, func):
+        func("'''")
+        func('"""')
+        func("'")
+        func('"')
+
+    def test_string_whitespace(self):
+        @self.for_all_string_types
+        def test_whitespace(delim):
+            with self.input(delim + ' \t\r' + delim):
+                self.assertToken('STRING', ' \t\r')
+
     def test_string_escape_sequences(self):
-        self.fail('escape sequences have not been implemented yet')
+        @self.for_all_string_types
+        def test_escapes(delim):
+            with self.input(delim + r'''\z\'\"''' + delim):
+                self.assertError('\\')
+                self.assertToken('STRING', '''z\'\"''')
