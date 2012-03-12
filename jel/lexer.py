@@ -37,6 +37,8 @@ class JELLexer(object):
         ('dstring', 'exclusive'),
         ('msstring', 'exclusive'),
         ('mdstring', 'exclusive'),
+        
+        ('nlescape', 'exclusive'),
         )
 
     tokens = ('STRING',)
@@ -57,12 +59,9 @@ class JELLexer(object):
     t_POWER = r'\*\*'
     t_TIMES = r'\*'
 
-    t_ignore = ' \t'
+    t_INITIAL_nlescape_ignore = ' \t\r'
 
     keywords = ('and', 'false', 'in', 'not', 'null', 'or', 'true')
-
-    def update_lineno(self, t):
-        t.lexer.lineno += t.value.count('\n')
 
     t_sstring_dstring_msstring_mdstring_ignore = ''
 
@@ -79,7 +78,7 @@ class JELLexer(object):
         t.lexer.pop_state()
         t.type = 'STRING'
         t.value = self.string_value
-        self.update_lineno(t)
+        t.lexer.lineno += t.value.count('\n')
         return t
 
     @TOKEN(msstring_re)
@@ -187,18 +186,25 @@ class JELLexer(object):
         r'\)'
         return self.end_grouping(t)
 
-    newline_re = r'(\\[%s]*\n)|(\n+)' % repr(t_ignore)[1:-1]
+    def t_begin_nlescape(self, t):
+        r'\\'
+        t.lexer.push_state('nlescape')
+
+    def t_nlescape_end(self, t):
+        r'\n'
+        t.lexer.pop_state()
+        t.lexer.lineno += 1
+
+    newline_re = r'\n+'
 
     @TOKEN(newline_re)
     def t_lbrace_lbracket_lparen_newline(self, t):
-        self.update_lineno(t)
+        t.lexer.lineno += len(t.value)
 
     @TOKEN(newline_re)
     def t_NEWLINE(self, t):
-        self.update_lineno(t)
-        # Discard escaped newlines
-        if t.value[0] != '\\':
-            return t
+        t.lexer.lineno += len(t.value)
+        return t
 
     def t_ANY_error(self, t):
         bad_char = t.value[0]

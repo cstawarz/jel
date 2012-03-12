@@ -81,31 +81,31 @@ class TestJELLexer(unittest.TestCase):
             self.assertError('#')
 
     def test_whitespace(self):
-        # Linefeed ('\n') is a token, space and horizontal tab ('\t')
-        # are ignored, and all others ('\f', '\r', '\v') are invalid
+        # Linefeed ('\n') is a token; space, horizontal tab ('\t'),
+        # and carriage return ('\r') are ignored; and all others
+        # ('\f', '\v') are invalid
         with self.input('  \n\t\t 1 2 \f 3 \r \v\r \n\n\n 4  \t'):
             self.assertToken('NEWLINE', '\n', lineno=1)
             self.assertToken('NUMBER', '1', lineno=2)
             self.assertToken('NUMBER', '2')
             self.assertError('\f')
             self.assertToken('NUMBER', '3')
-            self.assertError('\r')
             self.assertError('\v')
-            self.assertError('\r')
             self.assertToken('NEWLINE', '\n\n\n', lineno=2)
             self.assertToken('NUMBER', '4', lineno=5)
 
     def test_escaped_newline(self):
-        with self.input('\n \n\n \\\n\n \\   \t  \n 3  \\  \r  \n'):
+        with self.input('\n \n\n \\\n\n \\   \t  \n 3  \\  \f 4  \n5'):
             self.assertToken('NEWLINE', '\n', lineno=1)
             self.assertToken('NEWLINE', '\n\n', lineno=2)
             # Escaped newline, no token
             self.assertToken('NEWLINE', '\n', lineno=5)
             # Escaped newline, no token
             self.assertToken('NUMBER', '3', lineno=7)
-            self.assertError('\\')
-            self.assertError('\r')
-            self.assertToken('NEWLINE', '\n', lineno=7)
+            self.assertError('\f')
+            self.assertError('4')
+            # Escaped newline, no token
+            self.assertToken('NUMBER', '5', lineno=8)
 
     def test_newline_in_grouping(self):
         with self.input(
