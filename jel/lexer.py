@@ -71,14 +71,8 @@ class JELLexer(object):
     msstring_re = r"'''"
     mdstring_re = r'"""'
 
-    def begin_string(self, t):
-        t.lexer.push_state({
-            self.sstring_re: 'sstring',
-            self.dstring_re: 'dstring',
-            self.msstring_re: 'msstring',
-            self.mdstring_re: 'mdstring'
-            }[t.value])
-        
+    def begin_string(self, t, state):
+        t.lexer.push_state(state)
         self.string_value = ''
 
     def end_string(self, t):
@@ -90,39 +84,23 @@ class JELLexer(object):
 
     @TOKEN(msstring_re)
     def t_begin_msstring(self, t):
-        self.begin_string(t)
+        self.begin_string(t, 'msstring')
 
     @TOKEN(mdstring_re)
     def t_begin_mdstring(self, t):
-        self.begin_string(t)
+        self.begin_string(t, 'mdstring')
 
     @TOKEN(sstring_re)
     def t_begin_sstring(self, t):
-        self.begin_string(t)
+        self.begin_string(t, 'sstring')
 
     @TOKEN(dstring_re)
     def t_begin_dstring(self, t):
-        self.begin_string(t)
+        self.begin_string(t, 'dstring')
 
     def t_sstring_dstring_msstring_mdstring_escape_sequence(self, t):
         r'''\\['"]'''
         self.string_value += t.value.decode('unicode_escape')
-
-    @TOKEN(msstring_re)
-    def t_msstring_end(self, t):
-        return self.end_string(t)
-
-    @TOKEN(mdstring_re)
-    def t_mdstring_end(self, t):
-        return self.end_string(t)
-
-    @TOKEN(sstring_re)
-    def t_sstring_end(self, t):
-        return self.end_string(t)
-
-    @TOKEN(dstring_re)
-    def t_dstring_end(self, t):
-        return self.end_string(t)
 
     def t_msstring_body(self, t):
         r"([^'\\]|('(?!'')))+"
@@ -139,6 +117,22 @@ class JELLexer(object):
     def t_dstring_body(self, t):
         r'[^"\\\n]+'
         self.string_value += t.value
+
+    @TOKEN(msstring_re)
+    def t_msstring_end(self, t):
+        return self.end_string(t)
+
+    @TOKEN(mdstring_re)
+    def t_mdstring_end(self, t):
+        return self.end_string(t)
+
+    @TOKEN(sstring_re)
+    def t_sstring_end(self, t):
+        return self.end_string(t)
+
+    @TOKEN(dstring_re)
+    def t_dstring_end(self, t):
+        return self.end_string(t)
 
     @TOKEN(
         r'(?P<t_NUMBER_int>([1-9][0-9]+)|[0-9])'	# Integer
