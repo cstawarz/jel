@@ -136,10 +136,11 @@ class JELLexer(object):
         return self.end_string(t)
 
     @TOKEN(
+        r'(?P<t_NUMBER_value>'
         r'(?P<t_NUMBER_int>([1-9][0-9]+)|[0-9])'	# Integer
         r'(\.(?P<t_NUMBER_frac>[0-9]+))?'		# Fraction
         r'([eE](?P<t_NUMBER_exp>[+-]?[0-9]+))?'		# Exponent
-        r'(?P<t_NUMBER_units>[a-zA-Z][a-zA-Z0-9]*)?'	# Units
+        r')(?P<t_NUMBER_unit>[a-zA-Z][a-zA-Z0-9]*)?'	# Unit
         )
     def t_NUMBER(self, t):
         groupdict = dict((k.split('_')[2], v) for (k, v) in

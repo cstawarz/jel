@@ -1,4 +1,5 @@
 from __future__ import division, print_function, unicode_literals
+import decimal
 import inspect
 import os
 
@@ -243,7 +244,8 @@ class JELParser(object):
         '''
         number_literal_expr : NUMBER
         '''
-        p[0] = ast.NumberLiteralExpr(value=p[1])
+        p[0] = ast.NumberLiteralExpr(value = decimal.Decimal(p[1].value),
+                                     unit = (p[1].unit or None))
 
     def p_true_literal_expr(self, p):
         '''
