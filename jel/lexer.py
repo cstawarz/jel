@@ -29,14 +29,14 @@ class JELLexer(object):
         return lex.lex(module=self, **kwargs)
 
     states = (
-        ('lbrace', 'inclusive'),
-        ('lbracket', 'inclusive'),
-        ('lparen', 'inclusive'),
-        
         ('sstring', 'exclusive'),
         ('dstring', 'exclusive'),
         ('msstring', 'exclusive'),
         ('mdstring', 'exclusive'),
+        
+        ('lbrace', 'inclusive'),
+        ('lbracket', 'inclusive'),
+        ('lparen', 'inclusive'),
         
         ('nlescape', 'exclusive'),
         )
@@ -60,15 +60,9 @@ class JELLexer(object):
     t_TIMES = r'\*'
 
     t_INITIAL_nlescape_ignore = ' \t\r'
+    t_msstring_mdstring_sstring_dstring_ignore = ''
 
     keywords = ('and', 'false', 'in', 'not', 'null', 'or', 'true')
-
-    t_sstring_dstring_msstring_mdstring_ignore = ''
-
-    sstring_re = r"'"
-    dstring_re = r'"'
-    msstring_re = r"'''"
-    mdstring_re = r'"""'
 
     def begin_string(self, t, state):
         t.lexer.push_state(state)
@@ -81,23 +75,23 @@ class JELLexer(object):
         t.lexer.lineno += t.value.count('\n')
         return t
 
-    @TOKEN(msstring_re)
     def t_begin_msstring(self, t):
+        r"'''"
         self.begin_string(t, 'msstring')
 
-    @TOKEN(mdstring_re)
     def t_begin_mdstring(self, t):
+        r'"""'
         self.begin_string(t, 'mdstring')
 
-    @TOKEN(sstring_re)
     def t_begin_sstring(self, t):
+        r"'"
         self.begin_string(t, 'sstring')
 
-    @TOKEN(dstring_re)
     def t_begin_dstring(self, t):
+        r'"'
         self.begin_string(t, 'dstring')
 
-    def t_sstring_dstring_msstring_mdstring_escape_sequence(self, t):
+    def t_msstring_mdstring_sstring_dstring_escape_sequence(self, t):
         r'''\\['"]'''
         self.string_value += t.value.decode('unicode_escape')
 
@@ -117,20 +111,20 @@ class JELLexer(object):
         r'[^"\\\n]+'
         self.string_value += t.value
 
-    @TOKEN(msstring_re)
     def t_msstring_end(self, t):
+        r"'''"
         return self.end_string(t)
 
-    @TOKEN(mdstring_re)
     def t_mdstring_end(self, t):
+        r'"""'
         return self.end_string(t)
 
-    @TOKEN(sstring_re)
     def t_sstring_end(self, t):
+        r"'"
         return self.end_string(t)
 
-    @TOKEN(dstring_re)
     def t_dstring_end(self, t):
+        r'"'
         return self.end_string(t)
 
     @TOKEN(
@@ -195,14 +189,12 @@ class JELLexer(object):
         t.lexer.pop_state()
         t.lexer.lineno += 1
 
-    newline_re = r'\n+'
-
-    @TOKEN(newline_re)
     def t_lbrace_lbracket_lparen_newline(self, t):
-        t.lexer.lineno += len(t.value)
+        r'\n+'
+        self.t_NEWLINE(t)  # Update lineno but discard token
 
-    @TOKEN(newline_re)
     def t_NEWLINE(self, t):
+        r'\n+'
         t.lexer.lineno += len(t.value)
         return t
 
