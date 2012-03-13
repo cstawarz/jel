@@ -63,3 +63,14 @@ class TestJELParser(unittest.TestCase):
             self.assertEqual('1.230E-45', str(p.value))
             self.assertEqual(1.23e-45, float(p.value))
             self.assertEqual('ms', p.unit)
+
+    def test_string_literal_expr(self):
+        with self.parse('"foo bar\\nblah"') as p:
+            self.assertIsInstance(p, ast.StringLiteralExpr)
+            self.assertEqual('foo bar\nblah', p.value)
+
+        s = ''' 'foo\\n' "bar\\tboo" """blah\nbaz\\r""" \'''\\ffuzz\ncuz\''' '''
+        
+        with self.parse(s) as p:
+            self.assertIsInstance(p, ast.StringLiteralExpr)
+            self.assertEqual('foo\nbar\tbooblah\nbaz\r\ffuzz\ncuz', p.value)

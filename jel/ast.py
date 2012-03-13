@@ -36,6 +36,10 @@ class _AtomicLiteralExpr(AST):
     _fields = ('value',)
 
 
+class StringLiteralExpr(_AtomicLiteralExpr):
+    pass
+
+
 class NumberLiteralExpr(AST):
 
     _fields = ('value', 'unit')

@@ -232,13 +232,17 @@ class JELParser(object):
         assert len(p) == 2
         p[0] = p[1]
 
-    def p_string_literal_expr(self, p):
+    def p_string_literal_expr_many(self, p):
         '''
         string_literal_expr : STRING string_literal_expr
-                            | STRING
         '''
-        assert len(p) == 2
-        p[0] = p[1]
+        p[0] = ast.StringLiteralExpr(value = (p[1] + p[2].value))
+
+    def p_string_literal_expr_one(self, p):
+        '''
+        string_literal_expr : STRING
+        '''
+        p[0] = ast.StringLiteralExpr(value=p[1])
 
     def p_number_literal_expr(self, p):
         '''
