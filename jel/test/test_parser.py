@@ -40,7 +40,7 @@ class TestJELParser(unittest.TestCase):
         self.list_12 = ast.ListLiteralExpr(items=(self.one, self.two))
         self.empty_list = ast.ListLiteralExpr(items=())
 
-    def assertError(self, msg=None, token=None, lineno=None):
+    def assertError(self, msg=None, token=None, lineno=None, lexpos=None):
         self.assertTrue(self.errors, 'expected error was not detected')
         e = self.errors.popleft()
 
@@ -50,6 +50,8 @@ class TestJELParser(unittest.TestCase):
             self.assertEqual(token, e[1])
         if lineno:
             self.assertEqual(lineno, e[2])
+        if lexpos:
+            self.assertEqual(lexpos, e[3])
 
     def test_incomplete_input(self):
         with self.parse('"foo') as p:
@@ -216,3 +218,26 @@ class TestJELParser(unittest.TestCase):
 
         with self.parse('foo[,]'):
             self.assertError(token=',')
+
+    def test_function_call_expr(self):
+        def test_func(expr, name, *args):
+            with self.parse(expr) as p:
+                self.assertIsInstance(p, ast.FunctionCallExpr)
+                self.assertIsInstance(p.name, type(''))
+                self.assertEqual(name, p.name)
+                self.assertEqual(args, p.args)
+
+        test_func('foo()', 'foo')
+        test_func('bar(true)', 'bar', self.true)
+        test_func('bar(true,)', 'bar', self.true)
+        test_func('abc123(1, 2)', 'abc123', self.one, self.two)
+        test_func('abc123(1, 2,)', 'abc123', self.one, self.two)
+
+        with self.parse('foo(,)'):
+            self.assertError(token=',')
+
+        with self.parse('foo(1)(2)'):
+            self.assertError(token='(', lexpos=7)
+
+        with self.parse('(foo)(2)'):
+            self.assertError(token='(', lexpos=6)

@@ -29,14 +29,19 @@ class AST(object):
         return '%s(%s)' % (self._name, args)
 
 
+class BinaryOpExpr(AST):
+
+    _fields = ('op', 'operands')
+
+
 class UnaryOpExpr(AST):
 
     _fields = ('op', 'operand')
 
 
-class BinaryOpExpr(AST):
+class FunctionCallExpr(AST):
 
-    _fields = ('op', 'operands')
+    _fields = ('name', 'args')
 
 
 class SubscriptExpr(AST):

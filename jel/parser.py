@@ -151,7 +151,7 @@ class JELParser(object):
         '''
         function_call_expr : identifier_expr LPAREN expr_list RPAREN
         '''
-        raise NotImplementedError
+        p[0] = ast.FunctionCallExpr(name=p[1].value, args=p[3])
 
     def p_subscript_expr(self, p):
         '''
