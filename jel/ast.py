@@ -16,6 +16,14 @@ class AST(object):
             raise TypeError('%s has no field %r' %
                             (self._name, kwargs.popitem()[0]))
 
+    def __eq__(self, other):
+        return ((type(other) is type(self)) and
+                all(getattr(self, field) == getattr(other, field)
+                    for field in self._fields))
+
+    def __ne__(self, other):
+        return not (self == other)
+
     def __repr__(self):
         args = ', '.join('%s=%r' % (f, getattr(self, f)) for f in self._fields)
         return '%s(%s)' % (self._name, args)
