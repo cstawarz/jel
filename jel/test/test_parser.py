@@ -30,13 +30,21 @@ class TestJELParser(unittest.TestCase):
 
         self.parse = parse_wrapper
 
-    def assertError(self, token, lineno=None):
+    def assertError(self, msg=None, token=None, lineno=None):
         self.assertTrue(self.errors, 'expected error was not detected')
         e = self.errors.popleft()
-        
-        self.assertEqual(token, e[1])
+
+        if msg:
+            self.assertEqual(msg, e[0])
+        if token:
+            self.assertEqual(token, e[1])
         if lineno:
             self.assertEqual(lineno, e[2])
+
+    def test_incomplete_input(self):
+        with self.parse('"foo') as p:
+            self.assertError(msg='Input ended unexpectedly')
+            self.assertIsNone(p)
 
     def test_identifier_expr(self):
         with self.parse('foo') as p:
@@ -103,7 +111,7 @@ class TestJELParser(unittest.TestCase):
         test_list('[true, false, null,]', true_lit, false_lit, null_lit)
 
         with self.parse('[,]'):
-            self.assertError(',')
+            self.assertError(token=',')
 
     def test_dict_literal_expr(self):
         def test_dict(expr, *items):
@@ -132,7 +140,21 @@ class TestJELParser(unittest.TestCase):
         test_dict('{foo: true, bar: false, blah: null}', *items)
 
         with self.parse('{,}'):
-            self.assertError(',')
+            self.assertError(token=',')
 
         with self.parse('{"foo"}'):
-            self.assertError('}')
+            self.assertError(token='}')
+
+    def test_parenthetic_expr(self):
+        with self.parse('([null])') as p:
+            expected = ast.ListLiteralExpr(items=(ast.NullLiteralExpr(),))
+            self.assertEqual(expected, p)
+            
+        with self.parse('([null],)'):
+            self.assertError(token=',')
+            
+        with self.parse('(true, false)'):
+            self.assertError(token=',')
+            
+        with self.parse('()'):
+            self.assertError(token=')')
