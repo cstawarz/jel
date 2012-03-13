@@ -30,6 +30,14 @@ class TestJELParser(unittest.TestCase):
 
         self.parse = parse_wrapper
 
+    def assertError(self, token, lineno=None):
+        self.assertTrue(self.errors, 'expected error was not detected')
+        e = self.errors.popleft()
+        
+        self.assertEqual(token, e[1])
+        if lineno:
+            self.assertEqual(lineno, e[2])
+
     def test_identifier_expr(self):
         with self.parse('foo') as p:
             self.assertIsInstance(p, ast.IdentifierExpr)
@@ -74,3 +82,25 @@ class TestJELParser(unittest.TestCase):
         with self.parse(s) as p:
             self.assertIsInstance(p, ast.StringLiteralExpr)
             self.assertEqual('foo\nbar\tbooblah\nbaz\r\ffuzz\ncuz', p.value)
+
+    def test_list_literal_expr(self):
+        def test_list(expr, *items):
+            with self.parse(expr) as p:
+                self.assertIsInstance(p, ast.ListLiteralExpr)
+                self.assertIsInstance(p.items, tuple)
+                self.assertEqual(items, p.items)
+
+        null_lit = ast.NullLiteralExpr()
+        true_lit = ast.BooleanLiteralExpr(value=True)
+        false_lit = ast.BooleanLiteralExpr(value=False)
+
+        test_list('[]')
+        test_list('[null]', null_lit)
+        test_list('[null,]', null_lit)
+        test_list('[true, false]', true_lit, false_lit)
+        test_list('[true, false,]', true_lit, false_lit)
+        test_list('[true, false, null]', true_lit, false_lit, null_lit)
+        test_list('[true, false, null,]', true_lit, false_lit, null_lit)
+
+        with self.parse('[,]'):
+            self.assertError(',')

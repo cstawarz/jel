@@ -221,16 +221,25 @@ class JELParser(object):
         '''
         list_literal_expr : LBRACKET expr_list RBRACKET
         '''
-        raise NotImplementedError
+        p[0] = ast.ListLiteralExpr(items=p[2])
 
-    def p_expr_list(self, p):
+    def p_expr_list_many(self, p):
         '''
         expr_list : expr COMMA expr_list
-                  | expr
-                  | empty
         '''
-        assert len(p) == 2
-        p[0] = p[1]
+        p[0] = (p[1],) + p[3]
+
+    def p_expr_list_one(self, p):
+        '''
+        expr_list : expr
+        '''
+        p[0] = (p[1],)
+
+    def p_expr_list_empty(self, p):
+        '''
+        expr_list : empty
+        '''
+        p[0] = ()
 
     def p_string_literal_expr_many(self, p):
         '''

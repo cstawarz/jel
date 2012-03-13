@@ -39,6 +39,15 @@ class BinaryOpExpr(AST):
     _fields = ('op', 'operands')
 
 
+class _CompositeLiteralExpr(AST):
+
+    _fields = ('items',)
+
+
+class ListLiteralExpr(_CompositeLiteralExpr):
+    pass
+
+
 class _AtomicLiteralExpr(AST):
 
     _fields = ('value',)
