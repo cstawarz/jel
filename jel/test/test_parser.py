@@ -256,9 +256,9 @@ class TestJELParser(unittest.TestCase):
                 assert len(operands) == 2
                 self.assertEqual(operands, p.operands)
                 
-        test_binop('1%s2' % op, self.one, self.two)
+        test_binop('1 %s 2' % op, self.one, self.two)
 
-        expr = '1%s2%s3' % (op, op)
+        expr = '1 %s 2 %s 3' % (op, op)
         if left_assoc:
             test_binop(
                 expr,
@@ -274,3 +274,20 @@ class TestJELParser(unittest.TestCase):
 
     def test_exponentiation_expr(self):
         self._test_binary_op('**', left_assoc=False)
+
+    def _test_unary_op(self, op):
+        def test_unop(expr, operand):
+            with self.parse(expr) as p:
+                self.assertIsInstance(p, ast.UnaryOpExpr)
+                self.assertEqual(op, p.op)
+                self.assertEqual(operand, p.operand)
+                
+        test_unop('%s 1' % op, self.one)
+        test_unop(
+            '%s %s 2' % (op, op),
+            ast.UnaryOpExpr(op=op, operand=self.two),
+            )
+
+    def test_unary_expr(self):
+        self._test_unary_op('+')
+        self._test_unary_op('-')
