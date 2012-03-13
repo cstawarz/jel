@@ -35,8 +35,14 @@ class TestJELParser(unittest.TestCase):
         self.true = ast.BooleanLiteralExpr(value=True)
         self.false = ast.BooleanLiteralExpr(value=False)
         self.foobar = ast.StringLiteralExpr(value='foobar')
-        self.one = ast.NumberLiteralExpr(value=decimal.Decimal('1'), unit=None)
-        self.two = ast.NumberLiteralExpr(value=decimal.Decimal('2'), unit=None)
+
+        def make_number(value, unit=None):
+            return ast.NumberLiteralExpr(value = decimal.Decimal(value),
+                                         unit = unit)
+        self.one = make_number('1')
+        self.two = make_number('2')
+        self.three = make_number('3')
+        
         self.list_12 = ast.ListLiteralExpr(items=(self.one, self.two))
         self.empty_list = ast.ListLiteralExpr(items=())
 
@@ -241,3 +247,30 @@ class TestJELParser(unittest.TestCase):
 
         with self.parse('(foo)(2)'):
             self.assertError(token='(', lexpos=6)
+
+    def _test_binary_op(self, op, left_assoc=True):
+        def test_binop(expr, *operands):
+            with self.parse(expr) as p:
+                self.assertIsInstance(p, ast.BinaryOpExpr)
+                self.assertEqual(op, p.op)
+                assert len(operands) == 2
+                self.assertEqual(operands, p.operands)
+                
+        test_binop('1%s2' % op, self.one, self.two)
+
+        expr = '1%s2%s3' % (op, op)
+        if left_assoc:
+            test_binop(
+                expr,
+                ast.BinaryOpExpr(op=op, operands=(self.one, self.two)),
+                self.three,
+                )
+        else:
+            test_binop(
+                expr,
+                self.one,
+                ast.BinaryOpExpr(op=op, operands=(self.two, self.three)),
+                )
+
+    def test_exponentiation_expr(self):
+        self._test_binary_op('**', left_assoc=False)
