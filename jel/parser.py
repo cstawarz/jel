@@ -32,27 +32,15 @@ class JELParser(object):
             **kwargs
             )
 
-    def same(self, p):
-        assert len(p) == 2
-        p[0] = p[1]
-
-    def unary_op(self, p):
-        if len(p) == 3:
-            p[0] = ast.UnaryOpExpr(op=p[1], operand=p[2])
-        else:
-            self.same(p)
-
-    def binary_op(self, p):
-        if len(p) == 4:
-            p[0] = ast.BinaryOpExpr(op=p[2], operands=(p[1], p[3]))
-        else:
-            self.same(p)
-
     def p_expr(self, p):
         '''
         expr : or_expr
         '''
         self.same(p)
+
+    def same(self, p):
+        assert len(p) == 2
+        p[0] = p[1]
 
     def p_or_expr(self, p):
         '''
@@ -60,6 +48,12 @@ class JELParser(object):
                 | and_expr
         '''
         self.binary_op(p)
+
+    def binary_op(self, p):
+        if len(p) == 4:
+            p[0] = ast.BinaryOpExpr(op=p[2], operands=(p[1], p[3]))
+        else:
+            self.same(p)
 
     def p_and_expr(self, p):
         '''
@@ -74,6 +68,12 @@ class JELParser(object):
                  | comparison_expr
         '''
         self.unary_op(p)
+
+    def unary_op(self, p):
+        if len(p) == 3:
+            p[0] = ast.UnaryOpExpr(op=p[1], operand=p[2])
+        else:
+            self.same(p)
 
     def p_comparison_expr(self, p):
         '''
@@ -196,23 +196,20 @@ class JELParser(object):
         '''
         p[0] = ast.DictLiteralExpr(items=p[2])
 
-    def p_dict_item_list_many(self, p):
+    def p_dict_item_list(self, p):
         '''
         dict_item_list : dict_item COMMA dict_item_list
+                       | dict_item
+                       | empty
         '''
-        p[0] = (p[1],) + p[3]
+        self.item_list(p)
 
-    def p_dict_item_one(self, p):
-        '''
-        dict_item_list : dict_item
-        '''
-        p[0] = (p[1],)
-
-    def p_dict_item_list_empty(self, p):
-        '''
-        dict_item_list : empty
-        '''
-        p[0] = ()
+    def item_list(self, p):
+        if len(p) == 4:
+            p[0] = (p[1],) + p[3]
+        else:
+            assert len(p) == 2
+            p[0] = (() if p[1] is None else (p[1],))
 
     def p_dict_item(self, p):
         '''
@@ -233,35 +230,23 @@ class JELParser(object):
         '''
         p[0] = ast.ListLiteralExpr(items=p[2])
 
-    def p_expr_list_many(self, p):
+    def p_expr_list(self, p):
         '''
         expr_list : expr COMMA expr_list
+                  | expr
+                  | empty
         '''
-        p[0] = (p[1],) + p[3]
+        self.item_list(p)
 
-    def p_expr_list_one(self, p):
-        '''
-        expr_list : expr
-        '''
-        p[0] = (p[1],)
-
-    def p_expr_list_empty(self, p):
-        '''
-        expr_list : empty
-        '''
-        p[0] = ()
-
-    def p_string_literal_expr_many(self, p):
+    def p_string_literal_expr(self, p):
         '''
         string_literal_expr : STRING string_literal_expr
+                            | STRING
         '''
-        p[0] = ast.StringLiteralExpr(value = (p[1] + p[2].value))
-
-    def p_string_literal_expr_one(self, p):
-        '''
-        string_literal_expr : STRING
-        '''
-        p[0] = ast.StringLiteralExpr(value=p[1])
+        value = p[1]
+        if len(p) == 3:
+            value += p[2].value
+        p[0] = ast.StringLiteralExpr(value=value)
 
     def p_number_literal_expr(self, p):
         '''
@@ -270,17 +255,12 @@ class JELParser(object):
         p[0] = ast.NumberLiteralExpr(value = decimal.Decimal(p[1].value),
                                      unit = (p[1].unit or None))
 
-    def p_boolean_literal_expr_TRUE(self, p):
+    def p_boolean_literal_expr(self, p):
         '''
         boolean_literal_expr : TRUE
+                             | FALSE
         '''
-        p[0] = ast.BooleanLiteralExpr(value=True)
-
-    def p_boolean_literal_expr_FALSE(self, p):
-        '''
-        boolean_literal_expr : FALSE
-        '''
-        p[0] = ast.BooleanLiteralExpr(value=False)
+        p[0] = ast.BooleanLiteralExpr(value = (p[1] == 'true'))
 
     def p_null_literal_expr(self, p):
         '''
