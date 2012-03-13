@@ -298,3 +298,7 @@ class TestJELParser(unittest.TestCase):
         self._test_binary_op('*', ('/', '%'))
         self._test_binary_op('/', ('*', '%'))
         self._test_binary_op('%', ('*', '/'))
+
+    def test_additive_expr(self):
+        self._test_binary_op('+', ('-',))
+        self._test_binary_op('-', ('+',))
