@@ -157,7 +157,7 @@ class JELParser(object):
         '''
         subscript_expr : postfix_expr LBRACKET expr RBRACKET
         '''
-        raise NotImplementedError
+        p[0] = ast.SubscriptExpr(target=p[1], value=p[3])
 
     def p_attribute_expr(self, p):
         '''

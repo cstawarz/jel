@@ -30,6 +30,16 @@ class TestJELParser(unittest.TestCase):
 
         self.parse = parse_wrapper
 
+        self.foo = ast.IdentifierExpr(value='foo')
+        self.null = ast.NullLiteralExpr()
+        self.true = ast.BooleanLiteralExpr(value=True)
+        self.false = ast.BooleanLiteralExpr(value=False)
+        self.foobar = ast.StringLiteralExpr(value='foobar')
+        self.one = ast.NumberLiteralExpr(value=decimal.Decimal('1'), unit=None)
+        self.two = ast.NumberLiteralExpr(value=decimal.Decimal('2'), unit=None)
+        self.list_12 = ast.ListLiteralExpr(items=(self.one, self.two))
+        self.empty_list = ast.ListLiteralExpr(items=())
+
     def assertError(self, msg=None, token=None, lineno=None):
         self.assertTrue(self.errors, 'expected error was not detected')
         e = self.errors.popleft()
@@ -182,3 +192,27 @@ class TestJELParser(unittest.TestCase):
 
         with self.parse('foo.1'):
             self.assertError(token='1')
+
+    def test_subscript_expr(self):
+        def test_sub(expr, target, value):
+            with self.parse(expr) as p:
+                self.assertIsInstance(p, ast.SubscriptExpr)
+                self.assertEqual(target, p.target)
+                self.assertEqual(value, p.value)
+
+        test_sub('foo[1]', self.foo, self.one)
+        test_sub('(foo)[[]]', self.foo, self.empty_list)
+        test_sub('[1,2]["foobar"]', self.list_12, self.foobar)
+
+        test_sub('foo[1][2]',
+                 ast.SubscriptExpr(target=self.foo, value=self.one),
+                 self.two)
+
+        with self.parse('foo[]'):
+            self.assertError(token=']')
+
+        with self.parse('foo[1,2]'):
+            self.assertError(token=',')
+
+        with self.parse('foo[,]'):
+            self.assertError(token=',')

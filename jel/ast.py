@@ -39,6 +39,11 @@ class BinaryOpExpr(AST):
     _fields = ('op', 'operands')
 
 
+class SubscriptExpr(AST):
+
+    _fields = ('target', 'value')
+
+
 class AttributeExpr(AST):
 
     _fields = ('target', 'name')
