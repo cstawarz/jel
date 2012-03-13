@@ -44,6 +44,10 @@ class _CompositeLiteralExpr(AST):
     _fields = ('items',)
 
 
+class DictLiteralExpr(_CompositeLiteralExpr):
+    pass
+
+
 class ListLiteralExpr(_CompositeLiteralExpr):
     pass
 

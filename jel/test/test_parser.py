@@ -104,3 +104,35 @@ class TestJELParser(unittest.TestCase):
 
         with self.parse('[,]'):
             self.assertError(',')
+
+    def test_dict_literal_expr(self):
+        def test_dict(expr, *items):
+            with self.parse(expr) as p:
+                self.assertIsInstance(p, ast.DictLiteralExpr)
+                self.assertIsInstance(p.items, tuple)
+                self.assertEqual(items, p.items)
+
+        null_lit = ast.NullLiteralExpr()
+        true_lit = ast.BooleanLiteralExpr(value=True)
+        false_lit = ast.BooleanLiteralExpr(value=False)
+
+        test_dict('{}')
+
+        item = ('a', null_lit)
+        test_dict('{"a": null}', item)
+        test_dict('{a: null}', item)
+        test_dict('{"a": null,}', item)
+        test_dict('{a: null,}', item)
+
+        items = (('foo', true_lit), ('bar', false_lit))
+        test_dict("{'foo': true, bar: false}", *items)
+        test_dict("{foo: true, 'bar': false,}", *items)
+
+        items += (('blah', null_lit),)
+        test_dict('{foo: true, bar: false, blah: null}', *items)
+
+        with self.parse('{,}'):
+            self.assertError(',')
+
+        with self.parse('{"foo"}'):
+            self.assertError('}')

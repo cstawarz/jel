@@ -194,28 +194,38 @@ class JELParser(object):
         '''
         dict_literal_expr : LBRACE dict_item_list RBRACE
         '''
-        raise NotImplementedError
+        p[0] = ast.DictLiteralExpr(items=p[2])
 
-    def p_dict_item_list(self, p):
+    def p_dict_item_list_many(self, p):
         '''
         dict_item_list : dict_item COMMA dict_item_list
-                       | dict_item
-                       | empty
         '''
-        raise NotImplementedError
+        p[0] = (p[1],) + p[3]
+
+    def p_dict_item_one(self, p):
+        '''
+        dict_item_list : dict_item
+        '''
+        p[0] = (p[1],)
+
+    def p_dict_item_list_empty(self, p):
+        '''
+        dict_item_list : empty
+        '''
+        p[0] = ()
 
     def p_dict_item(self, p):
         '''
         dict_item : dict_key COLON expr
         '''
-        raise NotImplementedError
+        p[0] = (p[1], p[3])
 
     def p_dict_key(self, p):
         '''
         dict_key : string_literal_expr
                  | identifier_expr
         '''
-        self.same(p)
+        p[0] = p[1].value
 
     def p_list_literal_expr(self, p):
         '''
