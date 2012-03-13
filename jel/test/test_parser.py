@@ -158,3 +158,27 @@ class TestJELParser(unittest.TestCase):
             
         with self.parse('()'):
             self.assertError(token=')')
+
+    def test_attribute_expr(self):
+        def test_attr(expr, target, name):
+            with self.parse(expr) as p:
+                self.assertIsInstance(p, ast.AttributeExpr)
+                self.assertEqual(target, p.target)
+                self.assertIsInstance(p.name, type(''))
+                self.assertEqual(name, p.name)
+
+        id_lit = ast.IdentifierExpr(value='foo')
+
+        test_attr('foo.bar', id_lit, 'bar')
+        test_attr('(foo).blah', id_lit, 'blah')
+        test_attr(
+            '{foo123: null}.foo123',
+            ast.DictLiteralExpr(items=(('foo123', ast.NullLiteralExpr()),)),
+            'foo123')
+
+        test_attr('foo.bar.blah',
+                  ast.AttributeExpr(target=id_lit, name='bar'),
+                  'blah')
+
+        with self.parse('foo.1'):
+            self.assertError(token='1')

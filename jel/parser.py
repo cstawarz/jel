@@ -163,7 +163,7 @@ class JELParser(object):
         '''
         attribute_expr : postfix_expr DOT identifier_expr
         '''
-        raise NotImplementedError
+        p[0] = ast.AttributeExpr(target=p[1], name=p[3].value)
 
     def p_primary_expr(self, p):
         '''
