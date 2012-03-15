@@ -354,3 +354,62 @@ class TestJELParser(unittest.TestCase):
 
     def test_or_expr(self):
         self._test_binary_op('or')
+
+    def test_precedence(self):
+        x = ast.IdentifierExpr(value='x')
+        with self.parse('x or x and not x < x + x * -x ** (x or x) [x]') as p:
+            # or
+            self.assertIsInstance(p, ast.BinaryOpExpr)
+            self.assertEqual('or', p.op)
+            self.assertEqual(x, p.operands[0])
+            p = p.operands[1]
+            
+            # and
+            self.assertIsInstance(p, ast.BinaryOpExpr)
+            self.assertEqual('and', p.op)
+            self.assertEqual(x, p.operands[0])
+            p = p.operands[1]
+
+            # not
+            self.assertIsInstance(p, ast.UnaryOpExpr)
+            self.assertEqual('not', p.op)
+            p = p.operand
+            
+            # <
+            self.assertIsInstance(p, ast.ComparisonExpr)
+            self.assertEqual(('<',), p.ops)
+            self.assertEqual(x, p.operands[0])
+            p = p.operands[1]
+            
+            # +
+            self.assertIsInstance(p, ast.BinaryOpExpr)
+            self.assertEqual('+', p.op)
+            self.assertEqual(x, p.operands[0])
+            p = p.operands[1]
+            
+            # *
+            self.assertIsInstance(p, ast.BinaryOpExpr)
+            self.assertEqual('*', p.op)
+            self.assertEqual(x, p.operands[0])
+            p = p.operands[1]
+
+            # -
+            self.assertIsInstance(p, ast.UnaryOpExpr)
+            self.assertEqual('-', p.op)
+            p = p.operand
+            
+            # **
+            self.assertIsInstance(p, ast.BinaryOpExpr)
+            self.assertEqual('**', p.op)
+            self.assertEqual(x, p.operands[0])
+            p = p.operands[1]
+            
+            # []
+            self.assertIsInstance(p, ast.SubscriptExpr)
+            self.assertEqual(x, p.value)
+            p = p.target
+            
+            # ()
+            self.assertIsInstance(p, ast.BinaryOpExpr)
+            self.assertEqual('or', p.op)
+            self.assertEqual((x, x), p.operands)
