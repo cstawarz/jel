@@ -303,9 +303,41 @@ class TestJELParser(unittest.TestCase):
         self._test_binary_op('+', ('-',))
         self._test_binary_op('-', ('+',))
 
-    @unittest.expectedFailure
     def test_comparison_expr(self):
-        self.fail('not implemented')
+        def test_comp(op):
+            with self.parse('1 %s 2' % op) as p:
+                self.assertIsInstance(p, ast.ComparisonExpr)
+                self.assertEqual((op,), p.ops)
+                self.assertEqual((self.one, self.two), p.operands)
+
+        test_comp('<')
+        test_comp('<=')
+        test_comp('>')
+        test_comp('>=')
+        test_comp('!=')
+        test_comp('==')
+        test_comp('in')
+        test_comp('not in')
+
+        with self.parse('1 < 2 <= 3 not in [1,2]') as p:
+            self.assertIsInstance(p, ast.ComparisonExpr)
+            self.assertEqual(('<', '<=', 'not in'), p.ops)
+            self.assertEqual((self.one, self.two, self.three, self.list_12),
+                             p.operands)
+
+        # Parentheses break comparison chaining
+        with self.parse('(1 < 2) != (1 > 3)') as p:
+            self.assertIsInstance(p, ast.ComparisonExpr)
+            self.assertEqual(('!=',), p.ops)
+            self.assertEqual(
+                (
+                    ast.ComparisonExpr(ops=('<',),
+                                       operands=(self.one, self.two)),
+                    ast.ComparisonExpr(ops=('>',),
+                                       operands=(self.one, self.three)),
+                    ),
+                p.operands,
+                )
 
     def test_not_expr(self):
         self._test_unary_op('not')

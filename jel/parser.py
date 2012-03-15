@@ -78,9 +78,20 @@ class JELParser(object):
     def p_comparison_expr(self, p):
         '''
         comparison_expr : comparison_expr comparison_op additive_expr
-                        | additive_expr
         '''
-        self.binary_op(p)
+        if isinstance(p[1], ast.ComparisonExpr) and (not p[1]._parenthetic):
+            ops = p[1].ops + (p[2],)
+            operands = p[1].operands + (p[3],)
+        else:
+            ops = (p[2],)
+            operands = (p[1], p[3])
+        p[0] = ast.ComparisonExpr(ops=ops, operands=operands)
+
+    def p_comparison_expr_passthrough(self, p):
+        '''
+        comparison_expr : additive_expr
+        '''
+        self.same(p)
 
     def p_comparison_op(self, p):
         '''
@@ -91,9 +102,14 @@ class JELParser(object):
                       | NOTEQUAL
                       | EQUAL
                       | IN
-                      | NOT IN
         '''
-        p[0] = ' '.join(p[1:])
+        self.same(p)
+
+    def p_comparison_op_NOT_IN(self, p):
+        '''
+        comparison_op : NOT IN
+        '''
+        p[0] = p[1] + ' ' + p[2]
 
     def p_additive_expr(self, p):
         '''
@@ -177,6 +193,7 @@ class JELParser(object):
         '''
         parenthetic_expr : LPAREN expr RPAREN
         '''
+        p[2]._parenthetic = True
         p[0] = p[2]
 
     def p_literal_expr(self, p):

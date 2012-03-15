@@ -4,6 +4,7 @@ from __future__ import division, print_function, unicode_literals
 class AST(object):
 
     _fields = ()
+    _parenthetic = False
 
     @property
     def _name(self):
@@ -37,6 +38,11 @@ class BinaryOpExpr(AST):
 class UnaryOpExpr(AST):
 
     _fields = ('op', 'operand')
+
+
+class ComparisonExpr(AST):
+
+    _fields = ('ops', 'operands')
 
 
 class FunctionCallExpr(AST):
