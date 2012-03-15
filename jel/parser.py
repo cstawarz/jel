@@ -292,7 +292,7 @@ class JELParser(object):
     def print_grammar(cls):
         p_funcs = sorted((getattr(cls, f) for f in dir(cls)
                           if f.startswith('p_')),
-                         key = (lambda f: f.im_func.func_code.co_firstlineno))
+                         key = (lambda f: inspect.getsourcelines(f)[1]))
 
         prods = collections.OrderedDict()
 
@@ -302,7 +302,7 @@ class JELParser(object):
             rhs = [rule.strip() for rule in p[1].split('|')]
             prods.setdefault(lhs, []).extend(rhs)
             
-        for lhs, rhs in prods.iteritems():
+        for lhs, rhs in prods.items():
             print(lhs, end=('\n    : ' if (len(rhs) > 1) else ' : '))
             print('\n    | '.join(rhs))
             print()

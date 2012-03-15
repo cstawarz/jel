@@ -22,13 +22,13 @@ class TestAST(unittest.TestCase):
     def test_missing_field(self):
         with self.assertRaises(KeyError) as cm:
             Node(foo=1)
-        self.assertEqual('bar', cm.exception.message)
+        self.assertEqual('bar', cm.exception.args[0])
 
     def test_invalid_field(self):
         with self.assertRaises(TypeError) as cm:
             DerivedNode(foo=1, bar=2, blah=3)
         self.assertEqual("DerivedNode has no field 'blah'",
-                         cm.exception.message)
+                         cm.exception.args[0])
 
     def test_repr(self):
         self.assertEqual('Node(foo=1, bar=2)', repr(Node(foo=1, bar=2)))

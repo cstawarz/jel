@@ -4,13 +4,13 @@ from ply import lex
 from ply.lex import TOKEN
 
 
-class MatchString(unicode):
+class MatchString(type('')):
 
     def __new__(cls, value, groupdict):
         return super(MatchString, cls).__new__(cls, value)
 
     def __init__(self, value, groupdict):
-        super(MatchString, self).__init__(value)
+        super(MatchString, self).__init__()
         self.__dict__.update(groupdict)
 
 
@@ -93,7 +93,7 @@ class JELLexer(object):
     def t_msstring_mdstring_sstring_dstring_escape_sequence(self, t):
         r'''(\\['"\\/bfnrt])|((\\u[a-fA-F0-9]{4})+)'''
         self.string_value += ('/' if t.value[1] == '/' else
-                              t.value.decode('unicode_escape'))
+                              t.value.encode('ascii').decode('unicode_escape'))
 
     def t_msstring_body(self, t):
         r"([^'\\]|('(?!'')))+"
@@ -144,7 +144,7 @@ class JELLexer(object):
         )
     def t_NUMBER(self, t):
         groupdict = dict((k.split('_')[2], v) for (k, v) in
-                         t.lexer.lexmatch.groupdict('').iteritems()
+                         t.lexer.lexmatch.groupdict('').items()
                          if k.startswith('t_NUMBER_'))
         t.value = MatchString(t.value, groupdict)
         return t
