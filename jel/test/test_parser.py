@@ -290,6 +290,13 @@ class TestJELParser(unittest.TestCase):
     def test_exponentiation_expr(self):
         self._test_binary_op('**', left_assoc=False)
 
+        with self.parse('2**-1') as p:
+            self.assertIsInstance(p, ast.BinaryOpExpr)
+            self.assertEqual('**', p.op)
+            self.assertEqual((self.two,
+                              ast.UnaryOpExpr(op='-', operand=self.one)),
+                             p.operands)
+
     def test_unary_expr(self):
         self._test_unary_op('+')
         self._test_unary_op('-')

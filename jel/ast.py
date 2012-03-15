@@ -4,7 +4,6 @@ from __future__ import division, print_function, unicode_literals
 class AST(object):
 
     _fields = ()
-    _parenthetic = False
 
     @property
     def _name(self):
@@ -30,37 +29,42 @@ class AST(object):
         return '%s(%s)' % (self._name, args)
 
 
-class BinaryOpExpr(AST):
+class Expr(AST):
+
+    _parenthetic = False
+
+
+class BinaryOpExpr(Expr):
 
     _fields = ('op', 'operands')
 
 
-class UnaryOpExpr(AST):
+class UnaryOpExpr(Expr):
 
     _fields = ('op', 'operand')
 
 
-class ComparisonExpr(AST):
+class ComparisonExpr(Expr):
 
     _fields = ('ops', 'operands')
 
 
-class FunctionCallExpr(AST):
+class FunctionCallExpr(Expr):
 
     _fields = ('name', 'args')
 
 
-class SubscriptExpr(AST):
+class SubscriptExpr(Expr):
 
     _fields = ('target', 'value')
 
 
-class AttributeExpr(AST):
+class AttributeExpr(Expr):
 
     _fields = ('target', 'name')
 
 
-class _CompositeLiteralExpr(AST):
+class _CompositeLiteralExpr(Expr):
 
     _fields = ('items',)
 
@@ -73,7 +77,7 @@ class ListLiteralExpr(_CompositeLiteralExpr):
     pass
 
 
-class _AtomicLiteralExpr(AST):
+class _AtomicLiteralExpr(Expr):
 
     _fields = ('value',)
 
@@ -82,7 +86,7 @@ class StringLiteralExpr(_AtomicLiteralExpr):
     pass
 
 
-class NumberLiteralExpr(AST):
+class NumberLiteralExpr(Expr):
 
     _fields = ('value', 'unit')
 
@@ -91,7 +95,7 @@ class BooleanLiteralExpr(_AtomicLiteralExpr):
     pass
 
 
-class NullLiteralExpr(AST):
+class NullLiteralExpr(Expr):
     pass
 
 

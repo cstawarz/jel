@@ -149,7 +149,7 @@ class JELParser(object):
 
     def p_exponentiation_expr(self, p):
         '''
-        exponentiation_expr : postfix_expr POWER exponentiation_expr
+        exponentiation_expr : postfix_expr POWER unary_expr
                             | postfix_expr
         '''
         self.binary_op(p)
