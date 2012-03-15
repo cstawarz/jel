@@ -274,9 +274,6 @@ class TestJELParser(unittest.TestCase):
                                      operands = (self.two, self.three)),
                     )
 
-    def test_exponentiation_expr(self):
-        self._test_binary_op('**', left_assoc=False)
-
     def _test_unary_op(self, op):
         def test_unop(expr, operand):
             with self.parse(expr) as p:
@@ -290,6 +287,9 @@ class TestJELParser(unittest.TestCase):
             ast.UnaryOpExpr(op=op, operand=self.two),
             )
 
+    def test_exponentiation_expr(self):
+        self._test_binary_op('**', left_assoc=False)
+
     def test_unary_expr(self):
         self._test_unary_op('+')
         self._test_unary_op('-')
@@ -302,3 +302,16 @@ class TestJELParser(unittest.TestCase):
     def test_additive_expr(self):
         self._test_binary_op('+', ('-',))
         self._test_binary_op('-', ('+',))
+
+    @unittest.expectedFailure
+    def test_comparison_expr(self):
+        self.fail('not implemented')
+
+    def test_not_expr(self):
+        self._test_unary_op('not')
+
+    def test_and_expr(self):
+        self._test_binary_op('and')
+
+    def test_or_expr(self):
+        self._test_binary_op('or')
