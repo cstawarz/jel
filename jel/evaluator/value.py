@@ -54,6 +54,40 @@ class Value(_Value):
     def __contains__(self, item):
         self._unsupported_op()
 
+    def __add__(self, other):
+        self._unsupported_binop(other)
+
+    def __sub__(self, other):
+        self._unsupported_binop(other)
+
+    def __mul__(self, other):
+        self._unsupported_binop(other)
+
+    def __truediv__(self, other):
+        self._unsupported_binop(other)
+
+    if sys.version_info.major < 3:
+        def __div__(self, other):
+            self.__truediv__(other)
+
+    def __mod__(self, other):
+        self._unsupported_binop(other)
+
+    def __pos__(self):
+        self._unsupported_op()
+
+    def __neg__(self):
+        self._unsupported_op()
+
+    def __pow__(self, other):
+        self._unsupported_binop(other)
+
+    def __getitem__(self, key):
+        self._unsupported_op()
+
+    def getattribute(self, name):
+        self._unsupported_op()
+
 
 class Null(Value):
     pass

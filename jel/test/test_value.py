@@ -52,3 +52,29 @@ class TestValue(unittest.TestCase):
             v >= v2
         with self.assertRaises(UnsupportedOperation):
             v2 in v
+        with self.assertRaises(UnsupportedOperation):
+            v2 not in v
+        with self.assertRaises(UnsupportedOperation):
+            v + v2
+        with self.assertRaises(UnsupportedOperation):
+            v - v2
+        with self.assertRaises(UnsupportedOperation):
+            v * v2
+        with self.assertRaises(UnsupportedOperation):
+            # Evaluate without future imports, so that __div__ (rather
+            # than __truediv__) is called under Python 2.7
+            eval(compile('v / v2', '<string>', 'eval', 0, True),
+                 globals(),
+                 locals())
+        with self.assertRaises(UnsupportedOperation):
+            v % v2
+        with self.assertRaises(UnsupportedOperation):
+            +v
+        with self.assertRaises(UnsupportedOperation):
+            -v
+        with self.assertRaises(UnsupportedOperation):
+            v ** v2
+        with self.assertRaises(UnsupportedOperation):
+            v[v2]
+        with self.assertRaises(UnsupportedOperation):
+            v.getattribute(v2)
