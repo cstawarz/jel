@@ -9,6 +9,13 @@ class UnsupportedOperation(JELError):
     pass
 
 
+################################################################################
+#
+# Abstract classes
+#
+################################################################################
+
+
 # This is a trick to avoid using Python 3's non-backwards compatible
 # metaclass declaration syntax.  The class name is converted to str
 # because Python 2.7 won't accept unicode.
@@ -94,6 +101,10 @@ class Value(_Value):
 
 class Null(Value):
 
+    @staticmethod
+    def null():
+        return Null()
+
     def __bool__(self):
         return False
 
@@ -103,9 +114,6 @@ class Null(Value):
 
 class Boolean(Value):
 
-    def __eq__(self, other):
-        return isinstance(other, Boolean) and (bool(self) == bool(other))
-
     @staticmethod
     def true():
         return _TrueBoolean()
@@ -114,14 +122,8 @@ class Boolean(Value):
     def false():
         return _FalseBoolean()
 
-
-class _TrueBoolean(Boolean):
-    def __bool__(self):
-        return True
-
-class _FalseBoolean(Boolean):
-    def __bool__(self):
-        return False
+    def __eq__(self, other):
+        return isinstance(other, Boolean) and (bool(self) == bool(other))
 
 
 class Number(Value):
@@ -138,3 +140,22 @@ class List(Value):
 
 class Dictionary(Value):
     pass
+
+
+################################################################################
+#
+# Concrete classes (created via factory methods of their abstract bases)
+#
+################################################################################
+
+
+class _TrueBoolean(Boolean):
+
+    def __bool__(self):
+        return True
+
+
+class _FalseBoolean(Boolean):
+
+    def __bool__(self):
+        return False

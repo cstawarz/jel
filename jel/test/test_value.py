@@ -152,8 +152,8 @@ class TestValue(unittest.TestCase):
         self.assertTrue(i9 not in i7)
 
     def test_null(self):
-        n = Null()
-        n2 = Null()
+        n = Null.null()
+        n2 = Null.null()
 
         self.assertFalse(bool(n))
         
@@ -162,9 +162,6 @@ class TestValue(unittest.TestCase):
         self.assertFalse(n == MyValue())
 
     def test_boolean(self):
-        # Boolean is an ABC
-        self.assertRaises(TypeError, Boolean)
-        
         t = Boolean.true()
         f = Boolean.false()
         t2 = Boolean.true()
