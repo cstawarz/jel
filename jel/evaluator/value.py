@@ -133,14 +133,14 @@ class Number(Value):
         return _Number(val)
 
     @abstractmethod
-    def __float__(self):
+    def value(self):
         raise NotImplementedError
 
     def __bool__(self):
-        return bool(float(self))
+        return bool(self.value())
 
     def __eq__(self, other):
-        return isinstance(other, Number) and (float(self) == float(other))
+        return isinstance(other, Number) and (self.value() == other.value())
 
 
 class String(Value):
@@ -179,5 +179,5 @@ class _Number(Number):
     def __init__(self, val):
         self.val = val
 
-    def __float__(self):
-        return float(self.val)
+    def value(self):
+        return self.val

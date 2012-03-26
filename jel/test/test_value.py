@@ -181,7 +181,7 @@ class TestValue(unittest.TestCase):
         n2 = Number.number(0.0)
         n3 = Number.number(-3.4)
         
-        self.assertEqual(1.2, float(n1))
+        self.assertEqual(1.2, n1.value())
 
         self.assertTrue(bool(n1))
         self.assertFalse(bool(n2))
