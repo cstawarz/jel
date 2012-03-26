@@ -1,7 +1,14 @@
 from __future__ import division, print_function, unicode_literals
 import unittest
 
-from ..evaluator.value import Value, UnsupportedOperation
+from ..evaluator.value import UnsupportedOperation, Value, Null
+
+
+class MyValue(Value):
+    def __bool__(self):
+        return super(MyValue, self).__bool__()
+    def __eq__(self, other):
+        return super(MyValue, self).__eq__(other)
 
 
 class TestValue(unittest.TestCase):
@@ -27,12 +34,6 @@ class TestValue(unittest.TestCase):
         all_meths()
 
     def test_default_implementations(self):
-        class MyValue(Value):
-            def __bool__(self):
-                return super(MyValue, self).__bool__()
-            def __eq__(self, other):
-                return super(MyValue, self).__eq__(other)
-
         v = MyValue()
         v2 = MyValue()
         
@@ -149,3 +150,13 @@ class TestValue(unittest.TestCase):
         self.assertFalse(i9 in i7)
         self.assertFalse(i8 not in i7)
         self.assertTrue(i9 not in i7)
+
+    def test_null(self):
+        n = Null()
+        n2 = Null()
+
+        self.assertFalse(bool(n))
+        
+        self.assertTrue(n == n)
+        self.assertTrue(n == n2)
+        self.assertFalse(n == MyValue())

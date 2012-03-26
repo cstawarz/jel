@@ -93,7 +93,12 @@ class Value(_Value):
 
 
 class Null(Value):
-    pass
+
+    def __bool__(self):
+        return False
+
+    def __eq__(self, other):
+        return isinstance(other, Null)
 
 
 class Boolean(Value):
