@@ -102,7 +102,26 @@ class Null(Value):
 
 
 class Boolean(Value):
-    pass
+
+    def __eq__(self, other):
+        return isinstance(other, Boolean) and (bool(self) == bool(other))
+
+    @staticmethod
+    def true():
+        return _TrueBoolean()
+
+    @staticmethod
+    def false():
+        return _FalseBoolean()
+
+
+class _TrueBoolean(Boolean):
+    def __bool__(self):
+        return True
+
+class _FalseBoolean(Boolean):
+    def __bool__(self):
+        return False
 
 
 class Number(Value):
