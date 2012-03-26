@@ -1,5 +1,12 @@
 from __future__ import division, print_function, unicode_literals
 from abc import ABCMeta, abstractmethod
+import sys
+
+from . import JELError
+
+
+class UnsupportedOperation(JELError):
+    pass
 
 
 # This is a trick to avoid using Python 3's non-backwards compatible
@@ -11,12 +18,19 @@ _Value.__module__ = __name__
 
 class Value(_Value):
 
+    def _unsupported_op(self):
+        raise UnsupportedOperation
+
     def _unsupported_binop(self, other):
-        raise NotImplementedError
+        raise UnsupportedOperation
 
     @abstractmethod
     def __bool__(self):
-        pass
+        raise NotImplementedError
+
+    if sys.version_info.major < 3:
+        def __nonzero__(self):
+            return self.__bool__()
 
     @abstractmethod
     def __eq__(self, other):
@@ -38,7 +52,7 @@ class Value(_Value):
         return not (self < other)
 
     def __contains__(self, item):
-        raise NotImplementedError
+        self._unsupported_op()
 
 
 class Null(Value):
