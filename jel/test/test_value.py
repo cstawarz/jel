@@ -1,7 +1,8 @@
 from __future__ import division, print_function, unicode_literals
 import unittest
 
-from ..evaluator.value import UnsupportedOperation, Value, Null, Boolean
+from ..evaluator.value import (UnsupportedOperation, Value, Null, Boolean,
+                               Number)
 
 
 class MyValue(Value):
@@ -174,3 +175,19 @@ class TestValue(unittest.TestCase):
         
         self.assertFalse(t == f)
         self.assertFalse(t == MyValue())
+
+    def test_number(self):
+        n1 = Number.number(1.2)
+        n2 = Number.number(0.0)
+        n3 = Number.number(-3.4)
+        
+        self.assertEqual(1.2, float(n1))
+
+        self.assertTrue(bool(n1))
+        self.assertFalse(bool(n2))
+        self.assertTrue(bool(n3))
+
+        self.assertTrue(n1 == n1)
+        self.assertTrue(n1 == Number.number(1.2))
+        self.assertFalse(n1 == n2)
+        self.assertFalse(n1 == MyValue())

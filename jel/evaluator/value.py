@@ -127,7 +127,20 @@ class Boolean(Value):
 
 
 class Number(Value):
-    pass
+
+    @staticmethod
+    def number(val):
+        return _Number(val)
+
+    @abstractmethod
+    def __float__(self):
+        raise NotImplementedError
+
+    def __bool__(self):
+        return bool(float(self))
+
+    def __eq__(self, other):
+        return isinstance(other, Number) and (float(self) == float(other))
 
 
 class String(Value):
@@ -159,3 +172,12 @@ class _FalseBoolean(Boolean):
 
     def __bool__(self):
         return False
+
+
+class _Number(Number):
+
+    def __init__(self, val):
+        self.val = val
+
+    def __float__(self):
+        return float(self.val)
