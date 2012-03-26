@@ -82,6 +82,9 @@ class Value(_Value):
     def __pow__(self, other):
         self._unsupported_binop(other)
 
+    def __len__(self):
+        self._unsupported_op()
+
     def __getitem__(self, key):
         self._unsupported_op()
 
