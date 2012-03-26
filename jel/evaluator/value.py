@@ -11,9 +11,34 @@ _Value.__module__ = __name__
 
 class Value(_Value):
 
+    def _unsupported_binop(self, other):
+        raise NotImplementedError
+
     @abstractmethod
     def __bool__(self):
         pass
+
+    @abstractmethod
+    def __eq__(self, other):
+        self._unsupported_binop(other)
+
+    def __ne__(self, other):
+        return not (self == other)
+
+    def __lt__(self, other):
+        self._unsupported_binop(other)
+
+    def __le__(self, other):
+        return (self < other) or (self == other)
+
+    def __gt__(self, other):
+        return not (self <= other)
+
+    def __ge__(self, other):
+        return not (self < other)
+
+    def __contains__(self, item):
+        raise NotImplementedError
 
 
 class Null(Value):
