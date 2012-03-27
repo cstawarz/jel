@@ -201,9 +201,11 @@ class TestValue(unittest.TestCase):
     def test_number(self):
         n1 = Number(1.2)
         n2 = Number(0.0)
-        n3 = Number(-3.4)
+        n3 = Number.from_value(-3.4)
         
         self.assertEqual(1.2, n1.value)
+        self.assertEqual(0.0, n2.value)
+        self.assertEqual(-3.4, n3.value)
 
         self.assertTrue(bool(n1))
         self.assertFalse(bool(n2))
