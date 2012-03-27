@@ -2,11 +2,10 @@ from __future__ import division, print_function, unicode_literals
 import unittest
 
 from ..evaluator import UnsupportedOperation
-from ..evaluator import abc, value
-from ..evaluator.value import Number
+from ..evaluator import value
 
 
-class MyValue(abc.Value):
+class MyValue(value.Value):
     def __bool__(self):
         return super(MyValue, self).__bool__()
     def __eq__(self, other):
@@ -16,14 +15,14 @@ class MyValue(abc.Value):
 class TestValue(unittest.TestCase):
 
     def test_abstract_methods(self):
-        self.assertRaises(TypeError, abc.Value)
+        self.assertRaises(TypeError, value.Value)
 
-        class BoolOnly(abc.Value):
+        class BoolOnly(value.Value):
             def __bool__(self):
                 pass
         self.assertRaises(TypeError, BoolOnly)
 
-        class EqOnly(abc.Value):
+        class EqOnly(value.Value):
             def __eq__(self, other):
                 pass
         self.assertRaises(TypeError, EqOnly)
@@ -82,7 +81,7 @@ class TestValue(unittest.TestCase):
             v.getattribute(v2)
 
     def test_implied_comparisons(self):
-        class MyInt(abc.Value):
+        class MyInt(value.Value):
             def __init__(self, val):
                 self.val = val
             def __bool__(self):
@@ -159,11 +158,11 @@ class TestValue(unittest.TestCase):
         self.assertFalse(n == MyValue())
 
     def test_boolean_abc(self):
-        class MyBoolean(abc.Boolean):
+        class MyBoolean(value.BooleanLike):
             pass
         self.assertRaises(TypeError, MyBoolean)
         
-        class MyBoolean2(abc.Boolean):
+        class MyBoolean2(value.BooleanLike):
             def __bool__(self):
                 pass
         MyBoolean2()
@@ -182,26 +181,20 @@ class TestValue(unittest.TestCase):
         self.assertFalse(t == MyValue())
 
     def test_number_abc(self):
-        class FromValueOnly(abc.Number):
-            @classmethod
-            def from_value(self, val):
-                pass
-        self.assertRaises(TypeError, FromValueOnly)
+        class MyNumber(value.NumberLike):
+            pass
+        self.assertRaises(TypeError, MyNumber)
         
-        class ValueOnly(abc.Number):
+        class MyNumber2(value.NumberLike):
             @property
             def value(self):
                 pass
-        self.assertRaises(TypeError, ValueOnly)
-
-        class Both(FromValueOnly, ValueOnly):
-            pass
-        Both()
+        MyNumber2()
 
     def test_number(self):
-        n1 = Number(1.2)
-        n2 = Number(0.0)
-        n3 = Number.from_value(-3.4)
+        n1 = value.Number(1.2)
+        n2 = value.Number(0.0)
+        n3 = value.Number(-3.4)
         
         self.assertEqual(1.2, n1.value)
         self.assertEqual(0.0, n2.value)
@@ -212,6 +205,6 @@ class TestValue(unittest.TestCase):
         self.assertTrue(bool(n3))
 
         self.assertTrue(n1 == n1)
-        self.assertTrue(n1 == Number(1.2))
+        self.assertTrue(n1 == value.Number(1.2))
         self.assertFalse(n1 == n2)
         self.assertFalse(n1 == MyValue())
