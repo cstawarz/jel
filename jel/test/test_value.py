@@ -5,35 +5,11 @@ from ..evaluator import UnsupportedOperation
 from ..evaluator import value
 
 
-class MyValue(value.Value):
-    def __bool__(self):
-        return super(MyValue, self).__bool__()
-    def __eq__(self, other):
-        return super(MyValue, self).__eq__(other)
-
-
 class TestValue(unittest.TestCase):
 
-    def test_abstract_methods(self):
-        self.assertRaises(TypeError, value.Value)
-
-        class BoolOnly(value.Value):
-            def __bool__(self):
-                pass
-        self.assertRaises(TypeError, BoolOnly)
-
-        class EqOnly(value.Value):
-            def __eq__(self, other):
-                pass
-        self.assertRaises(TypeError, EqOnly)
-
-        class Both(BoolOnly, EqOnly):
-            pass
-        Both()
-
     def test_default_implementations(self):
-        v = MyValue()
-        v2 = MyValue()
+        v = value.Value()
+        v2 = value.Value()
         
         with self.assertRaises(NotImplementedError):
             bool(v)
@@ -84,8 +60,6 @@ class TestValue(unittest.TestCase):
         class MyInt(value.Value):
             def __init__(self, val):
                 self.val = val
-            def __bool__(self):
-                return bool(self.val)
             def __eq__(self, other):
                 assert type(other) is type(self)
                 return (self.val == other.val)
@@ -155,17 +129,7 @@ class TestValue(unittest.TestCase):
         self.assertFalse(bool(n))
         
         self.assertTrue(n == n)
-        self.assertFalse(n == MyValue())
-
-    def test_boolean_abc(self):
-        class MyBoolean(value.BooleanLike):
-            pass
-        self.assertRaises(TypeError, MyBoolean)
-        
-        class MyBoolean2(value.BooleanLike):
-            def __bool__(self):
-                pass
-        MyBoolean2()
+        self.assertFalse(n == value.Value())
 
     def test_boolean(self):
         t = value.True_
@@ -178,18 +142,7 @@ class TestValue(unittest.TestCase):
         self.assertTrue(f == f)
         
         self.assertFalse(t == f)
-        self.assertFalse(t == MyValue())
-
-    def test_number_abc(self):
-        class MyNumber(value.NumberLike):
-            pass
-        self.assertRaises(TypeError, MyNumber)
-        
-        class MyNumber2(value.NumberLike):
-            @property
-            def value(self):
-                pass
-        MyNumber2()
+        self.assertFalse(t == value.Value())
 
     def test_number(self):
         n1 = value.Number(1.2)
@@ -207,4 +160,4 @@ class TestValue(unittest.TestCase):
         self.assertTrue(n1 == n1)
         self.assertTrue(n1 == value.Number(1.2))
         self.assertFalse(n1 == n2)
-        self.assertFalse(n1 == MyValue())
+        self.assertFalse(n1 == value.Value())

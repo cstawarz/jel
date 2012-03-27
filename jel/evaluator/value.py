@@ -1,21 +1,18 @@
 from __future__ import division, print_function, unicode_literals
-from abc import ABCMeta, abstractmethod, abstractproperty
+import abc
 import sys
 
 from . import UnsupportedOperation
 
 
-################################################################################
-#
-# Abstract base classes
-#
-################################################################################
+def singleton(cls):
+    return cls()
 
 
 # This is a trick to avoid using Python 3's non-backwards compatible
 # metaclass declaration syntax.  The class name is converted to str
 # because Python 2.7 won't accept unicode.
-_Value = ABCMeta(str('_Value'), (object,), {})
+_Value = abc.ABCMeta(str('_Value'), (object,), {})
 _Value.__module__ = __name__
 
 
@@ -27,7 +24,6 @@ class Value(_Value):
     def _unsupported_binop(self, other):
         raise UnsupportedOperation
 
-    @abstractmethod
     def __bool__(self):
         raise NotImplementedError
 
@@ -35,7 +31,6 @@ class Value(_Value):
         def __nonzero__(self):
             return self.__bool__()
 
-    @abstractmethod
     def __eq__(self, other):
         return self._unsupported_binop(other)
 
@@ -95,77 +90,53 @@ class Value(_Value):
         return self._unsupported_op()
 
 
-class NullLike(Value):
+@singleton
+class Null(Value):
 
     def __bool__(self):
         return False
 
     def __eq__(self, other):
-        return isinstance(other, NullLike)
+        return other is self
 
 
-class BooleanLike(Value):
-
-    def __eq__(self, other):
-        return isinstance(other, BooleanLike) and (bool(self) == bool(other))
-
-
-class NumberLike(Value):
-
-    @abstractproperty
-    def value(self):
-        raise NotImplementedError
-
-    def __bool__(self):
-        return bool(self.value)
+class Boolean(Value):
 
     def __eq__(self, other):
-        return isinstance(other, NumberLike) and (self.value == other.value)
-
-
-class StringLike(Value):
-    pass
-
-
-class ListLike(Value):
-    pass
-
-
-class DictionaryLike(Value):
-    pass
-
-
-################################################################################
-#
-# Concrete derived classes
-#
-################################################################################
-
-
-def singleton(cls):
-    return cls()
-
-
-Null = singleton(NullLike)
+        return isinstance(other, Boolean) and (bool(self) == bool(other))
 
 
 @singleton
-class True_(BooleanLike):
+class True_(Boolean):
     def __bool__(self):
         return True
 
 
 @singleton
-class False_(BooleanLike):
+class False_(Boolean):
     def __bool__(self):
         return False
 
 
-class Number(NumberLike):
+class Number(Value):
 
     def __init__(self, val):
-        self._val = val
+        self.value = val
 
-    @property
-    def value(self):
-        return self._val
+    def __bool__(self):
+        return bool(self.value)
+
+    def __eq__(self, other):
+        return isinstance(other, Number) and (self.value == other.value)
+
+
+class String(Value):
+    pass
+
+
+class List(Value):
+    pass
+
+
+class Dictionary(Value):
+    pass
