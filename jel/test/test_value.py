@@ -1,11 +1,12 @@
 from __future__ import division, print_function, unicode_literals
 import unittest
 
-from ..evaluator.value import (UnsupportedOperation, Value, Null, Boolean,
-                               Number)
+from ..evaluator import UnsupportedOperation
+from ..evaluator import abc, value
+from ..evaluator.value import Number
 
 
-class MyValue(Value):
+class MyValue(abc.Value):
     def __bool__(self):
         return super(MyValue, self).__bool__()
     def __eq__(self, other):
@@ -15,7 +16,7 @@ class MyValue(Value):
 class TestValue(unittest.TestCase):
 
     def test_abstract_methods(self):
-        self.assertRaises(TypeError, Value)
+        self.assertRaises(TypeError, abc.Value)
 
         def no_args(_self):
             pass
@@ -24,7 +25,7 @@ class TestValue(unittest.TestCase):
         
         bases = []
         def test_meth(name, imp):
-            cls = type(str('Missing' + name), (Value,), {name: imp})
+            cls = type(str('Missing' + name), (abc.Value,), {name: imp})
             self.assertRaises(TypeError, cls)
             bases.append(cls)
 
@@ -84,7 +85,7 @@ class TestValue(unittest.TestCase):
             v.getattribute(v2)
 
     def test_implied_comparisons(self):
-        class MyInt(Value):
+        class MyInt(abc.Value):
             def __init__(self, val):
                 self.val = val
             def __bool__(self):
@@ -153,41 +154,38 @@ class TestValue(unittest.TestCase):
         self.assertTrue(i9 not in i7)
 
     def test_null(self):
-        n = Null.null()
-        n2 = Null.null()
-
+        n = value.Null
+        
         self.assertFalse(bool(n))
         
         self.assertTrue(n == n)
-        self.assertTrue(n == n2)
         self.assertFalse(n == MyValue())
 
     def test_boolean(self):
-        t = Boolean.true()
-        f = Boolean.false()
-        t2 = Boolean.true()
+        t = value.True_
+        f = value.False_
 
         self.assertTrue(bool(t))
         self.assertFalse(bool(f))
 
         self.assertTrue(t == t)
-        self.assertTrue(t == t2)
+        self.assertTrue(f == f)
         
         self.assertFalse(t == f)
         self.assertFalse(t == MyValue())
 
     def test_number(self):
-        n1 = Number.number(1.2)
-        n2 = Number.number(0.0)
-        n3 = Number.number(-3.4)
+        n1 = Number(1.2)
+        n2 = Number(0.0)
+        n3 = Number(-3.4)
         
-        self.assertEqual(1.2, n1.value())
+        self.assertEqual(1.2, n1.value)
 
         self.assertTrue(bool(n1))
         self.assertFalse(bool(n2))
         self.assertTrue(bool(n3))
 
         self.assertTrue(n1 == n1)
-        self.assertTrue(n1 == Number.number(1.2))
+        self.assertTrue(n1 == Number(1.2))
         self.assertFalse(n1 == n2)
         self.assertFalse(n1 == MyValue())
