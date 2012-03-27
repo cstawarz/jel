@@ -18,22 +18,19 @@ class TestValue(unittest.TestCase):
     def test_abstract_methods(self):
         self.assertRaises(TypeError, abc.Value)
 
-        def no_args(_self):
-            pass
-        def one_arg(_self, _arg):
-            pass
-        
-        bases = []
-        def test_meth(name, imp):
-            cls = type(str('Missing' + name), (abc.Value,), {name: imp})
-            self.assertRaises(TypeError, cls)
-            bases.append(cls)
+        class BoolOnly(abc.Value):
+            def __bool__(self):
+                pass
+        self.assertRaises(TypeError, BoolOnly)
 
-        test_meth('__bool__', no_args)
-        test_meth('__eq__', one_arg)
+        class EqOnly(abc.Value):
+            def __eq__(self, other):
+                pass
+        self.assertRaises(TypeError, EqOnly)
 
-        all_meths = type(str('AllMeths'), tuple(bases), {})
-        all_meths()
+        class Both(BoolOnly, EqOnly):
+            pass
+        Both()
 
     def test_default_implementations(self):
         v = MyValue()
@@ -161,6 +158,16 @@ class TestValue(unittest.TestCase):
         self.assertTrue(n == n)
         self.assertFalse(n == MyValue())
 
+    def test_boolean_abc(self):
+        class MyBoolean(abc.Boolean):
+            pass
+        self.assertRaises(TypeError, MyBoolean)
+        
+        class MyBoolean2(abc.Boolean):
+            def __bool__(self):
+                pass
+        MyBoolean2()
+
     def test_boolean(self):
         t = value.True_
         f = value.False_
@@ -173,6 +180,23 @@ class TestValue(unittest.TestCase):
         
         self.assertFalse(t == f)
         self.assertFalse(t == MyValue())
+
+    def test_number_abc(self):
+        class FromValueOnly(abc.Number):
+            @classmethod
+            def from_value(self, val):
+                pass
+        self.assertRaises(TypeError, FromValueOnly)
+        
+        class ValueOnly(abc.Number):
+            @property
+            def value(self):
+                pass
+        self.assertRaises(TypeError, ValueOnly)
+
+        class Both(FromValueOnly, ValueOnly):
+            pass
+        Both()
 
     def test_number(self):
         n1 = Number(1.2)

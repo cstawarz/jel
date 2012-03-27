@@ -24,6 +24,10 @@ class False_(abc.Boolean):
 
 class Number(abc.Number):
 
+    @classmethod
+    def from_value(cls, val):
+        return cls(val)
+
     def __init__(self, val):
         self._val = val
 

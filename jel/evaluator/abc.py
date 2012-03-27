@@ -3,6 +3,18 @@ from __future__ import (absolute_import, division, print_function,
 from abc import ABCMeta, abstractmethod, abstractproperty
 import sys
 
+# abstractclassmethod was added in Python 3.2.  Fake it if it's
+# missing.
+try:
+    from abc import abstractclassmethod
+except ImportError:
+    import functools
+    def abstractclassmethod(func):
+        @functools.wraps(func)
+        def wrapper(self, *args, **kwargs):
+            return func(type(self), *args, **kwargs)
+        return abstractmethod(wrapper)
+
 from . import UnsupportedOperation
 
 
@@ -105,6 +117,10 @@ class Boolean(Value):
 
 
 class Number(Value):
+
+    @abstractclassmethod
+    def from_value(cls, val):
+        raise NotImplementedError
 
     @abstractproperty
     def value(self):
