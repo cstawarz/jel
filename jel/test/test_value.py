@@ -2,14 +2,14 @@ from __future__ import division, print_function, unicode_literals
 import unittest
 
 from ..evaluator import UnsupportedOperation
-from ..evaluator import value
+from ..evaluator.value import Value, Null, Boolean, Number
 
 
 class TestValue(unittest.TestCase):
 
     def test_default_implementations(self):
-        v = value.Value()
-        v2 = value.Value()
+        v = Value()
+        v2 = Value()
         
         with self.assertRaises(NotImplementedError):
             bool(v)
@@ -57,7 +57,7 @@ class TestValue(unittest.TestCase):
             v.getattribute(v2)
 
     def test_implied_comparisons(self):
-        class MyInt(value.Value):
+        class MyInt(Value):
             def __init__(self, val):
                 self.val = val
             def __eq__(self, other):
@@ -124,30 +124,36 @@ class TestValue(unittest.TestCase):
         self.assertTrue(i9 not in i7)
 
     def test_null(self):
-        n = value.Null
+        n = Null()
         
-        self.assertFalse(bool(n))
+        self.assertIs(False, bool(n))
         
         self.assertTrue(n == n)
-        self.assertFalse(n == value.Value())
+        self.assertTrue(n == Null())
+        self.assertFalse(n == Value())
 
     def test_boolean(self):
-        t = value.True_
-        f = value.False_
+        t = Boolean(True)
+        f = Boolean(False)
 
-        self.assertTrue(bool(t))
-        self.assertFalse(bool(f))
+        self.assertIs(True, bool(t))
+        self.assertIs(False, bool(f))
+        self.assertIs(True, bool(Boolean(5.3)))
+        self.assertIs(False, bool(Boolean({})))
 
         self.assertTrue(t == t)
+        self.assertTrue(t == Boolean(True))
         self.assertTrue(f == f)
+        self.assertTrue(f == Boolean(False))
         
         self.assertFalse(t == f)
-        self.assertFalse(t == value.Value())
+        self.assertFalse(f == t)
+        self.assertFalse(t == Value())
 
     def test_number(self):
-        n1 = value.Number(1.2)
-        n2 = value.Number(0.0)
-        n3 = value.Number(-3.4)
+        n1 = Number(1.2)
+        n2 = Number(0.0)
+        n3 = Number(-3.4)
         
         self.assertEqual(1.2, n1.value)
         self.assertEqual(0.0, n2.value)
@@ -158,6 +164,6 @@ class TestValue(unittest.TestCase):
         self.assertTrue(bool(n3))
 
         self.assertTrue(n1 == n1)
-        self.assertTrue(n1 == value.Number(1.2))
+        self.assertTrue(n1 == Number(1.2))
         self.assertFalse(n1 == n2)
-        self.assertFalse(n1 == value.Value())
+        self.assertFalse(n1 == Value())

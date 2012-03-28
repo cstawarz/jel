@@ -5,10 +5,6 @@ import sys
 from . import UnsupportedOperation
 
 
-def singleton(cls):
-    return cls()
-
-
 # This is a trick to avoid using Python 3's non-backwards compatible
 # metaclass declaration syntax.  The class name is converted to str
 # because Python 2.7 won't accept unicode.
@@ -90,32 +86,25 @@ class Value(_Value):
         return self._unsupported_op()
 
 
-@singleton
 class Null(Value):
 
     def __bool__(self):
         return False
 
     def __eq__(self, other):
-        return other is self
+        return isinstance(other, Null)
 
 
 class Boolean(Value):
 
+    def __init__(self, val):
+        self.value = bool(val)
+
+    def __bool__(self):
+        return self.value
+
     def __eq__(self, other):
         return isinstance(other, Boolean) and (bool(self) == bool(other))
-
-
-@singleton
-class True_(Boolean):
-    def __bool__(self):
-        return True
-
-
-@singleton
-class False_(Boolean):
-    def __bool__(self):
-        return False
 
 
 class Number(Value):
