@@ -1,2 +1,6 @@
 #!/bin/bash
-python -m unittest discover
+for pyver in 2.7 3.2; do
+    echo ">>> Python $pyver <<<"
+    python${pyver} -m unittest discover
+    echo
+done
