@@ -92,8 +92,15 @@ class JELLexer(object):
 
     def t_msstring_mdstring_sstring_dstring_escape_sequence(self, t):
         r'''(\\['"\\/bfnrt])|((\\u[a-fA-F0-9]{4})+)'''
-        self.string_value += ('/' if t.value[1] == '/' else
-                              t.value.encode('ascii').decode('unicode_escape'))
+        if t.value[1] == '/':
+            value = '/'
+        else:
+            # Convert escape sequences into the characters they represent
+            value = t.value.encode().decode('unicode_escape')
+            if t.value.startswith('\\u'):
+                # Recombine any surrogate pairs
+                value = value.encode('utf-16').decode('utf-16')
+        self.string_value += value
 
     def t_msstring_body(self, t):
         r"([^'\\]|('(?!'')))+"

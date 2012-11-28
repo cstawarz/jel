@@ -1,5 +1,5 @@
 #!/bin/bash
-for pyver in 2.7 3.2; do
+for pyver in 2.7 3.3; do
     echo ">>> Python $pyver <<<"
     python${pyver} -m unittest discover
     echo
