@@ -3,17 +3,17 @@ import collections
 from contextlib import contextmanager
 import unittest
 
-from ..lexer import JELLexer, MatchString
+from ..lexer import Lexer, MatchString
 
 
-class TestJELLexer(unittest.TestCase):
+class TestLexer(unittest.TestCase):
 
     def setUp(self):
         self.errors = collections.deque()
         def error_logger(*info):
             self.errors.append(info)
             
-        self.lexer = JELLexer(error_logger).build()
+        self.lexer = Lexer(error_logger).build()
 
         @contextmanager
         def input_wrapper(s):

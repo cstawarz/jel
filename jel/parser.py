@@ -9,7 +9,7 @@ from ply import yacc
 from . import ast
 
 
-class JELParser(object):
+class Parser(object):
 
     def __init__(self, tokens, error_logger):
         self.tokens = tokens
@@ -326,4 +326,4 @@ class JELParser(object):
 
 
 if __name__ == '__main__':
-    JELParser.print_grammar()
+    Parser.print_grammar()

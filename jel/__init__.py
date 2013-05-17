@@ -1,7 +1,7 @@
 from __future__ import division, print_function, unicode_literals
 
-from .lexer import JELLexer
-from .parser import JELParser
+from .lexer import Lexer
+from .parser import Parser
 
 
 def print_error(msg, token=None, lineno=None, lexpos=None):
@@ -12,10 +12,10 @@ def print_error(msg, token=None, lineno=None, lexpos=None):
 
 
 def parse(text):
-    jl = JELLexer(print_error)
-    jp = JELParser(jl.tokens, print_error)
+    l = Lexer(print_error)
+    p = Parser(l.tokens, print_error)
 
-    lexer = jl.build()
-    parser = jp.build()
+    lexer = l.build()
+    parser = p.build()
 
     return parser.parse(text, lexer=lexer)

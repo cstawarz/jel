@@ -5,21 +5,21 @@ import decimal
 import unittest
 
 from .. import ast
-from ..lexer import JELLexer
-from ..parser import JELParser
+from ..lexer import Lexer
+from ..parser import Parser
 
 
-class TestJELParser(unittest.TestCase):
+class TestParser(unittest.TestCase):
 
     def setUp(self):
         self.errors = collections.deque()
         def error_logger(*info):
             self.errors.append(info)
             
-        jl = JELLexer(error_logger)
-        jp = JELParser(jl.tokens, error_logger)
-        self.lexer = jl.build()
-        self.parser = jp.build()
+        l = Lexer(error_logger)
+        p = Parser(l.tokens, error_logger)
+        self.lexer = l.build()
+        self.parser = p.build()
 
         @contextmanager
         def parse_wrapper(s):

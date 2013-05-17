@@ -14,7 +14,7 @@ class MatchString(type('')):
         self.__dict__.update(groupdict)
 
 
-class JELLexer(object):
+class Lexer(object):
 
     def __init__(self, error_logger):
         self.tokens += tuple(t for t in
