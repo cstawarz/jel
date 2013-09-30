@@ -16,6 +16,6 @@ def parse(text):
     p = Parser(l.tokens, print_error)
 
     lexer = l.build()
-    parser = p.build()
+    parser = p.build(debug=True)
 
     return parser.parse(text, lexer=lexer)
