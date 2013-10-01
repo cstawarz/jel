@@ -225,28 +225,32 @@ class TestParser(unittest.TestCase):
         with self.parse('foo[,]'):
             self.assertError(token=',')
 
-    def test_function_call_expr(self):
-        def test_func(expr, name, *args):
+    def test_call_expr(self):
+        def test_call(expr, name, *args):
             with self.parse(expr) as p:
-                self.assertIsInstance(p, ast.FunctionCallExpr)
-                self.assertIsInstance(p.name, type(''))
-                self.assertEqual(name, p.name)
+                self.assertIsInstance(p, ast.CallExpr)
+                self.assertIsInstance(p.target, ast.IdentifierExpr)
+                self.assertEqual(name, p.target.value)
                 self.assertEqual(args, p.args)
 
-        test_func('foo()', 'foo')
-        test_func('bar(true)', 'bar', self.true)
-        test_func('bar(true,)', 'bar', self.true)
-        test_func('abc123(1, 2)', 'abc123', self.one, self.two)
-        test_func('abc123(1, 2,)', 'abc123', self.one, self.two)
+        test_call('foo()', 'foo')
+        test_call('bar(true)', 'bar', self.true)
+        test_call('bar(true,)', 'bar', self.true)
+        test_call('abc123(1, 2)', 'abc123', self.one, self.two)
+        test_call('abc123(1, 2,)', 'abc123', self.one, self.two)
+        test_call('(foo)(2)', 'foo', self.two)
 
         with self.parse('foo(,)'):
             self.assertError(token=',')
 
-        with self.parse('foo(1)(2)'):
-            self.assertError(token='(', lexpos=7)
-
-        with self.parse('(foo)(2)'):
-            self.assertError(token='(', lexpos=6)
+        with self.parse('foo(1)(2)') as outer:
+            self.assertIsInstance(outer, ast.CallExpr)
+            self.assertEqual((self.two,), outer.args)
+            inner = outer.target
+            self.assertIsInstance(inner, ast.CallExpr)
+            self.assertIsInstance(inner.target, ast.IdentifierExpr)
+            self.assertEqual('foo', inner.target.value)
+            self.assertEqual((self.one,), inner.args)
 
     def _test_binary_op(self, op, sibling_ops=(), left_assoc=True):
         def test_binop(expr, *operands):

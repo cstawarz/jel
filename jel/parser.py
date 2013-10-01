@@ -156,18 +156,18 @@ class Parser(object):
 
     def p_postfix_expr(self, p):
         '''
-        postfix_expr : function_call_expr
+        postfix_expr : call_expr
                      | subscript_expr
                      | attribute_expr
                      | primary_expr
         '''
         self.same(p)
 
-    def p_function_call_expr(self, p):
+    def p_call_expr(self, p):
         '''
-        function_call_expr : identifier_expr LPAREN expr_list RPAREN
+        call_expr : postfix_expr LPAREN expr_list RPAREN
         '''
-        p[0] = ast.FunctionCallExpr(name=p[1].value, args=p[3])
+        p[0] = ast.CallExpr(target=p[1], args=p[3])
 
     def p_subscript_expr(self, p):
         '''

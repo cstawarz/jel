@@ -49,9 +49,9 @@ class ComparisonExpr(Expr):
     _fields = ('ops', 'operands')
 
 
-class FunctionCallExpr(Expr):
+class CallExpr(Expr):
 
-    _fields = ('name', 'args')
+    _fields = ('target', 'args')
 
 
 class SubscriptExpr(Expr):
