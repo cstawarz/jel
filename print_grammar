@@ -1,2 +1,2 @@
 #!/bin/bash
-python -m jel.parser | ${PAGER:-less -s}
+python -m mwel.parser | ${PAGER:-less -s}

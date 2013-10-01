@@ -1,4 +1,4 @@
 *.pyc
-jel/yacctab.py
+yacctab.py
 parser.out
 sandbox/
