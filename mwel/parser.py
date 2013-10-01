@@ -5,8 +5,8 @@ from jel.parser import Parser as JELParser
 
 class Parser(JELParser):
 
-    def build(self, debug=False, **kwargs):
-        return super(Parser, self).build(start='experiment')
+    # In Python 2.7, PLY insists that 'start' be str, not unicode
+    start = str('experiment')
 
     def p_experiment(self, p):
         '''
