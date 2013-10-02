@@ -307,9 +307,11 @@ class Parser(object):
 
     @classmethod
     def print_grammar(cls):
-        p_funcs = sorted((getattr(cls, f) for f in dir(cls)
-                          if f.startswith('p_')),
-                         key = (lambda f: inspect.getsourcelines(f)[1]))
+        p_funcs = []
+        for base in inspect.getmro(cls):
+            p_funcs.extend(sorted((getattr(base, f) for f in base.__dict__
+                                   if f.startswith('p_')),
+                                  key=(lambda f: inspect.getsourcelines(f)[1])))
 
         prods = collections.OrderedDict()
 
@@ -323,7 +325,3 @@ class Parser(object):
             print(lhs, end=('\n    : ' if (len(rhs) > 1) else ' : '))
             print('\n    | '.join(rhs))
             print()
-
-
-if __name__ == '__main__':
-    Parser.print_grammar()

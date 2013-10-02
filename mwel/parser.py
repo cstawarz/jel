@@ -103,7 +103,3 @@ class Parser(JELParser):
                 | NEWLINE
         '''
         pass
-
-
-if __name__ == '__main__':
-    Parser.print_grammar()
