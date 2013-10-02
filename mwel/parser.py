@@ -79,7 +79,7 @@ class Parser(JELParser):
     def p_component_attributes(self, p):
         '''
         component_attributes : dict_literal_expr
-                             | parenthetic_expr
+                             | call_args
                              | empty
         '''
         pass

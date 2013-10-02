@@ -237,7 +237,7 @@ def stim_off:
     start_timer { timer: 'stimoff_timer', duration: stimoff_time }
     report ('************* stim off! **********')
     dequeue_stimulus (RSVP_images[RSVP_test_stim_index])
-    update_stimulus_display
+    update_stimulus_display ()
     spike_rate = 25
     when ((not eye_in_window) and (not saccade)):
         reject_stim
