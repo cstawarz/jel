@@ -303,7 +303,7 @@ class Parser(object):
         else:
             bad_token = p.value
             self.error_logger('Invalid syntax at %r' % str(bad_token),
-                              bad_token, p.lexer.lineno, p.lexer.lexpos)
+                              bad_token, p.lineno, p.lexpos)
 
     @classmethod
     def print_grammar(cls):

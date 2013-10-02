@@ -4,14 +4,14 @@ from .lexer import Lexer
 from .parser import Parser
 
 
-def print_error(msg, token=None, lineno=None, lexpos=None):
-    print(msg, end='')
-    if token:
-        print(' (line %d, position %d)' % (lineno, lexpos), end='')
-    print()
-
-
 def parse(text):
+    def print_error(msg, token=None, lineno=None, lexpos=None):
+        print(msg, end='')
+        if token:
+            colno = lexpos - text.rfind('\n', 0, lexpos)
+            print(' (line %d, column %d)' % (lineno, colno), end='')
+        print()
+
     l = Lexer(print_error)
     p = Parser(l.tokens, print_error)
 
