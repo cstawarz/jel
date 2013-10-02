@@ -1,0 +1,141 @@
+#
+# I/O
+#
+
+
+iodevice.stimulus_display display { background_color: [0.5, 0.5, 0.5] }
+
+iodevice.mouse_input mouse_input
+
+filter.basic_eye_monitor eye_monitor {
+    eyeh_calibrated: mouse_input.mouse_position_x,
+    eyev_calibrated: mouse_input.mouse_position_y,
+    width_samples: 1,
+    saccade_entry_speed: 60,
+    saccade_exit_speed: 20,
+}
+
+
+#
+# Stimuli
+#
+
+
+stimulus.fixation_point fixation_point {
+    color: 'red',
+    trigger_width: 2,
+    trigger_watch_x: eye_monitor.eyeh_calibrated,
+    trigger_watch_y: eye_monitor.eyev_calibrated,
+    x_size: 0.5,
+    y_size: 0.5,
+    x_position: 0,
+    y_position: 0,
+    rotation: 0,
+    alpha_multiplier: 1,
+}
+
+var num_images = 11
+var image_size = 2.0
+var num_test_images = 6
+var image_circle_delta_theta = 2 * pi / num_test_images
+
+selection current_sample_image_index {
+    values: range(0, num_images-1),
+    selection: 'random_without_replacement',
+    nsamples: 1,
+    sampling_method: 'cycles',
+    autoreset: false,
+    }
+
+stimulus.fixation_point image_windows [for index in range(1, num_images)] {
+    color: 'black',
+    trigger_width: image_size,
+    trigger_watch_x: fixation_point.trigger_watch_x,
+    trigger_watch_y: fixation_point.trigger_watch_y,
+    x_size: image_size,
+    y_size: image_size,
+    x_position: 0,
+    y_position: 0,
+    rotation: 0,
+    alpha_multiplier: 0,  # Fully transparent
+    }
+
+stimulus.image_file images [for index in range(1, num_images)] {
+    path: format('images/img%s.png', index),
+    x_size: image_size,
+    y_size: image_size,
+    x_position: 0,
+    y_position: 0,
+    rotation: 0,
+    alpha_multiplier: 1,
+    }
+
+
+#
+# Protocols
+#
+
+
+protocol 'Test Protocol':
+
+    trial {
+        nsamples: 10,
+        sampling_method: 'cycles',
+        selection: 'sequential',
+        interruptible: true,
+        }:
+
+        start_device_io (mouse_input)
+        queue_stimulus (fixation_point)
+        update_stimulus_display
+        report ('Waiting for fixation')
+
+        when (fixation_point.eye_in_window and not eye_monitor.eye_in_saccade):
+            present_sample_image
+        else after (3s):
+            no_fixation
+        end
+    
+    end trial
+
+end protocol 'Test Protocol'
+
+
+def present_sample_image:
+    next_selection (current_sample_image_index)
+    queue_stimulus (images[current_sample_image_index])
+    update_stimulus_display
+    report ('Presenting sample image')
+
+    when (not fixation_point.eye_in_window and not eye_monitor.eye_in_saccade):
+        broken_fixation
+    else after (3s):
+        post_sample_image_delay
+    end
+end
+
+
+def post_sample_image_delay:
+    dequeue_stimulus (images[current_sample_image_index])
+    update_stimulus_display
+    report ('Imposing post sample image delay')
+
+    when (not fixation_point.eye_in_window and not eye_monitor.eye_in_saccade):
+        broken_fixation
+    else after (3s):
+        queue_test_images
+    end
+end
+
+
+def queue_test_images:
+    local image_circle_theta = (image_circle_delta_theta *
+                                disc_rand(0, num_test_images-1))
+
+    do [for index in range(0, num_test_images-1)]:
+        images[current_sample_image_index].pos_x = (image_circle_radius *
+                                                    cos(image_circle_theta))
+        images[current_sample_image_index].pos_y = (image_circle_radius *
+                                                    sin(image_circle_theta))
+    end
+end

@@ -216,6 +216,6 @@ class Lexer(object):
 
     def t_ANY_error(self, t):
         bad_char = t.value[0]
-        self.error_logger('Illegal character: %r' % bad_char,
+        self.error_logger('Illegal character: %r' % str(bad_char),
                           bad_char, t.lexer.lineno, t.lexer.lexpos)
         t.lexer.skip(1)
