@@ -319,6 +319,7 @@ class Parser(object):
             p = p.split(':')
             lhs = p[0].strip()
             rhs = [rule.strip() for rule in p[1].split('|')]
+            rhs = [' '.join(rule.split()) for rule in rhs]
             prods.setdefault(lhs, []).extend(rhs)
             
         for lhs, rhs in prods.items():

@@ -32,7 +32,11 @@ class Parser(JELParser):
 
     def p_component_def(self, p):
         '''
-        component_def : component_type_id component_instance_id component_attributes component_body
+        component_def : component_type_id \
+                        component_instance_id \
+                        component_rep_spec \
+                        component_attributes \
+                        component_body
         '''
         pass
 
@@ -48,6 +52,27 @@ class Parser(JELParser):
         component_instance_id : identifier_expr
                               | string_literal_expr
                               | empty
+        '''
+        pass
+
+    def p_component_rep_spec(self, p):
+        '''
+        component_rep_spec : LBRACKET component_rep_list RBRACKET
+                           | empty
+        '''
+        pass
+
+    def p_component_rep_list(self, p):
+        '''
+        component_rep_list : component_rep_list_item COMMA component_rep_list
+                           | component_rep_list_item COMMA
+                           | component_rep_list_item
+        '''
+        pass
+
+    def p_component_rep_list_item(self, p):
+        '''
+        component_rep_list_item : FOR identifier_expr IN expr
         '''
         pass
 
