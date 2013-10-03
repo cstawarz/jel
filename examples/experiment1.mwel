@@ -6,6 +6,7 @@
 display = iodevice.stimulus_display ( background_color = [0.5, 0.5, 0.5] )
 
 mouse_input = iodevice.mouse_input ()
+itc = mouse_input  # Production device will be an ITC-18
 
 eye_monitor = filter.basic_eye_monitor (
     eyeh_calibrated = mouse_input.mouse_position_x,
@@ -47,7 +48,7 @@ sample_image_index = selection (
     autoreset = false,
     )
 
-image_windows = genlist(
+image_windows = genlist (
     index, [1:num_images:1],
     stimulus.fixation_point (
         color = 'black',
@@ -63,7 +64,7 @@ image_windows = genlist(
         )
     )
 
-images = genlist(
+images = genlist (
     index, [1:num_images],
     stimulus.image_file (
         path = format('images/img%s.png', index),
@@ -82,7 +83,7 @@ images = genlist(
 #
 
 
-def test_protocol():
+def test_protocol ():
     trial (
         nsamples = 10,
         sampling_method = 'cycles',
@@ -90,10 +91,10 @@ def test_protocol():
         interruptible = true,
         ):
 
-        start_device_io (mouse_input)
-        queue_stimulus (fixation_point)
-        update_stimulus_display ()
-        report ('Waiting for fixation')
+        itc.start ()
+        display.queue (fixation_point)
+        display.update ()
+        print ('Waiting for fixation')
 
         when (fixation_point.eye_in_window and not eye_monitor.eye_in_saccade):
             present_sample_image ()
@@ -104,11 +105,11 @@ def test_protocol():
 end
 
 
-def present_sample_image():
+def present_sample_image ():
     sample_image_index.next ()
     display.queue (images[sample_image_index.value])
     display.update ()
-    report ('Presenting sample image')
+    print ('Presenting sample image')
 
     after (3s):
         post_sample_image_delay ()
@@ -119,13 +120,13 @@ def present_sample_image():
 end
 
 
-def post_sample_image_delay():
-    dequeue_stimulus (images[sample_image_index])
-    update_stimulus_display ()
-    report ('Imposing post sample image delay')
+def post_sample_image_delay ():
+    display.dequeue (images[sample_image_index])
+    display.update ()
+    print ('Imposing post sample image delay')
 
     after (3s):
-        queue_test_images ()
+        present_test_images ()
     else when (not fixation_point.eye_in_window and
                not eye_monitor.eye_in_saccade):
         broken_fixation ()
@@ -133,15 +134,35 @@ def post_sample_image_delay():
 end
 
 
-def queue_test_images():
+def present_test_images ():
     local image_circle_theta = (image_circle_delta_theta *
                                 disc_rand(0, num_test_images-1))
 
     foreach (index, [0:num_test_images-1]):
-        images[sample_image_index].pos_x = (image_circle_radius *
-                                            cos(image_circle_theta))
-        images[sample_image_index].pos_y = (image_circle_radius *
-                                            sin(image_circle_theta))
-        next_selection (sample_image_index)
+        local img = images[sample_image_index.value]
+        img.pos_x = image_circle_radius * cos(image_circle_theta)
+        img.pos_y = image_circle_radius * sin(image_circle_theta)
+
+        display.queue (img)
+        display.queue (image_windows[sample_image_index.value])
+
+        sample_image_index.next ()
+        image_circle_theta = image_circle_theta + image_circle_delta_theta
     end
+
+    display.update ()
+    print ('Presenting test images')
+
+    after (3s):
+        wait_for_selection ()
+    else when (not fixation_point.eye_in_window and
+               not eye_monitor.eye_in_saccade):
+        broken_fixation ()
+    end
+end
+
+
+def wait_for_selection ():
+    display.dequeue (fixation_point)
+    display.update ()
 end
