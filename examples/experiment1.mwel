@@ -107,10 +107,11 @@ def present_sample_image:
     update_stimulus_display
     report ('Presenting sample image')
 
-    when (not fixation_point.eye_in_window and not eye_monitor.eye_in_saccade):
-        broken_fixation
-    else after (3s):
+    after (3s):
         post_sample_image_delay
+    else when (not fixation_point.eye_in_window and
+               not eye_monitor.eye_in_saccade):
+        broken_fixation
     end
 end
 
@@ -120,10 +121,11 @@ def post_sample_image_delay:
     update_stimulus_display
     report ('Imposing post sample image delay')
 
-    when (not fixation_point.eye_in_window and not eye_monitor.eye_in_saccade):
-        broken_fixation
-    else after (3s):
+    after (3s):
         queue_test_images
+    else when (not fixation_point.eye_in_window and
+               not eye_monitor.eye_in_saccade):
+        broken_fixation
     end
 end
 
@@ -137,5 +139,6 @@ def queue_test_images:
                                                     cos(image_circle_theta))
         images[current_sample_image_index].pos_y = (image_circle_radius *
                                                     sin(image_circle_theta))
+        next_selection (current_sample_image_index)
     end
 end
