@@ -276,7 +276,7 @@ class Parser(object):
         number_literal_expr : NUMBER
         '''
         p[0] = ast.NumberLiteralExpr(value = decimal.Decimal(p[1].value),
-                                     unit = (p[1].unit or None))
+                                     tag = (p[1].tag or None))
 
     def p_boolean_literal_expr(self, p):
         '''

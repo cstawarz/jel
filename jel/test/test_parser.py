@@ -36,9 +36,9 @@ class TestParser(unittest.TestCase):
         self.false = ast.BooleanLiteralExpr(value=False)
         self.foobar = ast.StringLiteralExpr(value='foobar')
 
-        def make_number(value, unit=None):
+        def make_number(value, tag=None):
             return ast.NumberLiteralExpr(value = decimal.Decimal(value),
-                                         unit = unit)
+                                         tag = tag)
         self.one = make_number('1')
         self.two = make_number('2')
         self.three = make_number('3')
@@ -89,14 +89,14 @@ class TestParser(unittest.TestCase):
             self.assertIsInstance(p.value, decimal.Decimal)
             self.assertEqual('123', str(p.value))
             self.assertEqual(123, int(p.value))
-            self.assertIsNone(p.unit)
+            self.assertIsNone(p.tag)
             
         with self.parse('1.230E-45ms') as p:
             self.assertIsInstance(p, ast.NumberLiteralExpr)
             self.assertIsInstance(p.value, decimal.Decimal)
             self.assertEqual('1.230E-45', str(p.value))
             self.assertEqual(1.23e-45, float(p.value))
-            self.assertEqual('ms', p.unit)
+            self.assertEqual('ms', p.tag)
 
     def test_string_literal_expr(self):
         with self.parse('"foo bar\\nblah"') as p:

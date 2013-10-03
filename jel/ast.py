@@ -88,7 +88,7 @@ class StringLiteralExpr(_AtomicLiteralExpr):
 
 class NumberLiteralExpr(Expr):
 
-    _fields = ('value', 'unit')
+    _fields = ('value', 'tag')
 
 
 class BooleanLiteralExpr(_AtomicLiteralExpr):

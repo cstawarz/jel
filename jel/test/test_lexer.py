@@ -61,13 +61,13 @@ class TestLexer(unittest.TestCase):
         if lineno:
             self.assertEqual(lineno, e[2])
 
-    def assertNumber(self, value, int='', frac='', exp='', unit=''):
+    def assertNumber(self, value, int='', frac='', exp='', tag=''):
         t = self.assertToken('NUMBER', value)
         self.assertIsInstance(t.value, MatchString)
         self.assertEqual(int, t.value.int)
         self.assertEqual(frac, t.value.frac)
         self.assertEqual(exp, t.value.exp)
-        self.assertEqual(unit, t.value.unit)
+        self.assertEqual(tag, t.value.tag)
 
     def test_errors(self):
         with self.input('1 2 $@ & 3 4 #'):
@@ -189,7 +189,7 @@ class TestLexer(unittest.TestCase):
             self.assertToken('IDENTIFIER', 'F_0_9')
             self.assertToken('NUMBER', '2')
             self.assertToken('IDENTIFIER', '_')
-            self.assertToken('NUMBER', '23foo')  # 'foo' is unit
+            self.assertToken('NUMBER', '23foo')  # 'foo' is tag
 
     def test_keywords(self):
         with self.input('and false in not null or true And andyet andnot'):
@@ -239,25 +239,25 @@ class TestLexer(unittest.TestCase):
             self.assertNumber('2.3E-00089', int='2', frac='3', exp='-00089')
 
             # There must be at least one digit after the 'e' or 'E',
-            # so the letter is lexed as unit in '1.2e' and '-2.4E'
-            self.assertNumber('1.2e', int='1', frac='2', unit='e')
-            self.assertNumber('2.4E', int='2', frac='4', unit='E')
+            # so the letter is lexed as tag in '1.2e' and '-2.4E'
+            self.assertNumber('1.2e', int='1', frac='2', tag='e')
+            self.assertNumber('2.4E', int='2', frac='4', tag='E')
             self.assertNumber('5', int='5')
 
-    def test_numbers_with_units(self):
+    def test_numbers_with_tags(self):
         with self.input(
                 '0s 1ms 2.3us 0.1e23MpS2 '
                 '12a1B2c345 1.23E123E123'
                 ):
-            self.assertNumber('0s', int='0', unit='s')
-            self.assertNumber('1ms', int='1', unit='ms')
-            self.assertNumber('2.3us', int='2', frac='3', unit='us')
+            self.assertNumber('0s', int='0', tag='s')
+            self.assertNumber('1ms', int='1', tag='ms')
+            self.assertNumber('2.3us', int='2', frac='3', tag='us')
             self.assertNumber('0.1e23MpS2', int='0', frac='1', exp='23',
-                              unit='MpS2')
+                              tag='MpS2')
             
-            self.assertNumber('12a1B2c345', int='12', unit='a1B2c345')
+            self.assertNumber('12a1B2c345', int='12', tag='a1B2c345')
             self.assertNumber('1.23E123E123', int='1', frac='23', exp='123',
-                              unit='E123')  # Poor choice of unit
+                              tag='E123')  # Poor choice of tag
 
     def test_string(self):
         with self.input(
