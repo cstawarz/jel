@@ -86,7 +86,7 @@ class Parser(JELParser):
         '''
         pass
 
-    def p_named_call_args(self, p):
+    def p_call_args_named(self, p):
         '''
         call_args : LPAREN named_expr_list RPAREN
         '''
@@ -103,5 +103,12 @@ class Parser(JELParser):
     def p_named_expr_list_item(self, p):
         '''
         named_expr_list_item : identifier_expr ASSIGN expr
+        '''
+        pass
+
+    def p_list_item_range_expr(self, p):
+        '''
+        list_item : expr COLON expr COLON expr
+                  | expr COLON expr
         '''
         pass

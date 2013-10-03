@@ -175,6 +175,14 @@ class Parser(object):
         '''
         p[0] = p[2]
 
+    def p_expr_list(self, p):
+        '''
+        expr_list : expr COMMA expr_list
+                  | expr
+                  | empty
+        '''
+        self.item_list(p)
+
     def p_subscript_expr(self, p):
         '''
         subscript_expr : postfix_expr LBRACKET expr RBRACKET
@@ -249,17 +257,23 @@ class Parser(object):
 
     def p_list_literal_expr(self, p):
         '''
-        list_literal_expr : LBRACKET expr_list RBRACKET
+        list_literal_expr : LBRACKET list_item_list RBRACKET
         '''
         p[0] = ast.ListLiteralExpr(items=p[2])
 
-    def p_expr_list(self, p):
+    def p_list_item_list(self, p):
         '''
-        expr_list : expr COMMA expr_list
-                  | expr
-                  | empty
+        list_item_list : list_item COMMA list_item_list
+                       | list_item
+                       | empty
         '''
         self.item_list(p)
+
+    def p_list_item(self, p):
+        '''
+        list_item : expr
+        '''
+        self.same(p)
 
     def p_string_literal_expr(self, p):
         '''
