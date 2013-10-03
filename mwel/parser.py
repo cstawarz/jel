@@ -6,12 +6,12 @@ from jel.parser import Parser as JELParser
 class Parser(JELParser):
 
     # In Python 2.7, PLY insists that 'start' be str, not unicode
-    start = str('experiment')
+    start = str('module')
 
-    def p_experiment(self, p):
+    def p_module(self, p):
         '''
-        experiment : newline stmt_list
-                   | stmt_list
+        module : newline stmt_list
+               | stmt_list
         '''
         pass
 
@@ -25,100 +25,57 @@ class Parser(JELParser):
 
     def p_stmt(self, p):
         '''
-        stmt : component_def
-             | variable_stmt
+        stmt : assignment_stmt
+             | local_stmt
+             | call_stmt
+             | def_stmt
         '''
         pass
 
-    def p_component_def(self, p):
+    def p_assignment_stmt(self, p):
         '''
-        component_def : component_type_id \
-                        component_instance_id \
-                        component_rep_spec \
-                        component_attributes \
-                        component_body
+        assignment_stmt : assignment_target ASSIGN expr
         '''
         pass
 
-    def p_component_type_id(self, p):
+    def p_assignment_target(self, p):
         '''
-        component_type_id : identifier_expr DOT component_type_id
+        assignment_target : subscript_expr
+                          | attribute_expr
                           | identifier_expr
         '''
         pass
 
-    def p_component_instance_id(self, p):
+    def p_local_stmt(self, p):
         '''
-        component_instance_id : identifier_expr
-                              | string_literal_expr
-                              | empty
+        local_stmt : LOCAL identifier_expr ASSIGN expr
         '''
         pass
 
-    def p_component_rep_spec(self, p):
+    def p_call_stmt(self, p):
         '''
-        component_rep_spec : LBRACKET component_rep_list RBRACKET
-                           | empty
-        '''
-        pass
-
-    def p_component_rep_list(self, p):
-        '''
-        component_rep_list : component_rep_list_item COMMA component_rep_list
-                           | component_rep_list_item COMMA
-                           | component_rep_list_item
+        call_stmt : call_expr call_stmt_body
         '''
         pass
 
-    def p_component_rep_list_item(self, p):
+    def p_call_stmt_body(self, p):
         '''
-        component_rep_list_item : FOR identifier_expr IN expr
-        '''
-        pass
-
-    def p_component_attributes(self, p):
-        '''
-        component_attributes : dict_literal_expr
-                             | call_args
-                             | empty
-        '''
-        pass
-
-    def p_component_body(self, p):
-        '''
-        component_body : COLON newline stmt_list component_tail
+        call_stmt_body : COLON newline stmt_list call_stmt_tail
                        | empty
         '''
         pass
 
-    def p_component_tail(self, p):
+    def p_call_stmt_tail(self, p):
         '''
-        component_tail : ELSE component_def
-                       | ELSE component_body
-                       | END component_type_id component_instance_id
+        call_stmt_tail : ELSE call_stmt
+                       | ELSE call_stmt_body
                        | END
         '''
         pass
 
-    def p_variable_stmt(self, p):
+    def p_def_stmt(self, p):
         '''
-        variable_stmt : variable_declarator identifier_expr
-                      | variable_declarator identifier_expr assignment_op expr
-                      | identifier_expr assignment_op expr
-        '''
-        pass
-
-    def p_variable_declarator(self, p):
-        '''
-        variable_declarator : VAR
-                            | LOCAL
-        '''
-        pass
-
-    def p_assignment_op(self, p):
-        '''
-        assignment_op : ASSIGN
-                      | PLUSASSIGN
+        def_stmt : DEF identifier_expr LPAREN RPAREN COLON newline stmt_list END
         '''
         pass
 
@@ -126,5 +83,25 @@ class Parser(JELParser):
         '''
         newline : NEWLINE newline
                 | NEWLINE
+        '''
+        pass
+
+    def p_named_call_args(self, p):
+        '''
+        call_args : LPAREN named_expr_list RPAREN
+        '''
+        pass
+
+    def p_named_expr_list(self, p):
+        '''
+        named_expr_list : named_expr_list_item COMMA named_expr_list
+                        | named_expr_list_item COMMA
+                        | named_expr_list_item
+        '''
+        pass
+
+    def p_named_expr_list_item(self, p):
+        '''
+        named_expr_list_item : identifier_expr ASSIGN expr
         '''
         pass

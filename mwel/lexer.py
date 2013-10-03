@@ -5,9 +5,8 @@ from jel.lexer import Lexer as JELLexer
 
 class Lexer(JELLexer):
 
-    keywords = JELLexer.keywords + ('else', 'end', 'for', 'local', 'var')
+    keywords = JELLexer.keywords + ('def', 'else', 'end', 'for', 'local')
 
     t_ASSIGN = r'='
-    t_PLUSASSIGN = r'\+='
 
     t_ignore_comment = r'\#[^\n]*'
