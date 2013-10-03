@@ -2,311 +2,302 @@
 # Variables
 #
 
-var spike_rate = 30
-var eye_h_raw
-var eye_v_raw
-var spikes
-var reward
-var eye_h_calibrated
-var eye_v_calibrated
-var eye_h
-var eye_v
-var saccade
-var eye_in_window
+spike_rate = var (30)
+eye_h_raw = var ()
+eye_v_raw = var ()
+spikes = var ()
+reward = var ()
+eye_h_calibrated = var ()
+eye_v_calibrated = var ()
+eye_h = var ()
+eye_v = var ()
+saccade = var ()
+eye_in_window = var ()
 
-var fixation_width = 2
-var fixation_point_size = 0.4
-var fixation_pos_x = 0
-var fixation_pos_y = 0
-var stm_size = 5.4
-var stm_pos_x = 0
-var stm_pos_y = 5
+fixation_width = var (2)
+fixation_point_size = var (0.4)
+fixation_pos_x = var (0)
+fixation_pos_y = var (0)
+stm_size = var (5.4)
+stm_pos_x = var (0)
+stm_pos_y = var (5)
 
-var images_shown = 0
-var imageGroup_repetition = 0
-var number_repeats = 2
-var ITI = 500
-var sync = 0
-var number_of_stm_shown = 0
-var ignore_time = 2s
-var stimon_delay = 160ms
-var stimon_time = 100ms
-var stimoff_time = 100ms
-var show_N_images = 6
-var imagesetsize = 100
-var reward_duration = 100ms
-var success = false
-var miss_count = 0
-var failure = false
-var ignore = false
+images_shown = var (0)
+imageGroup_repetition = var (0)
+number_repeats = var (2)
+ITI = var (500)
+sync = var (0)
+number_of_stm_shown = var (0)
+ignore_time = var (2s)
+stimon_delay = var (160ms)
+stimon_time = var (100ms)
+stimoff_time = var (100ms)
+show_N_images = var (6)
+imagesetsize = var (100)
+reward_duration = var (100ms)
+success = var (false)
+miss_count = var (0)
+failure = var (false)
+ignore = var (false)
 
-selection RSVP_test_stim_index {
-    values: range(0, 99),
-    selection: 'random_without_replacement',
-    nsamples: 1,
-    sampling_method: 'cycles',
-    }
+RSVP_test_stim_index = selection (
+    values = [0:99],
+    selection = 'random_without_replacement',
+    nsamples = 1,
+    sampling_method = 'cycles',
+    )
 
 
 #
 # Data pipeline
 #
 
-iodevice.fake_monkey fm { spike_rate: spike_rate }:
-    iochannel.eye_movement {
-        eye_h: eye_h_raw,
-        eye_v: eye_v_raw,
-        data_interval: 1ms,
-        update_interval: 10ms,
-        }
-    iochannel.spike { variable: spikes }
-    iochannel.juice { variable: reward }
-end
+fm = iodevice.fake_monkey (
+    spike_rate = spike_rate,
 
-standard_eye_calibrator eye_calibrator {
-    eyeh_raw: eye_h_raw,
-    eyev_raw: eye_v_raw,
-    eyeh_calibrated: eye_h_calibrated,
-    eyev_calibrated: eye_v_calibrated,
-    }
+    em = iochannel.eye_movement (
+        eye_h = eye_h_raw,
+        eye_v = eye_v_raw,
+        data_interval = 1ms,
+        update_interval = 10ms,
+        ),
+    sp = iochannel.spike ( variable = spikes ),
+    rw = iochannel.juice ( variable = reward ),
+    )
 
-boxcar_filter_1D eye_h_filter {
-    in1: eye_h_calibrated,
-    out1: eye_h,
-    width_samples: 5,
-    }
+eye_calibrator = standard_eye_calibrator (
+    eyeh_raw = eye_h_raw,
+    eyev_raw = eye_v_raw,
+    eyeh_calibrated = eye_h_calibrated,
+    eyev_calibrated = eye_v_calibrated,
+    )
 
-boxcar_filter_1D eye_v_filter {
-    in1: eye_v_calibrated,
-    out1: eye_v,
-    width_samples: 5,
-    }
+eye_h_filter = boxcar_filter_1D (
+    in1 = eye_h_calibrated,
+    out1 = eye_h,
+    width_samples = 5,
+    )
 
-basic_eye_monitor eye_monitor {
-    eyeh_calibrated: eye_h,
-    eyev_calibrated: eye_v,
-    eye_state: saccade,
-    width_samples: 5,
-    saccade_entry_speed: 60,
-    saccade_exit_speed: 20,
-    }
+eye_v_filter = boxcar_filter_1D (
+    in1 = eye_v_calibrated,
+    out1 = eye_v,
+    width_samples = 5,
+    )
+
+eye_monitor = basic_eye_monitor (
+    eyeh_calibrated = eye_h,
+    eyev_calibrated = eye_v,
+    eye_state = saccade,
+    width_samples = 5,
+    saccade_entry_speed = 60,
+    saccade_exit_speed = 20,
+    )
 
 
 #
 # Stimuli
 #
 
-blank_screen 'blank screen' { color: [0.5, 0.5, 0.5] }
+display = iodevice.stimulus_display ( background_color = [0.5, 0.5, 0.5] )
 
-stimulus.fixation_point fixation_dot {
-    color: [1,0,0],
-    trigger_width: fixation_width,
-    trigger_watch_x: eye_h,
-    trigger_watch_y: eye_v,
-    trigger_flag: eye_in_window,
-    x_size: fixation_point_size,
-    y_size: fixation_point_size,
-    x_position: fixation_pos_x,
-    y_position: fixation_pos_y,
-    rotation: 0.0,
-    alpha_multiplier: 1.0,
-    }
+fixation_dot = stimulus.fixation_point (
+    color = [1,0,0],
+    trigger_width = fixation_width,
+    trigger_watch_x = eye_h,
+    trigger_watch_y = eye_v,
+    trigger_flag = eye_in_window,
+    x_size = fixation_point_size,
+    y_size = fixation_point_size,
+    x_position = fixation_pos_x,
+    y_position = fixation_pos_y,
+    rotation = 0.0,
+    alpha_multiplier = 1.0,
+    )
 
-image_file RSVP_images [for RSVP_stim_counter in range(1, 100)] {
-    path: format('images/RSVP_images/OSImage_%d.png', RSVP_stim_counter),
-    x_size: stm_size,
-    y_size: stm_size,
-    x_position: stm_pos_x,
-    y_position: stm_pos_y,
-    rotation: 0,
-    alpha_multiplier: 1,
-    }
-
-stimulus.circle circles [
-    for diameter in [1,5,10],
-    for x_pos in [-20, 20],
-    for y_pos in [-10, 10],
-    ] {
-        color: [1,1,1],
-        x_size: diameter,
-        y_size: diameter,
-        x_position: x_pos,
-        y_position: y_pos,
-        rotation: 0,
-    }
+RSVP_images = genlist(
+    RSVP_stim_counter, [1:100],
+    image_file (
+        path = format('images/RSVP_images/OSImage_%d.png', RSVP_stim_counter),
+        x_size = stm_size,
+        y_size = stm_size,
+        x_position = stm_pos_x,
+        y_position = stm_pos_y,
+        rotation = 0,
+        alpha_multiplier = 1,
+        )
+    )
 
 
 #
 # Sounds
 #
 
-wav_file stm_on_sound ('sounds/stm_on.wav')
-wav_file reward_sound ('sounds/reward.wav')
-wav_file failure_sound ('sounds/failure.wav')
-wav_file complete_sound ('sounds/complete.wav')
-wav_file acquire_sound ('sounds/acquire.wav')
+stm_on_sound = wav_file ('sounds/stm_on.wav')
+reward_sound = wav_file ('sounds/reward.wav')
+failure_sound = wav_file ('sounds/failure.wav')
+complete_sound = wav_file ('sounds/complete.wav')
+acquire_sound = wav_file ('sounds/acquire.wav')
 
 
 #
 # Experiment
 #
 
-protocol 'RSVP protocol':
-
+def rsvp_protocol():
     reset_selection (RSVP_test_stim_index)
-    images_shown = 0
-    imageGroup_repetition = 0
-    fixation_point_size = 0.2
-    fixation_pos_x = 0
-    fixation_pos_y = 0
+    images_shown.assign (0)
+    imageGroup_repetition.assign (0)
+    fixation_point_size.assign (0.2)
+    fixation_pos_x.assign (0)
+    fixation_pos_y.assign (0)
 
     while (imageGroup_repetition < number_repeats):
         while (images_shown < imagesetsize):
 
-            start_trial
+            start_trial ()
 
             when (timer_expired('rsvp_ignore_timer')):
-                ignored = true
+                ignored.assign (true)
             else when (eye_in_window and (not saccade)):
                 play_sound (acquire_sound)
                 when ((not eye_in_window) and (not saccade)):
-                    failed = true
+                    failed.assign (true)
                 else after (stimon_delay):
-                    display_image_set
+                    display_image_set ()
                 end
             end
 
-            finish_trial
+            finish_trial ()
 
-        end while
-    end while
-end protocol
-
-
-def start_trial:
-    wait (ITI)
-    sync = 1
-    start_device_io (fm)
-    report ('********** RSVP TRIAL START **********')
-    
-    number_of_stm_shown = 0
-    live_queue_stimulus (fixation_dot)
-    update_stimulus_display
-    play_sound (stm_on_sound)
-    start_timer { timer: 'rsvp_ignore_timer', duration: ignore_time }
-
-    if (rand(0,1) > 0.1):  # Fake monkey ignores fixation 10% of time
-        report ('Fixate on target')
-        fake_monkey_saccade_and_fixate {
-            duration: (rand(0.9, 1.5) *
-                       (stimon_delay + ((stimon_time + stimoff_time) *
-                                        show_N_images))),
-            fake_monkey: fm,
-            h: fixation_pos_x,
-            v: fixation_pos_y,
-            }
+        end
     end
 end
 
 
-def display_image_set:
+def start_trial():
+    wait (ITI)
+    sync.assign (1)
+    start_device_io (fm)
+    report ('********** RSVP TRIAL START **********')
+    
+    number_of_stm_shown.assign (0)
+    live_queue_stimulus (fixation_dot)
+    update_stimulus_display ()
+    play_sound (stm_on_sound)
+    start_timer ( timer = 'rsvp_ignore_timer', duration = ignore_time )
+
+    if (rand(0,1) > 0.1):  # Fake monkey ignores fixation 10% of time
+        report ('Fixate on target')
+        fake_monkey_saccade_and_fixate (
+            duration = (rand(0.9, 1.5) *
+                       (stimon_delay + ((stimon_time + stimoff_time) *
+                                        show_N_images))),
+            fake_monkey = fm,
+            h = fixation_pos_x,
+            v = fixation_pos_y,
+            )
+    end
+end
+
+
+def display_image_set():
     while ((not failed) and (number_of_stm_shown < show_N_images)):
-        start_timer { timer: 'stimon_timer', duration: stimon_time }
+        start_timer ( timer = 'stimon_timer', duration = stimon_time )
         report (format('********** stim on: RSVP_images[ %d ] **********',
                        RSVP_test_stim_index))
         queue_stimulus (RSVP_images[RSVP_test_stim_index])
         bring_stimulus_to_front (fixation_dot)
-        update_stimulus_display
+        update_stimulus_display ()
 
         # If image index is at 7, increase the spiking rate
         if (RSVP_test_stim_index == 7):
-            spike_rate = 400
+            spike_rate.assign (400)
         end
 
         when ((not eye_in_window) and (not saccade)):
-            reject_stim
-            failed = true
+            reject_stim ()
+            failed.assign (true)
         else when (timer_expired('stimon_timer')):
-            stim_off
+            stim_off ()
         end
-    end while
-end
-
-
-def stim_off:
-    start_timer { timer: 'stimoff_timer', duration: stimoff_time }
-    report ('************* stim off! **********')
-    dequeue_stimulus (RSVP_images[RSVP_test_stim_index])
-    update_stimulus_display ()
-    spike_rate = 25
-    when ((not eye_in_window) and (not saccade)):
-        reject_stim
-        failed = true
-    else when (timer_expired('stimoff_timer')):
-        accept_stim
     end
 end
 
 
-def reject_stim:
+def stim_off():
+    start_timer ( timer = 'stimoff_timer', duration = stimoff_time )
+    report ('************* stim off! **********')
     dequeue_stimulus (RSVP_images[RSVP_test_stim_index])
-    update_stimulus_display
-    spike_rate = 25
+    update_stimulus_display ()
+    spike_rate.assign (25)
+    when ((not eye_in_window) and (not saccade)):
+        reject_stim ()
+        failed.assign (true)
+    else when (timer_expired('stimoff_timer')):
+        accept_stim ()
+    end
+end
+
+
+def reject_stim():
+    dequeue_stimulus (RSVP_images[RSVP_test_stim_index])
+    update_stimulus_display ()
+    spike_rate.assign (25)
     reject_selections (RSVP_test_stim_index)
 end
 
 
-def accept_stim:
+def accept_stim():
     accept_selections (RSVP_test_stim_index)
-    number_of_stm_shown += 1
-    images_shown += 1
+    number_of_stm_shown.assign (number_of_stm_shown + 1)
+    images_shown.assign (images_shown + 1)
 
     if (images_shown < imagesetsize):
         next_selection (RSVP_test_stim_index)
     else:
         reset_selection (RSVP_test_stim_index)
-        imageGroup_repetition += 1
-        images_shown = 0
+        imageGroup_repetition.assign (imageGroup_repetition + 1)
+        images_shown.assign (0)
     end
 end
 
 
-def finish_trial:
+def finish_trial():
     if (ignored):
         report ('************* RSVP Ignored!!!! **********')
-        ignore += 1
-        miss_count += 1
+        ignore.assign (ignore + 1)
+        miss_count.assign (miss_count + 1)
     else if (failed):
         report ('************* RSVP Failure!!!! **********')
         play_sound (failure_sound)
-        failure += 1
-        miss_count += 1
+        failure.assign (failure + 1)
+        miss_count.assign (miss_count + 1)
     else:
         wait (500ms)
         report ('************* RSVP Success!!!! **********')
-        reward = reward_duration
-        success += 1
-        miss_count = 0
+        reward.assign (reward_duration)
+        success.assign (success + 1)
+        miss_count.assign (0)
     end
 
     dequeue_stimulus (fixation_dot)
-    update_stimulus_display
+    update_stimulus_display ()
     if (miss_count < 5):
         wait (500ms)
     else:
         play_sound (failure_sound)
-        miss_count = 0
+        miss_count.assign (0)
         wait (2.5s)
     end
 
     report ('************* RSVP Trial Completed **********')
     stop_device_io (fm)
-    sync = 0
+    sync.assign (0)
     
-    fake_monkey_saccade_and_fixate {
-        fake_monkey: fm,
-        duration: 0,
-        h: 5,
-        v: 0,
-        }
+    fake_monkey_saccade_and_fixate (
+        fake_monkey = fm,
+        duration = 0,
+        h = 5,
+        v = 0,
+        )
 end
