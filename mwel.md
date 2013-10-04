@@ -26,7 +26,7 @@ Scope
 
 Names can have global or local scope.
 
-Every statement list (i.e. the top level of a module, and the bodies of call and "def" statements) gets its own local scope.  Local scopes nest lexically, and local names mask identical names in the global scope or enclosing local scopes.
+Every statement list (i.e. the top level of a module, and the bodies of call and function definition statements) gets its own local scope.  Local scopes nest lexically, and local names mask identical names in the global scope or enclosing local scopes.
 
 Local names are created by prefixing an assignment-to-identifier statement with the "local" keyword, e.g.
 
@@ -56,9 +56,9 @@ TODO:  Are global names global program-wide or just within the current module?
 Functions
 ---------
 
-A function definition (i.e. a "def" statement) can appear in any statement list.  It both creates the function and binds it to a name.  If "def" is preceded by "local", then the binding is local to the current scope.  Otherwise, the binding is global.
+A function definition statement can appear in any statement list.  It both creates the function and binds it to a name.  If "function" is preceded by "local", then the binding is local to the current scope.  Otherwise, the binding is global.
 
-TODO:  Support inline function defintions (i.e. lambda expressions)?
+An inline function defintion (i.e. function definition expression) creates a function but does not bind it to a name.
 
 As in Lua, functions are first-class values with proper lexical scoping.  As such, the body of a function can access local names from all enclosing local scopes (including any enclosing function definitions).
 

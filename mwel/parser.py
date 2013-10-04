@@ -75,7 +75,13 @@ class Parser(JELParser):
 
     def p_function_stmt(self, p):
         '''
-        function_stmt : FUNCTION identifier_expr LPAREN RPAREN COLON newline stmt_list END
+        function_stmt : FUNCTION identifier_expr function_args function_body
+        '''
+        pass
+
+    def p_function_body(self, p):
+        '''
+        function_body : COLON newline stmt_list END
         '''
         pass
 
@@ -103,6 +109,24 @@ class Parser(JELParser):
     def p_named_expr_list_item(self, p):
         '''
         named_expr_list_item : identifier_expr ASSIGN expr
+        '''
+        pass
+
+    def p_primary_expr_function_expr(self, p):
+        '''
+        primary_expr : function_expr
+        '''
+        pass
+
+    def p_function_expr(self, p):
+        '''
+        function_expr : FUNCTION function_args expr END
+        '''
+        pass
+
+    def p_function_args(self, p):
+        '''
+        function_args : LPAREN RPAREN
         '''
         pass
 

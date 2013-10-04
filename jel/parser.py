@@ -340,7 +340,7 @@ class Parser(object):
             lhs = p[0].strip()
             rhs = [rule.strip() for rule in p[1].split('|')]
             rhs = [' '.join(rule.split()) for rule in rhs]
-            prods.setdefault(lhs, []).extend(rhs)
+            prods[lhs] = prods.pop(lhs, []) + rhs
             
         for lhs, rhs in prods.items():
             print(lhs, end=('\n    : ' if (len(rhs) > 1) else ' : '))

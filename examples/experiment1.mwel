@@ -79,7 +79,7 @@ images = genlist (
 
 
 #
-# Protocols
+# Functions
 #
 
 
@@ -113,11 +113,14 @@ function present_sample_image ():
 
     after (3s):
         post_sample_image_delay ()
-    else when (not fixation_point.eye_in_window and
-               not eye_monitor.eye_in_saccade):
+    else when (fixation_broken()):
         broken_fixation ()
     end
 end
+
+
+fixation_broken = function () (not fixation_point.eye_in_window and
+                               not eye_monitor.eye_in_saccade) end
 
 
 function post_sample_image_delay ():
@@ -127,8 +130,7 @@ function post_sample_image_delay ():
 
     after (3s):
         present_test_images ()
-    else when (not fixation_point.eye_in_window and
-               not eye_monitor.eye_in_saccade):
+    else when (fixation_broken()):
         broken_fixation ()
     end
 end
@@ -155,8 +157,7 @@ function present_test_images ():
 
     after (3s):
         wait_for_selection ()
-    else when (not fixation_point.eye_in_window and
-               not eye_monitor.eye_in_saccade):
+    else when (fixation_broken()):
         broken_fixation ()
     end
 end
