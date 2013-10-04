@@ -1,7 +1,7 @@
 #!/bin/bash
 (
 python <<EOF
-from mwel.parser import Parser
+from ${1:-mwel}.parser import Parser
 Parser.print_grammar()
 EOF
 ) | ${PAGER:-less -s}
