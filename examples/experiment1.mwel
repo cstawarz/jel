@@ -5,7 +5,7 @@
 
 display = iodevice.stimulus_display ( background_color = [0.5, 0.5, 0.5] )
 
-mouse_input = iodevice.mouse_input ()
+local mouse_input = iodevice.mouse_input ()
 itc = mouse_input  # Production device will be an ITC-18
 
 eye_monitor = filter.basic_eye_monitor (
@@ -38,9 +38,9 @@ fixation_point = stimulus.fixation_point (
 num_images = 11
 image_size = 2.0
 num_test_images = 6
-image_circle_delta_theta = 2 * pi / num_test_images
+image_circle_delta_theta = 2 * math.pi / num_test_images
 
-sample_image_index = selection (
+current_sample_image_index = selection (
     values = [0:num_images-1],
     selection = 'random_without_replacement',
     nsamples = 1,
@@ -79,6 +79,16 @@ images = genlist (
 
 
 #
+# Variables
+#
+
+
+local num_images_queued = 0
+local success = false
+local reward = 0
+
+
+#
 # Functions
 #
 
@@ -90,6 +100,12 @@ function test_protocol ():
         selection = 'sequential',
         interruptible = true,
         ):
+
+        # Reset variables
+        current_sample_image_index.reset()
+        num_images_queued = 0
+        success = false
+        reward = 0
 
         itc.start ()
         display.queue (fixation_point)
@@ -106,10 +122,21 @@ end
 
 
 function present_sample_image ():
-    sample_image_index.next ()
-    display.queue (images[sample_image_index.value])
+    current_sample_image_index.next ()
+    local sample_image = images[current_sample_image_index.value]
+
+    sample_image.pos_x = 0
+    sample_image.pos_y = 0
+
+    display.queue (sample_image)
+    num_images_queue += 1
     display.update ()
+
     print ('Presenting sample image')
+
+    # Not local, as we'll use this elsewhere
+    fixation_broken = function () (not fixation_point.eye_in_window and
+                                   not eye_monitor.eye_in_saccade) end
 
     after (3s):
         post_sample_image_delay ()
@@ -119,13 +146,11 @@ function present_sample_image ():
 end
 
 
-fixation_broken = function () (not fixation_point.eye_in_window and
-                               not eye_monitor.eye_in_saccade) end
-
-
 function post_sample_image_delay ():
-    display.dequeue (images[sample_image_index])
+    display.dequeue (images[current_sample_image_index.value])
+    num_images_queued -= 1
     display.update ()
+
     print ('Imposing post sample image delay')
 
     after (3s):
@@ -140,16 +165,21 @@ function present_test_images ():
     local image_circle_theta = (image_circle_delta_theta *
                                 disc_rand(0, num_test_images-1))
 
-    foreach (index, [0:num_test_images-1]):
-        local img = images[sample_image_index.value]
-        img.pos_x = image_circle_radius * cos(image_circle_theta)
-        img.pos_y = image_circle_radius * sin(image_circle_theta)
+    while (num_images_queued < num_test_images):
+        local image = images[current_sample_image_index.value]
+        local window = image_windows[num_images_queued]
 
-        display.queue (img)
-        display.queue (image_windows[sample_image_index.value])
+        image.pos_x = window.pos_x = (image_circle_radius *
+                                      math.cos(image_circle_theta))
+        image.pos_y = window.pos_y = (image_circle_radius *
+                                      math.sin(image_circle_theta))
 
-        sample_image_index.next ()
-        image_circle_theta = image_circle_theta + image_circle_delta_theta
+        display.queue (image)
+        display.queue (window)
+
+        num_images_queued += 1
+        current_sample_image_index.next ()
+        image_circle_theta += image_circle_delta_theta
     end
 
     display.update ()
@@ -166,4 +196,6 @@ end
 function wait_for_selection ():
     display.dequeue (fixation_point)
     display.update ()
+
+    print ('Waiting for selection')
 end

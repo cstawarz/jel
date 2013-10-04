@@ -35,7 +35,25 @@ class Parser(JELParser):
 
     def p_assignment_stmt(self, p):
         '''
-        assignment_stmt : assignment_target ASSIGN expr
+        assignment_stmt : chained_assignment_stmt
+                        | augmented_assignment_stmt
+        '''
+        pass
+
+    def p_chained_assignment_stmt(self, p):
+        '''
+        chained_assignment_stmt : assignment_target \
+                                    ASSIGN \
+                                    chained_assignment_stmt
+                                | assignment_target ASSIGN expr
+        '''
+        pass
+
+    def p_augmented_assignment_stmt(self, p):
+        '''
+        augmented_assignment_stmt : assignment_target \
+                                      augmented_assignment_op \
+                                      expr
         '''
         pass
 
@@ -44,6 +62,13 @@ class Parser(JELParser):
         assignment_target : subscript_expr
                           | attribute_expr
                           | identifier_expr
+        '''
+        pass
+
+    def p_augmented_assignment_op(self, p):
+        '''
+        augmented_assignment_op : PLUSASSIGN
+                                | MINUSASSIGN
         '''
         pass
 
