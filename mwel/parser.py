@@ -29,6 +29,7 @@ class Parser(JELParser):
              | local_stmt
              | call_stmt
              | function_stmt
+             | return_stmt
         '''
         pass
 
@@ -92,6 +93,13 @@ class Parser(JELParser):
         '''
         pass
 
+    def p_return_stmt(self, p):
+        '''
+        return_stmt : RETURN expr
+                    | RETURN
+        '''
+        pass
+
     def p_call_args_named(self, p):
         '''
         call_args : LPAREN named_expr_list RPAREN
@@ -126,7 +134,21 @@ class Parser(JELParser):
 
     def p_function_args(self, p):
         '''
-        function_args : LPAREN RPAREN
+        function_args : LPAREN function_arg_list RPAREN
+        '''
+        pass
+
+    def p_function_arg_list(self, p):
+        '''
+        function_arg_list : function_arg_list_item COMMA function_arg_list
+                          | function_arg_list_item
+                          | empty
+        '''
+        pass
+
+    def p_function_arg_list_item(self, p):
+        '''
+        function_arg_list_item : identifier_expr
         '''
         pass
 

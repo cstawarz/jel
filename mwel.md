@@ -58,11 +58,13 @@ Functions
 
 A function definition statement can appear in any statement list.  It both creates the function and binds it to a name.  If "function" is preceded by "local", then the binding is local to the current scope.  Otherwise, the binding is global.
 
-An inline function defintion (i.e. function definition expression) creates a function but does not bind it to a name.
+An inline function definition (i.e. function definition expression) creates a function but does not bind it to a name.
 
 As in Lua, functions are first-class values with proper lexical scoping.  As such, the body of a function can access local names from all enclosing local scopes (including any enclosing function definitions).
 
-When called, a function receives all its arguments (including all elements of the call statement body) as *unevaluated* expressions.  This allows the function to defer evaluation, selectively evaluate arguments, and/or inspect the AST.  (This is necessary because all control-flow constructs are implemented as functions.)
+When a function created by a function definition statement or expression is called, its arguments are all evalutated and bound to local names within the function body, and then the body is executed.
+
+When a builtin function is called, it receives all its arguments (including all elements of the call statement body) as *unevaluated* expressions.  This allows the function to defer evaluation, selectively evaluate arguments, and/or inspect the AST.  (This is necessary because all control-flow constructs are implemented as functions.)
 
 
 
