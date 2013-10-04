@@ -69,11 +69,11 @@ class _CompositeLiteralExpr(Expr):
     _fields = ('items',)
 
 
-class DictLiteralExpr(_CompositeLiteralExpr):
+class ObjectLiteralExpr(_CompositeLiteralExpr):
     pass
 
 
-class ListLiteralExpr(_CompositeLiteralExpr):
+class ArrayLiteralExpr(_CompositeLiteralExpr):
     pass
 
 

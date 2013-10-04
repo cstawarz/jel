@@ -28,7 +28,7 @@ class Parser(JELParser):
         stmt : assignment_stmt
              | local_stmt
              | call_stmt
-             | def_stmt
+             | function_stmt
         '''
         pass
 
@@ -73,9 +73,9 @@ class Parser(JELParser):
         '''
         pass
 
-    def p_def_stmt(self, p):
+    def p_function_stmt(self, p):
         '''
-        def_stmt : DEF identifier_expr LPAREN RPAREN COLON newline stmt_list END
+        function_stmt : FUNCTION identifier_expr LPAREN RPAREN COLON newline stmt_list END
         '''
         pass
 
@@ -106,9 +106,9 @@ class Parser(JELParser):
         '''
         pass
 
-    def p_list_item_range_expr(self, p):
+    def p_array_item_range_expr(self, p):
         '''
-        list_item : expr COLON expr COLON expr
-                  | expr COLON expr
+        array_item : expr COLON expr COLON expr
+                   | expr COLON expr
         '''
         pass

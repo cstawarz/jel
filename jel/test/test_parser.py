@@ -43,8 +43,8 @@ class TestParser(unittest.TestCase):
         self.two = make_number('2')
         self.three = make_number('3')
         
-        self.list_12 = ast.ListLiteralExpr(items=(self.one, self.two))
-        self.empty_list = ast.ListLiteralExpr(items=())
+        self.array_12 = ast.ArrayLiteralExpr(items=(self.one, self.two))
+        self.empty_array = ast.ArrayLiteralExpr(items=())
 
     def assertError(self, msg=None, token=None, lineno=None, lexpos=None):
         self.assertTrue(self.errors, 'expected error was not detected')
@@ -109,10 +109,10 @@ class TestParser(unittest.TestCase):
             self.assertIsInstance(p, ast.StringLiteralExpr)
             self.assertEqual('foo\nbar\tbooblah\nbaz\r\ffuzz\ncuz', p.value)
 
-    def test_list_literal_expr(self):
-        def test_list(expr, *items):
+    def test_array_literal_expr(self):
+        def test_array(expr, *items):
             with self.parse(expr) as p:
-                self.assertIsInstance(p, ast.ListLiteralExpr)
+                self.assertIsInstance(p, ast.ArrayLiteralExpr)
                 self.assertIsInstance(p.items, tuple)
                 self.assertEqual(items, p.items)
 
@@ -120,21 +120,21 @@ class TestParser(unittest.TestCase):
         true_lit = ast.BooleanLiteralExpr(value=True)
         false_lit = ast.BooleanLiteralExpr(value=False)
 
-        test_list('[]')
-        test_list('[null]', null_lit)
-        test_list('[null,]', null_lit)
-        test_list('[true, false]', true_lit, false_lit)
-        test_list('[true, false,]', true_lit, false_lit)
-        test_list('[true, false, null]', true_lit, false_lit, null_lit)
-        test_list('[true, false, null,]', true_lit, false_lit, null_lit)
+        test_array('[]')
+        test_array('[null]', null_lit)
+        test_array('[null,]', null_lit)
+        test_array('[true, false]', true_lit, false_lit)
+        test_array('[true, false,]', true_lit, false_lit)
+        test_array('[true, false, null]', true_lit, false_lit, null_lit)
+        test_array('[true, false, null,]', true_lit, false_lit, null_lit)
 
         with self.parse('[,]'):
             self.assertError(token=',')
 
-    def test_dict_literal_expr(self):
-        def test_dict(expr, *items):
+    def test_object_literal_expr(self):
+        def test_object(expr, *items):
             with self.parse(expr) as p:
-                self.assertIsInstance(p, ast.DictLiteralExpr)
+                self.assertIsInstance(p, ast.ObjectLiteralExpr)
                 self.assertIsInstance(p.items, tuple)
                 self.assertEqual(items, p.items)
 
@@ -142,20 +142,20 @@ class TestParser(unittest.TestCase):
         true_lit = ast.BooleanLiteralExpr(value=True)
         false_lit = ast.BooleanLiteralExpr(value=False)
 
-        test_dict('{}')
+        test_object('{}')
 
         item = ('a', null_lit)
-        test_dict('{"a": null}', item)
-        test_dict('{a: null}', item)
-        test_dict('{"a": null,}', item)
-        test_dict('{a: null,}', item)
+        test_object('{"a": null}', item)
+        test_object('{a: null}', item)
+        test_object('{"a": null,}', item)
+        test_object('{a: null,}', item)
 
         items = (('foo', true_lit), ('bar', false_lit))
-        test_dict("{'foo': true, bar: false}", *items)
-        test_dict("{foo: true, 'bar': false,}", *items)
+        test_object("{'foo': true, bar: false}", *items)
+        test_object("{foo: true, 'bar': false,}", *items)
 
         items += (('blah', null_lit),)
-        test_dict('{foo: true, bar: false, blah: null}', *items)
+        test_object('{foo: true, bar: false, blah: null}', *items)
 
         with self.parse('{,}'):
             self.assertError(token=',')
@@ -165,7 +165,7 @@ class TestParser(unittest.TestCase):
 
     def test_parenthetic_expr(self):
         with self.parse('([null])') as p:
-            expected = ast.ListLiteralExpr(items=(ast.NullLiteralExpr(),))
+            expected = ast.ArrayLiteralExpr(items=(ast.NullLiteralExpr(),))
             self.assertEqual(expected, p)
             
         with self.parse('([null],)'):
@@ -191,7 +191,7 @@ class TestParser(unittest.TestCase):
         test_attr('(foo).blah', id_lit, 'blah')
         test_attr(
             '{foo123: null}.foo123',
-            ast.DictLiteralExpr(items=(('foo123', ast.NullLiteralExpr()),)),
+            ast.ObjectLiteralExpr(items=(('foo123', ast.NullLiteralExpr()),)),
             'foo123')
 
         test_attr('foo.bar.blah',
@@ -209,8 +209,8 @@ class TestParser(unittest.TestCase):
                 self.assertEqual(value, p.value)
 
         test_sub('foo[1]', self.foo, self.one)
-        test_sub('(foo)[[]]', self.foo, self.empty_list)
-        test_sub('[1,2]["foobar"]', self.list_12, self.foobar)
+        test_sub('(foo)[[]]', self.foo, self.empty_array)
+        test_sub('[1,2]["foobar"]', self.array_12, self.foobar)
 
         test_sub('foo[1][2]',
                  ast.SubscriptExpr(target=self.foo, value=self.one),
@@ -333,7 +333,7 @@ class TestParser(unittest.TestCase):
         with self.parse('1 < 2 <= 3 not in [1,2]') as p:
             self.assertIsInstance(p, ast.ComparisonExpr)
             self.assertEqual(('<', '<=', 'not in'), p.ops)
-            self.assertEqual((self.one, self.two, self.three, self.list_12),
+            self.assertEqual((self.one, self.two, self.three, self.array_12),
                              p.operands)
 
         # Parentheses break comparison chaining

@@ -143,7 +143,7 @@ acquire_sound = wav_file ('sounds/acquire.wav')
 # Experiment
 #
 
-def rsvp_protocol():
+function rsvp_protocol():
     reset_selection (RSVP_test_stim_index)
     images_shown.assign (0)
     imageGroup_repetition.assign (0)
@@ -174,7 +174,7 @@ def rsvp_protocol():
 end
 
 
-def start_trial():
+function start_trial():
     wait (ITI)
     sync.assign (1)
     start_device_io (fm)
@@ -200,7 +200,7 @@ def start_trial():
 end
 
 
-def display_image_set():
+function display_image_set():
     while ((not failed) and (number_of_stm_shown < show_N_images)):
         start_timer ( timer = 'stimon_timer', duration = stimon_time )
         report (format('********** stim on: RSVP_images[ %d ] **********',
@@ -224,7 +224,7 @@ def display_image_set():
 end
 
 
-def stim_off():
+function stim_off():
     start_timer ( timer = 'stimoff_timer', duration = stimoff_time )
     report ('************* stim off! **********')
     dequeue_stimulus (RSVP_images[RSVP_test_stim_index])
@@ -239,7 +239,7 @@ def stim_off():
 end
 
 
-def reject_stim():
+function reject_stim():
     dequeue_stimulus (RSVP_images[RSVP_test_stim_index])
     update_stimulus_display ()
     spike_rate.assign (25)
@@ -247,7 +247,7 @@ def reject_stim():
 end
 
 
-def accept_stim():
+function accept_stim():
     accept_selections (RSVP_test_stim_index)
     number_of_stm_shown.assign (number_of_stm_shown + 1)
     images_shown.assign (images_shown + 1)
@@ -262,7 +262,7 @@ def accept_stim():
 end
 
 
-def finish_trial():
+function finish_trial():
     if (ignored):
         report ('************* RSVP Ignored!!!! **********')
         ignore.assign (ignore + 1)

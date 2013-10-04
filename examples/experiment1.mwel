@@ -83,7 +83,7 @@ images = genlist (
 #
 
 
-def test_protocol ():
+function test_protocol ():
     trial (
         nsamples = 10,
         sampling_method = 'cycles',
@@ -105,7 +105,7 @@ def test_protocol ():
 end
 
 
-def present_sample_image ():
+function present_sample_image ():
     sample_image_index.next ()
     display.queue (images[sample_image_index.value])
     display.update ()
@@ -120,7 +120,7 @@ def present_sample_image ():
 end
 
 
-def post_sample_image_delay ():
+function post_sample_image_delay ():
     display.dequeue (images[sample_image_index])
     display.update ()
     print ('Imposing post sample image delay')
@@ -134,7 +134,7 @@ def post_sample_image_delay ():
 end
 
 
-def present_test_images ():
+function present_test_images ():
     local image_circle_theta = (image_circle_delta_theta *
                                 disc_rand(0, num_test_images-1))
 
@@ -162,7 +162,7 @@ def present_test_images ():
 end
 
 
-def wait_for_selection ():
+function wait_for_selection ():
     display.dequeue (fixation_point)
     display.update ()
 end

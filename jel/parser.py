@@ -212,8 +212,8 @@ class Parser(object):
 
     def p_literal_expr(self, p):
         '''
-        literal_expr : dict_literal_expr
-                     | list_literal_expr
+        literal_expr : object_literal_expr
+                     | array_literal_expr
                      | string_literal_expr
                      | number_literal_expr
                      | boolean_literal_expr
@@ -221,17 +221,17 @@ class Parser(object):
         '''
         self.same(p)
 
-    def p_dict_literal_expr(self, p):
+    def p_object_literal_expr(self, p):
         '''
-        dict_literal_expr : LBRACE dict_item_list RBRACE
+        object_literal_expr : LBRACE object_item_list RBRACE
         '''
-        p[0] = ast.DictLiteralExpr(items=p[2])
+        p[0] = ast.ObjectLiteralExpr(items=p[2])
 
-    def p_dict_item_list(self, p):
+    def p_object_item_list(self, p):
         '''
-        dict_item_list : dict_item COMMA dict_item_list
-                       | dict_item
-                       | empty
+        object_item_list : object_item COMMA object_item_list
+                         | object_item
+                         | empty
         '''
         self.item_list(p)
 
@@ -242,36 +242,36 @@ class Parser(object):
             assert len(p) == 2
             p[0] = (() if p[1] is None else (p[1],))
 
-    def p_dict_item(self, p):
+    def p_object_item(self, p):
         '''
-        dict_item : dict_key COLON expr
+        object_item : object_key COLON expr
         '''
         p[0] = (p[1], p[3])
 
-    def p_dict_key(self, p):
+    def p_object_key(self, p):
         '''
-        dict_key : string_literal_expr
-                 | identifier_expr
+        object_key : string_literal_expr
+                   | identifier_expr
         '''
         p[0] = p[1].value
 
-    def p_list_literal_expr(self, p):
+    def p_array_literal_expr(self, p):
         '''
-        list_literal_expr : LBRACKET list_item_list RBRACKET
+        array_literal_expr : LBRACKET array_item_list RBRACKET
         '''
-        p[0] = ast.ListLiteralExpr(items=p[2])
+        p[0] = ast.ArrayLiteralExpr(items=p[2])
 
-    def p_list_item_list(self, p):
+    def p_array_item_list(self, p):
         '''
-        list_item_list : list_item COMMA list_item_list
-                       | list_item
-                       | empty
+        array_item_list : array_item COMMA array_item_list
+                        | array_item
+                        | empty
         '''
         self.item_list(p)
 
-    def p_list_item(self, p):
+    def p_array_item(self, p):
         '''
-        list_item : expr
+        array_item : expr
         '''
         self.same(p)
 

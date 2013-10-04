@@ -5,7 +5,7 @@ from jel.lexer import Lexer as JELLexer
 
 class Lexer(JELLexer):
 
-    keywords = JELLexer.keywords + ('def', 'else', 'end', 'local')
+    keywords = JELLexer.keywords + ('else', 'end', 'function', 'local')
 
     t_ASSIGN = r'='
 
