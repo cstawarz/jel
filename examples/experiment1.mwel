@@ -85,7 +85,6 @@ images = genlist (
 
 local num_images_queued = 0
 local success = false
-local reward = 0
 
 
 #
@@ -101,22 +100,27 @@ function test_protocol ():
         interruptible = true,
         ):
 
-        # Reset variables
-        current_sample_image_index.reset()
-        num_images_queued = 0
-        success = false
-        reward = 0
+        begin_trial ()
+    end
+end
 
-        itc.start ()
-        display.queue (fixation_point)
-        display.update ()
-        print ('Waiting for fixation')
 
-        when (fixation_point.eye_in_window and not eye_monitor.eye_in_saccade):
-            present_sample_image ()
-        else after (3s):
-            no_fixation ()
-        end
+function begin_trial ():
+    # Reset variables
+    current_sample_image_index.reset()
+    num_images_queued = 0
+    success = false
+
+    itc.start ()
+    display.queue (fixation_point)
+    display.update ()
+    print ('Waiting for fixation')
+
+    when (fixation_point.eye_in_window and not eye_monitor.eye_in_saccade):
+        present_sample_image ()
+    else after (3s):
+        print ('No fixation')
+        end_trial ()
     end
 end
 
@@ -200,12 +204,15 @@ function wait_for_selection ():
     print ('Waiting for selection')
 
     when (eye_in_sample_image_window()):
-        success ()
+        success = true
+        print ('Success!')
     else when (eye_in_other_image_window()):
-        incorrect_selection ()
+        print ('Incorrect selection')
     else after (3s):
-        no_selection ()
+        print ('No selection')
     end
+
+    end_trial ()
 end
 
 
@@ -229,70 +236,28 @@ function eye_in_other_image_window ():
 end
 
 
-function success ():
-    success = true
-    print ('Success!')
-    dequeue_images ()
-end
-
-
-function dequeue_images ():
+function end_trial ():
     foreach (i, [0:num_images_queued-1]):
         display.dequeue (images[current_sample_image_index[i]])
         display.dequeue (image_windows[i])
-        # TODO: num_images_queued -= 1 ??
     end
-    clear_display ()
-end
 
-
-function clear_display ():
     display.dequeue (fixation_point)
     display.update ()
+
     if (success):
-        reward ()
-    else:
-        intertrial_interval ()
+        uninterruptible():
+            # Dispense reward
+        end
     end
-end
 
-
-function reward ():
-    uninterruptible():
-        reward = 1
-        wait (10ms)
-        reward = 0
-    end
-    intertrial_interval ()
-end
-
-
-function intertrial_interval ():
     itc.stop()
     print ('Intertrial interval')
     wait (3s)
 end
 
 
-function no_fixation ():
-    print ('No fixation')
-    clear_display ()
-end
-
-
 function broken_fixation ():
     print ('Fixation broken')
-    dequeue_images ()
-end
-
-
-function no_selection ():
-    print ('No selection')
-    dequeue_images ()
-end
-
-
-function incorrect_selection ():
-    print ('Incorrect selection')
-    dequeue_images ()
+    end_trial ()
 end
