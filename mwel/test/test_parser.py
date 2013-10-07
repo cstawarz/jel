@@ -47,3 +47,25 @@ class TestParser(ParserTestMixin, unittest.TestCase):
 
         with self.parse('local bar\n'):
             self.assertError(token='\n')
+
+    def test_simple_assignment(self):
+        def test_assign(src, target_type, value_type):
+            with self.parse(src) as p:
+                self.assertIsInstance(p, ast.Module)
+                self.assertEqual(1, len(p.statements))
+                p = p.statements[0]
+                self.assertIsInstance(p, ast.ChainedAssignmentStmt)
+                self.assertIsInstance(p.targets, tuple)
+                self.assertEqual(1, len(p.targets))
+                self.assertIsInstance(p.targets[0], target_type)
+                self.assertIsInstance(p.value, value_type)
+
+        test_assign('foo = 1', ast.IdentifierExpr, ast.NumberLiteralExpr)
+        test_assign('foo.bar = foo', ast.AttributeExpr, ast.IdentifierExpr)
+        test_assign('foo[bar] = 2*x+1', ast.SubscriptExpr, ast.BinaryOpExpr)
+
+        with self.parse('1 = 2'):
+            self.assertError(token='=')
+
+        with self.parse('f(1) = 2'):
+            self.assertError(token='=')
