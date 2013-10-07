@@ -68,7 +68,18 @@ When a builtin function is called, it receives all its arguments (including all 
 
 
 
+Call Statments
+--------------
+
+Call expressions (i.e. simple call statements) may be used as call statements only if they return null.  Otherwise, they must be the right-hand side of an assignment statement.  (Put another way:  Call expression results cannot be silently discarded.)  This is to prevent users from forgetting to bind the results of object-constructor calls to names.  (TODO:  Support assignment to "_" as a means of explicitly discarding call expression results?)
+
+Compound call statements (i.e. those with a statement body) are not expressions and cannot return a result.
+
+Compound call statements can add local names to the environment in which their body statements execute.  For example, "while" could add a local "break" function that terminates execution of the body and exits the loop.  Similarly, "trial" could add local functions for accepting/rejecting selections.
+
+
+
 Modules
 -------
 
-TODO:  I'm thinking Python-style modules, i.e. the contents a single source file.  These would be "require"-able from other modules (loaded at most once per session).  Should loading a module add its global names to the program-wide global scope, or should the "require" call return an object with attributes for each of its global names?
+TODO:  I'm thinking Python-style modules, i.e. the contents of a single source file.  These would be "require"-able from other modules (loaded at most once per session).  Should loading a module add its global names to the program-wide global scope, or should the "require" call return an object with attributes for each of its global names?  Maybe it would be best to follow Lua and support both options, with "object-like" modules ending with a top-level return statement.
