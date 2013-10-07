@@ -6,14 +6,14 @@ import unittest
 from ..lexer import Lexer, MatchString
 
 
-class TestLexer(unittest.TestCase):
+class LexerTestMixin(object):
 
     def setUp(self):
         self.errors = collections.deque()
         def error_logger(*info):
             self.errors.append(info)
             
-        self.lexer = Lexer(error_logger).build()
+        self.lexer = self.lexer_class(error_logger).build()
 
         @contextmanager
         def input_wrapper(s):
@@ -68,6 +68,11 @@ class TestLexer(unittest.TestCase):
         self.assertEqual(frac, t.value.frac)
         self.assertEqual(exp, t.value.exp)
         self.assertEqual(tag, t.value.tag)
+
+
+class TestLexer(LexerTestMixin, unittest.TestCase):
+
+    lexer_class = Lexer
 
     def test_errors(self):
         with self.input('1 2 $@ & 3 4 #'):
