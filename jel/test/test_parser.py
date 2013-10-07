@@ -9,15 +9,15 @@ from ..lexer import Lexer
 from ..parser import Parser
 
 
-class TestParser(unittest.TestCase):
+class ParserTestMixin(object):
 
     def setUp(self):
         self.errors = collections.deque()
         def error_logger(*info):
             self.errors.append(info)
             
-        l = Lexer(error_logger)
-        p = Parser(l.tokens, error_logger)
+        l = self.lexer_class(error_logger)
+        p = self.parser_class(l.tokens, error_logger)
         self.lexer = l.build()
         self.parser = p.build()
 
@@ -58,6 +58,12 @@ class TestParser(unittest.TestCase):
             self.assertEqual(lineno, e[2])
         if lexpos:
             self.assertEqual(lexpos, e[3])
+
+
+class TestParser(ParserTestMixin, unittest.TestCase):
+
+    lexer_class = Lexer
+    parser_class = Parser
 
     def test_incomplete_input(self):
         with self.parse('"foo') as p:

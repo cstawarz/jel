@@ -2,6 +2,8 @@ from __future__ import division, print_function, unicode_literals
 
 from jel.parser import Parser as JELParser
 
+from . import ast
+
 
 class Parser(JELParser):
 
@@ -13,7 +15,7 @@ class Parser(JELParser):
         module : newline stmt_list
                | stmt_list
         '''
-        pass
+        p[0] = ast.Module(statements=(p[2] if len(p) == 3 else p[1]))
 
     def p_stmt_list(self, p):
         '''
@@ -21,7 +23,7 @@ class Parser(JELParser):
                   | stmt
                   | empty
         '''
-        pass
+        self.item_list(p)
 
     def p_stmt(self, p):
         '''
@@ -31,7 +33,7 @@ class Parser(JELParser):
              | function_stmt
              | return_stmt
         '''
-        pass
+        self.same(p)
 
     def p_assignment_stmt(self, p):
         '''
@@ -76,7 +78,7 @@ class Parser(JELParser):
         '''
         local_stmt : LOCAL identifier_expr ASSIGN expr
         '''
-        pass
+        p[0] = ast.LocalStmt(name=p[2].value, value=p[4])
 
     def p_call_stmt(self, p):
         '''
