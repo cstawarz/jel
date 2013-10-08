@@ -13,6 +13,11 @@ class ChainedAssignmentStmt(AST):
     _fields = ('targets', 'value')
 
 
+class AugmentedAssignmentStmt(AST):
+
+    _fields = ('target', 'op', 'value')
+
+
 class LocalStmt(AST):
 
     _fields = ('name', 'value')

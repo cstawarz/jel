@@ -48,7 +48,8 @@ class Parser(JELParser):
                                     ASSIGN \
                                     chained_assignment_stmt
         '''
-        pass
+        p[3].targets += (p[1],)
+        p[0] = p[3]
 
     def p_chained_assignment_stmt_single(self, p):
         '''
@@ -62,7 +63,9 @@ class Parser(JELParser):
                                       augmented_assignment_op \
                                       expr
         '''
-        pass
+        p[0] = ast.AugmentedAssignmentStmt(target = p[1],
+                                           op = p[2],
+                                           value = p[3])
 
     def p_assignment_target(self, p):
         '''
@@ -77,7 +80,7 @@ class Parser(JELParser):
         augmented_assignment_op : PLUSASSIGN
                                 | MINUSASSIGN
         '''
-        pass
+        self.same(p)
 
     def p_local_stmt(self, p):
         '''
