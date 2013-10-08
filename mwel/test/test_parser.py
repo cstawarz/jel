@@ -120,7 +120,13 @@ class TestParser(ParserTestMixin, unittest.TestCase):
                 self.assertIsInstance(p, ast.Module)
                 self.assertEqual(1, len(p.statements))
                 p = p.statements[0]
+                
                 self.assertIsInstance(p, ast.CallStmt)
+                self.assertIsInstance(p.head, ast.CallExpr)
+                self.assertIsNone(p.body)
+                self.assertIsNone(p.tail)
+
+                p = p.head
                 self.assertIsInstance(p.target, target_type)
                 self.assertEqual(args, p.args)
 
@@ -131,17 +137,45 @@ class TestParser(ParserTestMixin, unittest.TestCase):
                   (self.foo, self.array_12))
 
         # Named args
-        def od(*args):  return collections.OrderedDict(args)
-        test_call('foo(a=1)', ast.IdentifierExpr, od(('a', self.one)))
+        test_call('foo(a=1)', ast.IdentifierExpr, self.od('a', self.one))
         test_call('a.b(foo = foo, bar=[1,2],)',
                   ast.AttributeExpr,
-                  od(('foo', self.foo), ('bar', self.array_12)))
+                  self.od('foo', self.foo, 'bar', self.array_12))
 
         with self.parse('foo(1, a=2)'):
             self.assertError(token='=')
 
         with self.parse('foo("a"=2)'):
             self.assertError(token='=')
+
+    @staticmethod
+    def od(*args):
+        return collections.OrderedDict(zip(args[:-1:2], args[1::2]))
+
+    def test_compound_call_stmt(self):
+        def test_call(src, num_body_stmts, tail_type=type(None)):
+            with self.parse(src) as p:
+                self.assertIsInstance(p, ast.Module)
+                self.assertEqual(1, len(p.statements))
+                p = p.statements[0]
+                
+                self.assertIsInstance(p, ast.CallStmt)
+                self.assertIsInstance(p.head, ast.CallExpr)
+                self.assertIsInstance(p.body, tuple)
+                self.assertEqual(num_body_stmts, len(p.body))
+                self.assertIsInstance(p.tail, tail_type)
+
+        test_call('''
+        foo ():
+        end
+        ''', 0)
+
+        test_call('''
+        if (x > 2):
+            local y = 2*x
+            do_something(y)
+        end
+        ''', 2)
 
     def test_return_stmt(self):
         def test_return(src, value):

@@ -91,21 +91,34 @@ class Parser(JELParser):
 
     def p_call_stmt(self, p):
         '''
-        call_stmt : call_expr call_stmt_body
-                  | call_expr
+        call_stmt : simple_call_stmt
+                  | compound_call_stmt
         '''
-        p[0] = ast.CallStmt(target=p[1].target, args=p[1].args)
+        self.same(p)
+
+    def p_simple_call_stmt(self, p):
+        '''
+        simple_call_stmt : call_expr
+        '''
+        p[0] = ast.CallStmt(head=p[1], body=None, tail=None)
+
+    def p_compound_call_stmt(self, p):
+        '''
+        compound_call_stmt : simple_call_stmt call_stmt_body call_stmt_tail
+        '''
+        p[1].body = p[2]
+        p[0] = p[1]
 
     def p_call_stmt_body(self, p):
         '''
-        call_stmt_body : COLON newline stmt_list call_stmt_tail
+        call_stmt_body : COLON newline stmt_list
         '''
-        pass
+        p[0] = p[3]
 
     def p_call_stmt_tail(self, p):
         '''
-        call_stmt_tail : ELSE call_stmt
-                       | ELSE call_stmt_body
+        call_stmt_tail : ELSE compound_call_stmt
+                       | ELSE call_stmt_body END
                        | END
         '''
         pass

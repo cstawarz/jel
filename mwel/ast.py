@@ -25,7 +25,7 @@ class LocalStmt(AST):
 
 class CallStmt(AST):
 
-    _fields = ('target', 'args')
+    _fields = ('head', 'body', 'tail')
 
 
 class ReturnStmt(AST):
