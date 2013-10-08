@@ -1,4 +1,5 @@
 from __future__ import division, print_function, unicode_literals
+import collections
 
 from jel.parser import Parser as JELParser
 
@@ -91,13 +92,13 @@ class Parser(JELParser):
     def p_call_stmt(self, p):
         '''
         call_stmt : call_expr call_stmt_body
+                  | call_expr
         '''
-        pass
+        p[0] = ast.CallStmt(target=p[1].target, args=p[1].args)
 
     def p_call_stmt_body(self, p):
         '''
         call_stmt_body : COLON newline stmt_list call_stmt_tail
-                       | empty
         '''
         pass
 
@@ -133,13 +134,13 @@ class Parser(JELParser):
         return_stmt : RETURN expr
                     | RETURN
         '''
-        pass
+        p[0] = ast.ReturnStmt(value=(p[2] if len(p) == 3 else None))
 
     def p_call_args_named(self, p):
         '''
         call_args : LPAREN named_expr_list RPAREN
         '''
-        pass
+        p[0] = collections.OrderedDict(p[2])
 
     def p_named_expr_list(self, p):
         '''
@@ -147,13 +148,13 @@ class Parser(JELParser):
                         | named_expr_list_item COMMA
                         | named_expr_list_item
         '''
-        pass
+        p[0] = (p[1],) + (p[3] if len(p) == 4 else ())
 
     def p_named_expr_list_item(self, p):
         '''
         named_expr_list_item : identifier_expr ASSIGN expr
         '''
-        pass
+        p[0] = (p[1].value, p[3])
 
     def p_primary_expr_function_expr(self, p):
         '''

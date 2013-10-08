@@ -21,3 +21,13 @@ class AugmentedAssignmentStmt(AST):
 class LocalStmt(AST):
 
     _fields = ('name', 'value')
+
+
+class CallStmt(AST):
+
+    _fields = ('target', 'args')
+
+
+class ReturnStmt(AST):
+
+    _fields = ('value',)
