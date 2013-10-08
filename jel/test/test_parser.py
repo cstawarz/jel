@@ -141,8 +141,8 @@ class TestParser(ParserTestMixin, unittest.TestCase):
         def test_object(expr, *items):
             with self.parse(expr) as p:
                 self.assertIsInstance(p, ast.ObjectLiteralExpr)
-                self.assertIsInstance(p.items, tuple)
-                self.assertEqual(items, p.items)
+                self.assertIsInstance(p.items, collections.OrderedDict)
+                self.assertEqual(items, tuple(p.items.items()))
 
         null_lit = ast.NullLiteralExpr()
         true_lit = ast.BooleanLiteralExpr(value=True)
@@ -197,7 +197,10 @@ class TestParser(ParserTestMixin, unittest.TestCase):
         test_attr('(foo).blah', id_lit, 'blah')
         test_attr(
             '{foo123: null}.foo123',
-            ast.ObjectLiteralExpr(items=(('foo123', ast.NullLiteralExpr()),)),
+            ast.ObjectLiteralExpr(
+                items = collections.OrderedDict((('foo123',
+                                                  ast.NullLiteralExpr()),))
+                ),
             'foo123')
 
         test_attr('foo.bar.blah',

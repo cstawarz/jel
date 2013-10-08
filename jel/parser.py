@@ -225,7 +225,7 @@ class Parser(object):
         '''
         object_literal_expr : LBRACE object_item_list RBRACE
         '''
-        p[0] = ast.ObjectLiteralExpr(items=p[2])
+        p[0] = ast.ObjectLiteralExpr(items=collections.OrderedDict(p[2]))
 
     def p_object_item_list(self, p):
         '''
