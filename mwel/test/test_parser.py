@@ -153,29 +153,81 @@ class TestParser(ParserTestMixin, unittest.TestCase):
         return collections.OrderedDict(zip(args[:-1:2], args[1::2]))
 
     def test_compound_call_stmt(self):
-        def test_call(src, num_body_stmts, tail_type=type(None)):
-            with self.parse(src) as p:
-                self.assertIsInstance(p, ast.Module)
-                self.assertEqual(1, len(p.statements))
-                p = p.statements[0]
-                
-                self.assertIsInstance(p, ast.CallStmt)
-                self.assertIsInstance(p.head, ast.CallExpr)
-                self.assertIsInstance(p.body, tuple)
-                self.assertEqual(num_body_stmts, len(p.body))
-                self.assertIsInstance(p.tail, tail_type)
+        with self.parse('''
+                        foo ():
+                        end
+                        ''') as p:
+            self.assertIsInstance(p, ast.Module)
+            self.assertEqual(1, len(p.statements))
+            p = p.statements[0]
+            
+            self.assertIsInstance(p, ast.CallStmt)
+            self.assertIsInstance(p.head, ast.CallExpr)
+            self.assertIsInstance(p.body, tuple)
+            self.assertEqual(0, len(p.body))
+            self.assertIsNone(p.tail)
 
-        test_call('''
-        foo ():
-        end
-        ''', 0)
+        with self.parse('''
+                        when (eye_in_window and not eye_in_saccade):
+                            present_stimulus()
+                        else after (500ms):
+                            print('No fixation')
+                            no_fixation()
+                        end
+                        ''') as p:
+            self.assertIsInstance(p, ast.Module)
+            self.assertEqual(1, len(p.statements))
+            p = p.statements[0]
+            
+            self.assertIsInstance(p, ast.CallStmt)
+            self.assertIsInstance(p.head, ast.CallExpr)
+            self.assertIsInstance(p.body, tuple)
+            self.assertEqual(1, len(p.body))
+            self.assertIsInstance(p.tail, ast.CallStmt)
+            p = p.tail
+            
+            self.assertIsInstance(p, ast.CallStmt)
+            self.assertIsInstance(p.head, ast.CallExpr)
+            self.assertIsInstance(p.body, tuple)
+            self.assertEqual(2, len(p.body))
+            self.assertIsNone(p.tail)
 
-        test_call('''
-        if (x > 2):
-            local y = 2*x
-            do_something(y)
-        end
-        ''', 2)
+        with self.parse('''
+                        if (x > 2):
+                            local y = 2*x
+                            do_something(y)
+                        else if (x < -1):
+                            error()
+                        else if (2*y == foo):
+                            # No idea what to do here!
+                        else:
+                            call_for_help()
+                        end
+                        ''') as p:
+            self.assertIsInstance(p, ast.Module)
+            self.assertEqual(1, len(p.statements))
+            p = p.statements[0]
+            
+            self.assertIsInstance(p, ast.CallStmt)
+            self.assertIsInstance(p.head, ast.CallExpr)
+            self.assertIsInstance(p.body, tuple)
+            self.assertEqual(2, len(p.body))
+            self.assertIsInstance(p.tail, ast.CallStmt)
+            p = p.tail
+            
+            self.assertIsInstance(p, ast.CallStmt)
+            self.assertIsInstance(p.head, ast.CallExpr)
+            self.assertIsInstance(p.body, tuple)
+            self.assertEqual(1, len(p.body))
+            self.assertIsInstance(p.tail, ast.CallStmt)
+            p = p.tail
+            
+            self.assertIsInstance(p, ast.CallStmt)
+            self.assertIsInstance(p.head, ast.CallExpr)
+            self.assertIsInstance(p.body, tuple)
+            self.assertEqual(0, len(p.body))
+            self.assertIsInstance(p.tail, tuple)
+            self.assertEqual(1, len(p.tail))
 
     def test_return_stmt(self):
         def test_return(src, value):

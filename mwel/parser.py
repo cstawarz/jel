@@ -107,6 +107,7 @@ class Parser(JELParser):
         compound_call_stmt : simple_call_stmt call_stmt_body call_stmt_tail
         '''
         p[1].body = p[2]
+        p[1].tail = p[3]
         p[0] = p[1]
 
     def p_call_stmt_body(self, p):
@@ -121,7 +122,7 @@ class Parser(JELParser):
                        | ELSE call_stmt_body END
                        | END
         '''
-        pass
+        p[0] = (p[2] if len(p) > 2 else None)
 
     def p_function_stmt(self, p):
         '''
