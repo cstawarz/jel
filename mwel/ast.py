@@ -28,6 +28,11 @@ class CallStmt(AST):
     _fields = ('head', 'body', 'tail')
 
 
+class FunctionStmt(AST):
+
+    _fields = ('name', 'args', 'body', 'local')
+
+
 class ReturnStmt(AST):
 
     _fields = ('value',)

@@ -136,21 +136,20 @@ class TestParser(ParserTestMixin, unittest.TestCase):
                   ast.BinaryOpExpr,
                   (self.foo, self.array_12))
 
+        def od(*args):
+            return collections.OrderedDict(zip(args[:-1:2], args[1::2]))
+
         # Named args
-        test_call('foo(a=1)', ast.IdentifierExpr, self.od('a', self.one))
+        test_call('foo(a=1)', ast.IdentifierExpr, od('a', self.one))
         test_call('a.b(foo = foo, bar=[1,2],)',
                   ast.AttributeExpr,
-                  self.od('foo', self.foo, 'bar', self.array_12))
+                  od('foo', self.foo, 'bar', self.array_12))
 
         with self.parse('foo(1, a=2)'):
             self.assertError(token='=')
 
         with self.parse('foo("a"=2)'):
             self.assertError(token='=')
-
-    @staticmethod
-    def od(*args):
-        return collections.OrderedDict(zip(args[:-1:2], args[1::2]))
 
     def test_compound_call_stmt(self):
         with self.parse('''
@@ -228,6 +227,47 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             self.assertEqual(0, len(p.body))
             self.assertIsInstance(p.tail, tuple)
             self.assertEqual(1, len(p.tail))
+
+        with self.parse('''
+                        if (x):
+                        else:
+                        else:
+                        end
+                        ''') as p:
+            self.assertError(token='else')
+
+    def test_function_stmt(self):
+        def test_func(src, name, args, num_stmts, local=False):
+            with self.parse(src) as p:
+                self.assertIsInstance(p, ast.Module)
+                self.assertEqual(1, len(p.statements))
+                p = p.statements[0]
+                self.assertIsInstance(p, ast.FunctionStmt)
+                self.assertEqual(name, p.name)
+                self.assertEqual(args, p.args)
+                self.assertIsInstance(p.body, tuple)
+                self.assertEqual(num_stmts, len(p.body))
+                self.assertEqual(local, p.local)
+
+        test_func('''
+                  function foo():
+                  end
+                  ''', 'foo', (), 0)
+
+        test_func('''
+                  local function square(x):
+                      return x*x
+                  end
+                  ''', 'square', ('x',), 1, True)
+
+        test_func('''
+                  function roots(a, b, c,):
+                      local d = math.sqrt(b**2 - 4*a*c)
+                      local r1 = (-b + d) / (2*a)
+                      local r2 = (-b - d) / (2*a)
+                      return [r1, r2]
+                  end
+                  ''', 'roots', ('a', 'b', 'c'), 4)
 
     def test_return_stmt(self):
         def test_return(src, value):

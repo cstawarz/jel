@@ -126,15 +126,29 @@ class Parser(JELParser):
 
     def p_function_stmt(self, p):
         '''
-        function_stmt : FUNCTION identifier_expr function_args function_body
+        function_stmt : LOCAL function_def
+                      | function_def
         '''
-        pass
+        if len(p) == 2:
+            p[0] = p[1]
+        else:
+            p[2].local = True
+            p[0] = p[2]
 
-    def p_function_body(self, p):
+    def p_function_def(self, p):
         '''
-        function_body : COLON newline stmt_list END
+        function_def : FUNCTION \
+                         identifier_expr \
+                         function_args \
+                         COLON \
+                         newline \
+                         stmt_list \
+                         END
         '''
-        pass
+        p[0] = ast.FunctionStmt(name = p[2].value,
+                                args = p[3],
+                                body = p[6],
+                                local = False)
 
     def p_newline(self, p):
         '''
@@ -186,7 +200,7 @@ class Parser(JELParser):
         '''
         function_args : LPAREN function_arg_list RPAREN
         '''
-        pass
+        p[0] = p[2]
 
     def p_function_arg_list(self, p):
         '''
@@ -194,13 +208,13 @@ class Parser(JELParser):
                           | function_arg_list_item
                           | empty
         '''
-        pass
+        self.item_list(p)
 
     def p_function_arg_list_item(self, p):
         '''
         function_arg_list_item : identifier_expr
         '''
-        pass
+        p[0] = p[1].value
 
     def p_array_item_range_expr(self, p):
         '''

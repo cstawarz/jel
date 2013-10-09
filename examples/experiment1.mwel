@@ -216,12 +216,12 @@ function wait_for_selection ():
 end
 
 
-function eye_in_sample_image_window ():
+local function eye_in_sample_image_window ():
     return image_windows[0].eye_in_window and not eye_monitor.eye_in_saccade
 end
 
 
-function eye_in_other_image_window ():
+local function eye_in_other_image_window ():
     if (eye_monitor.eye_in_saccade):
         return false
     end
