@@ -36,3 +36,13 @@ class FunctionStmt(AST):
 class ReturnStmt(AST):
 
     _fields = ('value',)
+
+
+class FunctionExpr(AST):
+
+    _fields = ('args', 'body')
+
+
+class RangeExpr(AST):
+
+    _fields = ('start', 'stop', 'step')

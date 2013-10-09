@@ -281,3 +281,43 @@ class TestParser(ParserTestMixin, unittest.TestCase):
         test_return('return foo', self.foo)
         test_return('return [1,2]', self.array_12)
         test_return('return', None)
+
+    def test_function_expr(self):
+        def test_func(src, args, expr_type):
+            with self.parse('local f = ' + src) as p:
+                self.assertIsInstance(p, ast.Module)
+                self.assertEqual(1, len(p.statements))
+                p = p.statements[0]
+                self.assertIsInstance(p, ast.LocalStmt)
+                self.assertIsInstance(p.value, ast.FunctionExpr)
+                p = p.value
+                self.assertEqual(args, p.args)
+                self.assertIsInstance(p.body, expr_type)
+
+        test_func('function () true end', (), ast.BooleanLiteralExpr)
+        test_func('function (x) x*x end', ('x',), ast.BinaryOpExpr)
+        test_func('function (foo, bar) foo < bar < 5 end',
+                  ('foo', 'bar'),
+                  ast.ComparisonExpr)
+
+        with self.parse('function () end'):
+            self.assertError(token='end')
+
+    def test_range_expr(self):
+        with self.parse('local arr = [1, 2:(1+2), foo:9:f(4), 2]') as p:
+            self.assertIsInstance(p, ast.Module)
+            self.assertEqual(1, len(p.statements))
+            p = p.statements[0]
+            
+            self.assertIsInstance(p, ast.LocalStmt)
+            self.assertIsInstance(p.value, ast.ArrayLiteralExpr)
+            items = p.value.items
+            self.assertEqual(4, len(items))
+            self.assertEqual(self.one, items[0])
+            self.assertEqual(self.two, items[3])
+
+            p = items[1]
+            self.assertIsInstance(p, ast.RangeExpr)
+            self.assertEqual(self.two, p.start)
+            self.assertIsInstance(p.stop, ast.BinaryOpExpr)
+            self.assertIsNone(p.step)

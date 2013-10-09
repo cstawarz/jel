@@ -188,13 +188,13 @@ class Parser(JELParser):
         '''
         primary_expr : function_expr
         '''
-        pass
+        self.same(p)
 
     def p_function_expr(self, p):
         '''
         function_expr : FUNCTION function_args expr END
         '''
-        pass
+        p[0] = ast.FunctionExpr(args=p[2], body=p[3])
 
     def p_function_args(self, p):
         '''
@@ -221,4 +221,6 @@ class Parser(JELParser):
         array_item : expr COLON expr COLON expr
                    | expr COLON expr
         '''
-        pass
+        p[0] = ast.RangeExpr(start = p[1],
+                             stop = p[3],
+                             step = (p[5] if len(p) == 6 else None))
