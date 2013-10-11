@@ -47,7 +47,7 @@ However, this is fine:
         ...
     end
 
-Global name bindings are created by assigning a value to a name that has not previously been declared local in the current scope or any enclosing scope.  
+Global name bindings can be created only at the top level of a module (i.e. not from within a function).  A global name binding is created by assigning a value to a name that has not previously been declared local.
 
 TODO:  Are global names global program-wide or just within the current module?
 
