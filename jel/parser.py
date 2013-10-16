@@ -47,11 +47,11 @@ class Parser(object):
         or_expr : or_expr OR and_expr
                 | and_expr
         '''
-        self.binary_op(p)
+        self.binary_logical(p, ast.OrExpr)
 
-    def binary_op(self, p):
+    def binary_logical(self, p, node_type):
         if len(p) == 4:
-            p[0] = ast.BinaryOpExpr(op=p[2], operands=(p[1], p[3]))
+            p[0] = node_type(operands=(p[1], p[3]))
         else:
             self.same(p)
 
@@ -60,7 +60,7 @@ class Parser(object):
         and_expr : and_expr AND not_expr
                  | not_expr
         '''
-        self.binary_op(p)
+        self.binary_logical(p, ast.AndExpr)
 
     def p_not_expr(self, p):
         '''
@@ -117,6 +117,12 @@ class Parser(object):
                       | multiplicative_expr
         '''
         self.binary_op(p)
+
+    def binary_op(self, p):
+        if len(p) == 4:
+            p[0] = ast.BinaryOpExpr(op=p[2], operands=(p[1], p[3]))
+        else:
+            self.same(p)
 
     def p_multiplicative_expr(self, p):
         '''

@@ -34,6 +34,19 @@ class Expr(AST):
     _parenthetic = False
 
 
+class _BinaryLogicalExpr(Expr):
+
+    _fields = ('operands',)
+
+
+class OrExpr(_BinaryLogicalExpr):
+    pass
+
+
+class AndExpr(_BinaryLogicalExpr):
+    pass
+
+
 class BinaryOpExpr(Expr):
 
     _fields = ('op', 'operands')

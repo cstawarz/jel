@@ -362,24 +362,36 @@ class TestParser(ParserTestMixin, unittest.TestCase):
     def test_not_expr(self):
         self._test_unary_op('not')
 
+    def _test_binary_logical(self, op, node_type):
+        def test_logical(expr, *operands):
+            with self.parse(expr) as p:
+                self.assertIsInstance(p, node_type)
+                assert len(operands) == 2
+                self.assertEqual(operands, p.operands)
+
+        test_logical('1 %s 2' % op, self.one, self.two)
+        test_logical(
+            '1 %s 2 %s 3' % (op, op),
+            node_type(operands=(self.one, self.two)),
+            self.three,
+            )
+
     def test_and_expr(self):
-        self._test_binary_op('and')
+        self._test_binary_logical('and', ast.AndExpr)
 
     def test_or_expr(self):
-        self._test_binary_op('or')
+        self._test_binary_logical('or', ast.OrExpr)
 
     def test_precedence(self):
         x = ast.IdentifierExpr(value='x')
         with self.parse('x or x and not x < x + x * -x ** (x or x) [x]') as p:
             # or
-            self.assertIsInstance(p, ast.BinaryOpExpr)
-            self.assertEqual('or', p.op)
+            self.assertIsInstance(p, ast.OrExpr)
             self.assertEqual(x, p.operands[0])
             p = p.operands[1]
             
             # and
-            self.assertIsInstance(p, ast.BinaryOpExpr)
-            self.assertEqual('and', p.op)
+            self.assertIsInstance(p, ast.AndExpr)
             self.assertEqual(x, p.operands[0])
             p = p.operands[1]
 
@@ -423,6 +435,5 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             p = p.target
             
             # ()
-            self.assertIsInstance(p, ast.BinaryOpExpr)
-            self.assertEqual('or', p.op)
+            self.assertIsInstance(p, ast.OrExpr)
             self.assertEqual((x, x), p.operands)
