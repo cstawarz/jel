@@ -45,22 +45,37 @@ class Parser(object):
     def p_or_expr(self, p):
         '''
         or_expr : or_expr OR and_expr
-                | and_expr
         '''
         self.binary_logical(p, ast.OrExpr)
 
     def binary_logical(self, p, node_type):
-        if len(p) == 4:
-            p[0] = node_type(operands=(p[1], p[3]))
+        if isinstance(p[1], node_type):
+            p[0] = p[1]
         else:
-            self.same(p)
+            p[0] = node_type(operands=(p[1],))
+
+        if isinstance(p[3], node_type):
+            p[0].operands += p[3].operands
+        else:
+            p[0].operands += (p[3],)
+
+    def p_or_expr_passthrough(self, p):
+        '''
+        or_expr : and_expr
+        '''
+        self.same(p)
 
     def p_and_expr(self, p):
         '''
         and_expr : and_expr AND not_expr
-                 | not_expr
         '''
         self.binary_logical(p, ast.AndExpr)
+
+    def p_and_expr_passthrough(self, p):
+        '''
+        and_expr : not_expr
+        '''
+        self.same(p)
 
     def p_not_expr(self, p):
         '''
@@ -80,12 +95,11 @@ class Parser(object):
         comparison_expr : comparison_expr comparison_op additive_expr
         '''
         if isinstance(p[1], ast.ComparisonExpr) and (not p[1]._parenthetic):
-            ops = p[1].ops + (p[2],)
-            operands = p[1].operands + (p[3],)
+            p[1].ops += (p[2],)
+            p[1].operands += (p[3],)
+            p[0] = p[1]
         else:
-            ops = (p[2],)
-            operands = (p[1], p[3])
-        p[0] = ast.ComparisonExpr(ops=ops, operands=operands)
+            p[0] = ast.ComparisonExpr(ops=(p[2],), operands=(p[1], p[3]))
 
     def p_comparison_expr_passthrough(self, p):
         '''

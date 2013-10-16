@@ -366,15 +366,13 @@ class TestParser(ParserTestMixin, unittest.TestCase):
         def test_logical(expr, *operands):
             with self.parse(expr) as p:
                 self.assertIsInstance(p, node_type)
-                assert len(operands) == 2
                 self.assertEqual(operands, p.operands)
 
         test_logical('1 %s 2' % op, self.one, self.two)
-        test_logical(
-            '1 %s 2 %s 3' % (op, op),
-            node_type(operands=(self.one, self.two)),
-            self.three,
-            )
+
+        test_logical('1 %s 2 %s 3' % (op, op), self.one, self.two, self.three)
+        test_logical('(1 %s 2) %s 3' % (op, op), self.one, self.two, self.three)
+        test_logical('1 %s (2 %s 3)' % (op, op), self.one, self.two, self.three)
 
     def test_and_expr(self):
         self._test_binary_logical('and', ast.AndExpr)
