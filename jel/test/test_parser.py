@@ -23,6 +23,7 @@ class ParserTestMixin(object):
 
         @contextmanager
         def parse_wrapper(s):
+            self.lexer.lineno = 1  # Reset lineno
             yield self.parser.parse(s, lexer=self.lexer)
             if self.errors:
                 self.fail('input contained unexpected errors: ' +
@@ -59,6 +60,10 @@ class ParserTestMixin(object):
         if lexpos:
             self.assertEqual(lexpos, e[3])
 
+    def assertLocation(self, p, lineno, lexpos):
+        self.assertEqual(lineno, p.lineno)
+        self.assertEqual(lexpos, p.lexpos)
+
 
 class TestParser(ParserTestMixin, unittest.TestCase):
 
@@ -73,25 +78,30 @@ class TestParser(ParserTestMixin, unittest.TestCase):
     def test_identifier_expr(self):
         with self.parse('foo') as p:
             self.assertIsInstance(p, ast.IdentifierExpr)
+            self.assertLocation(p, 1, 0)
             self.assertEqual('foo', p.value)
 
     def test_null_literal_expr(self):
         with self.parse('null') as p:
             self.assertIsInstance(p, ast.NullLiteralExpr)
+            self.assertLocation(p, 1, 0)
 
     def test_true_literal_expr(self):
         with self.parse('true') as p:
             self.assertIsInstance(p, ast.BooleanLiteralExpr)
+            self.assertLocation(p, 1, 0)
             self.assertIs(True, p.value)
 
     def test_false_literal_expr(self):
         with self.parse('false') as p:
             self.assertIsInstance(p, ast.BooleanLiteralExpr)
+            self.assertLocation(p, 1, 0)
             self.assertIs(False, p.value)
 
     def test_number_literal_expr(self):
         with self.parse('123') as p:
             self.assertIsInstance(p, ast.NumberLiteralExpr)
+            self.assertLocation(p, 1, 0)
             self.assertIsInstance(p.value, decimal.Decimal)
             self.assertEqual('123', str(p.value))
             self.assertEqual(123, int(p.value))
@@ -99,6 +109,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             
         with self.parse('1.230E-45ms') as p:
             self.assertIsInstance(p, ast.NumberLiteralExpr)
+            self.assertLocation(p, 1, 0)
             self.assertIsInstance(p.value, decimal.Decimal)
             self.assertEqual('1.230E-45', str(p.value))
             self.assertEqual(1.23e-45, float(p.value))
@@ -107,18 +118,21 @@ class TestParser(ParserTestMixin, unittest.TestCase):
     def test_string_literal_expr(self):
         with self.parse('"foo bar\\nblah"') as p:
             self.assertIsInstance(p, ast.StringLiteralExpr)
+            self.assertLocation(p, 1, 0)
             self.assertEqual('foo bar\nblah', p.value)
 
         s = ''' 'foo\\n' "bar\\tboo" """blah\nbaz\\r""" \'''\\ffuzz\ncuz\''' '''
         
         with self.parse(s) as p:
             self.assertIsInstance(p, ast.StringLiteralExpr)
+            self.assertLocation(p, 1, 1)
             self.assertEqual('foo\nbar\tbooblah\nbaz\r\ffuzz\ncuz', p.value)
 
     def test_array_literal_expr(self):
         def test_array(expr, *items):
             with self.parse(expr) as p:
                 self.assertIsInstance(p, ast.ArrayLiteralExpr)
+                self.assertLocation(p, 1, 0)
                 self.assertIsInstance(p.items, tuple)
                 self.assertEqual(items, p.items)
 
@@ -141,6 +155,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
         def test_object(expr, *items):
             with self.parse(expr) as p:
                 self.assertIsInstance(p, ast.ObjectLiteralExpr)
+                self.assertLocation(p, 1, 0)
                 self.assertIsInstance(p.items, collections.OrderedDict)
                 self.assertEqual(items, tuple(p.items.items()))
 
@@ -173,6 +188,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
         with self.parse('([null])') as p:
             expected = ast.ArrayLiteralExpr(items=(ast.NullLiteralExpr(),))
             self.assertEqual(expected, p)
+            self.assertLocation(p, 1, 1)
             
         with self.parse('([null],)'):
             self.assertError(token=',')
@@ -184,46 +200,51 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             self.assertError(token=')')
 
     def test_attribute_expr(self):
-        def test_attr(expr, target, name):
+        def test_attr(expr, target, name, lexpos):
             with self.parse(expr) as p:
                 self.assertIsInstance(p, ast.AttributeExpr)
+                self.assertLocation(p, 1, lexpos)
                 self.assertEqual(target, p.target)
                 self.assertIsInstance(p.name, type(''))
                 self.assertEqual(name, p.name)
 
         id_lit = ast.IdentifierExpr(value='foo')
 
-        test_attr('foo.bar', id_lit, 'bar')
-        test_attr('(foo).blah', id_lit, 'blah')
+        test_attr('foo.bar', id_lit, 'bar', 3)
+        test_attr('(foo).blah', id_lit, 'blah', 5)
         test_attr(
             '{foo123: null}.foo123',
             ast.ObjectLiteralExpr(
                 items = collections.OrderedDict((('foo123',
                                                   ast.NullLiteralExpr()),))
                 ),
-            'foo123')
+            'foo123',
+            14)
 
         test_attr('foo.bar.blah',
                   ast.AttributeExpr(target=id_lit, name='bar'),
-                  'blah')
+                  'blah',
+                  7)
 
         with self.parse('foo.1'):
             self.assertError(token='1')
 
     def test_subscript_expr(self):
-        def test_sub(expr, target, value):
+        def test_sub(expr, target, value, lexpos):
             with self.parse(expr) as p:
                 self.assertIsInstance(p, ast.SubscriptExpr)
+                self.assertLocation(p, 1, lexpos)
                 self.assertEqual(target, p.target)
                 self.assertEqual(value, p.value)
 
-        test_sub('foo[1]', self.foo, self.one)
-        test_sub('(foo)[[]]', self.foo, self.empty_array)
-        test_sub('[1,2]["foobar"]', self.array_12, self.foobar)
+        test_sub('foo[1]', self.foo, self.one, 3)
+        test_sub('(foo)[[]]', self.foo, self.empty_array, 5)
+        test_sub('[1,2]["foobar"]', self.array_12, self.foobar, 5)
 
         test_sub('foo[1][2]',
                  ast.SubscriptExpr(target=self.foo, value=self.one),
-                 self.two)
+                 self.two,
+                 6)
 
         with self.parse('foo[]'):
             self.assertError(token=']')
@@ -235,56 +256,59 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             self.assertError(token=',')
 
     def test_call_expr(self):
-        def test_call(expr, name, *args):
+        def test_call(expr, name, args, lexpos):
             with self.parse(expr) as p:
                 self.assertIsInstance(p, ast.CallExpr)
+                self.assertLocation(p, 1, lexpos)
                 self.assertIsInstance(p.target, ast.IdentifierExpr)
                 self.assertEqual(name, p.target.value)
                 self.assertEqual(args, p.args)
 
-        test_call('foo()', 'foo')
-        test_call('bar(true)', 'bar', self.true)
-        test_call('bar(true,)', 'bar', self.true)
-        test_call('abc123(1, 2)', 'abc123', self.one, self.two)
-        test_call('abc123(1, 2,)', 'abc123', self.one, self.two)
-        test_call('(foo)(2)', 'foo', self.two)
+        test_call('foo()', 'foo', (), 3)
+        test_call('bar(true)', 'bar', (self.true,), 3)
+        test_call('bar(true,)', 'bar', (self.true,), 3)
+        test_call('abc123(1, 2)', 'abc123', (self.one, self.two), 6)
+        test_call('abc123(1, 2,)', 'abc123', (self.one, self.two), 6)
+        test_call('(foo)(2)', 'foo', (self.two,), 5)
 
         with self.parse('foo(,)'):
             self.assertError(token=',')
 
         with self.parse('foo(1)(2)') as outer:
             self.assertIsInstance(outer, ast.CallExpr)
+            self.assertLocation(outer, 1, 6)
             self.assertEqual((self.two,), outer.args)
             inner = outer.target
             self.assertIsInstance(inner, ast.CallExpr)
+            self.assertLocation(inner, 1, 3)
             self.assertIsInstance(inner.target, ast.IdentifierExpr)
             self.assertEqual('foo', inner.target.value)
             self.assertEqual((self.one,), inner.args)
 
     def _test_binary_op(self, op, sibling_ops=(), left_assoc=True):
-        def test_binop(expr, *operands):
+        def test_binop(expr, operands):
             with self.parse(expr) as p:
                 self.assertIsInstance(p, ast.BinaryOpExpr)
                 self.assertEqual(op, p.op)
                 assert len(operands) == 2
                 self.assertEqual(operands, p.operands)
                 
-        test_binop('1 %s 2' % op, self.one, self.two)
+        test_binop('1 %s 2' % op, (self.one, self.two))
 
         for other_op in (op,) + sibling_ops:
             if left_assoc:
                 test_binop(
                     '1 %s 2 %s 3' % (other_op, op),
-                    ast.BinaryOpExpr(op = other_op,
+                    (ast.BinaryOpExpr(op = other_op,
                                      operands = (self.one, self.two)),
-                    self.three,
+                     self.three),
                     )
             else:
                 test_binop(
                     '1 %s 2 %s 3' % (op, other_op),
-                    self.one,
-                    ast.BinaryOpExpr(op = other_op,
-                                     operands = (self.two, self.three)),
+                    (self.one,
+                     ast.BinaryOpExpr(op = other_op,
+                                     operands = (self.two, self.three))),
                     )
 
     def _test_unary_op(self, op):

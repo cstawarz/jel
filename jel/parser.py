@@ -46,9 +46,9 @@ class Parser(object):
         '''
         or_expr : or_expr OR and_expr
         '''
-        self.binary_logical(p, ast.OrExpr)
+        self.logical_op(p, ast.OrExpr)
 
-    def binary_logical(self, p, node_type):
+    def logical_op(self, p, node_type):
         if isinstance(p[1], node_type):
             p[0] = p[1]
         else:
@@ -69,7 +69,7 @@ class Parser(object):
         '''
         and_expr : and_expr AND not_expr
         '''
-        self.binary_logical(p, ast.AndExpr)
+        self.logical_op(p, ast.AndExpr)
 
     def p_and_expr_passthrough(self, p):
         '''
@@ -134,7 +134,8 @@ class Parser(object):
 
     def binary_op(self, p):
         if len(p) == 4:
-            p[0] = ast.BinaryOpExpr(op=p[2], operands=(p[1], p[3]))
+            p[0] = ast.BinaryOpExpr(op = p[2],
+                                    operands = (p[1], p[3]))
         else:
             self.same(p)
 
@@ -185,15 +186,18 @@ class Parser(object):
 
     def p_call_expr(self, p):
         '''
-        call_expr : postfix_expr call_args
+        call_expr : postfix_expr LPAREN call_arg_list RPAREN
         '''
-        p[0] = ast.CallExpr(target=p[1], args=p[2])
+        p[0] = ast.CallExpr(p.lineno(2),
+                            p.lexpos(2),
+                            target = p[1],
+                            args = p[3])
 
-    def p_call_args(self, p):
+    def p_call_arg_list(self, p):
         '''
-        call_args : LPAREN expr_list RPAREN
+        call_arg_list : expr_list
         '''
-        p[0] = p[2]
+        self.same(p)
 
     def p_expr_list(self, p):
         '''
@@ -207,13 +211,19 @@ class Parser(object):
         '''
         subscript_expr : postfix_expr LBRACKET expr RBRACKET
         '''
-        p[0] = ast.SubscriptExpr(target=p[1], value=p[3])
+        p[0] = ast.SubscriptExpr(p.lineno(2),
+                                 p.lexpos(2),
+                                 target = p[1],
+                                 value = p[3])
 
     def p_attribute_expr(self, p):
         '''
         attribute_expr : postfix_expr DOT identifier_expr
         '''
-        p[0] = ast.AttributeExpr(target=p[1], name=p[3].value)
+        p[0] = ast.AttributeExpr(p.lineno(2),
+                                 p.lexpos(2),
+                                 target = p[1],
+                                 name = p[3].value)
 
     def p_primary_expr(self, p):
         '''
@@ -245,7 +255,9 @@ class Parser(object):
         '''
         object_literal_expr : LBRACE object_item_list RBRACE
         '''
-        p[0] = ast.ObjectLiteralExpr(items=collections.OrderedDict(p[2]))
+        p[0] = ast.ObjectLiteralExpr(p.lineno(1),
+                                     p.lexpos(1),
+                                     items = collections.OrderedDict(p[2]))
 
     def p_object_item_list(self, p):
         '''
@@ -279,7 +291,7 @@ class Parser(object):
         '''
         array_literal_expr : LBRACKET array_item_list RBRACKET
         '''
-        p[0] = ast.ArrayLiteralExpr(items=p[2])
+        p[0] = ast.ArrayLiteralExpr(p.lineno(1), p.lexpos(1), items=p[2])
 
     def p_array_item_list(self, p):
         '''
@@ -303,13 +315,15 @@ class Parser(object):
         value = p[1]
         if len(p) == 3:
             value += p[2].value
-        p[0] = ast.StringLiteralExpr(value=value)
+        p[0] = ast.StringLiteralExpr(p.lineno(1), p.lexpos(1), value=value)
 
     def p_number_literal_expr(self, p):
         '''
         number_literal_expr : NUMBER
         '''
-        p[0] = ast.NumberLiteralExpr(value = decimal.Decimal(p[1].value),
+        p[0] = ast.NumberLiteralExpr(p.lineno(1),
+                                     p.lexpos(1),
+                                     value = decimal.Decimal(p[1].value),
                                      tag = (p[1].tag or None))
 
     def p_boolean_literal_expr(self, p):
@@ -317,19 +331,21 @@ class Parser(object):
         boolean_literal_expr : TRUE
                              | FALSE
         '''
-        p[0] = ast.BooleanLiteralExpr(value = (p[1] == 'true'))
+        p[0] = ast.BooleanLiteralExpr(p.lineno(1),
+                                      p.lexpos(1),
+                                      value = (p[1] == 'true'))
 
     def p_null_literal_expr(self, p):
         '''
         null_literal_expr : NULL
         '''
-        p[0] = ast.NullLiteralExpr()
+        p[0] = ast.NullLiteralExpr(p.lineno(1), p.lexpos(1))
 
     def p_identifier_expr(self, p):
         '''
         identifier_expr : IDENTIFIER
         '''
-        p[0] = ast.IdentifierExpr(value=p[1])
+        p[0] = ast.IdentifierExpr(p.lineno(1), p.lexpos(1), value=p[1])
 
     def p_empty(self, p):
         '''

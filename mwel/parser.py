@@ -164,11 +164,11 @@ class Parser(JELParser):
         '''
         p[0] = ast.ReturnStmt(value=(p[2] if len(p) == 3 else None))
 
-    def p_call_args_named(self, p):
+    def p_call_arg_list_named(self, p):
         '''
-        call_args : LPAREN named_expr_list RPAREN
+        call_arg_list : named_expr_list
         '''
-        p[0] = collections.OrderedDict(p[2])
+        p[0] = collections.OrderedDict(p[1])
 
     def p_named_expr_list(self, p):
         '''

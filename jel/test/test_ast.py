@@ -19,6 +19,15 @@ class OtherNode(ast.AST):
 
 class TestAST(unittest.TestCase):
 
+    def test_lineno_and_lexpos(self):
+        n = OtherNode()
+        self.assertEqual(-1, n.lineno)
+        self.assertEqual(-1, n.lexpos)
+
+        n = OtherNode(lineno=12, lexpos=34)
+        self.assertEqual(12, n.lineno)
+        self.assertEqual(34, n.lexpos)
+
     def test_missing_field(self):
         with self.assertRaises(KeyError) as cm:
             Node(foo=1)

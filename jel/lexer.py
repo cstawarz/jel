@@ -65,11 +65,15 @@ class Lexer(object):
 
     def begin_string(self, t, state):
         t.lexer.push_state(state)
+        self.string_lineno = t.lineno
+        self.string_lexpos = t.lexpos
         self.string_value = ''
 
     def end_string(self, t):
         t.lexer.pop_state()
         t.type = 'STRING'
+        t.lineno = self.string_lineno
+        t.lexpos = self.string_lexpos
         t.value = self.string_value
         t.lexer.lineno += t.value.count('\n')
         return t

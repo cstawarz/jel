@@ -9,7 +9,9 @@ class AST(object):
     def _name(self):
         return type(self).__name__
 
-    def __init__(self, **kwargs):
+    def __init__(self, lineno=-1, lexpos=-1, **kwargs):
+        self.lineno = lineno
+        self.lexpos = lexpos
         for field in self._fields:
             setattr(self, field, kwargs.pop(field))
         if kwargs:
