@@ -303,7 +303,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
         with self.parse('function () end'):
             self.assertError(token='end')
 
-    def test_range_expr(self):
+    def test_array_item_range(self):
         with self.parse('local arr = [1, 2:(1+2), foo:9:f(4), 2]') as p:
             self.assertIsInstance(p, ast.Module)
             self.assertEqual(1, len(p.statements))
@@ -317,7 +317,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             self.assertEqual(self.two, items[3])
 
             p = items[1]
-            self.assertIsInstance(p, ast.RangeExpr)
+            self.assertIsInstance(p, ast.ArrayItemRange)
             self.assertEqual(self.two, p.start)
             self.assertIsInstance(p.stop, ast.BinaryOpExpr)
             self.assertIsNone(p.step)

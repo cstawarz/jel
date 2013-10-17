@@ -8,41 +8,45 @@ class Module(AST):
     _fields = ('statements',)
 
 
-class ChainedAssignmentStmt(AST):
+class Stmt(AST):
+    pass
+
+
+class ChainedAssignmentStmt(Stmt):
 
     _fields = ('targets', 'value')
 
 
-class AugmentedAssignmentStmt(AST):
+class AugmentedAssignmentStmt(Stmt):
 
     _fields = ('target', 'op', 'value')
 
 
-class LocalStmt(AST):
+class LocalStmt(Stmt):
 
     _fields = ('name', 'value')
 
 
-class CallStmt(AST):
+class CallStmt(Stmt):
 
     _fields = ('head', 'body', 'tail')
 
 
-class FunctionStmt(AST):
+class FunctionStmt(Stmt):
 
     _fields = ('name', 'args', 'body', 'local')
 
 
-class ReturnStmt(AST):
+class ReturnStmt(Stmt):
 
     _fields = ('value',)
 
 
-class FunctionExpr(AST):
+class FunctionExpr(Expr):
 
     _fields = ('args', 'body')
 
 
-class RangeExpr(AST):
+class ArrayItemRange(AST):
 
     _fields = ('start', 'stop', 'step')

@@ -221,6 +221,6 @@ class Parser(JELParser):
         array_item : expr COLON expr COLON expr
                    | expr COLON expr
         '''
-        p[0] = ast.RangeExpr(start = p[1],
-                             stop = p[3],
-                             step = (p[5] if len(p) == 6 else None))
+        p[0] = ast.ArrayItemRange(start = p[1],
+                                  stop = p[3],
+                                  step = (p[5] if len(p) == 6 else None))

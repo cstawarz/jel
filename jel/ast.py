@@ -34,17 +34,14 @@ class Expr(AST):
     _parenthetic = False
 
 
-class _BinaryLogicalExpr(Expr):
+class OrExpr(Expr):
 
     _fields = ('operands',)
 
 
-class OrExpr(_BinaryLogicalExpr):
-    pass
+class AndExpr(Expr):
 
-
-class AndExpr(_BinaryLogicalExpr):
-    pass
+    _fields = ('operands',)
 
 
 class BinaryOpExpr(Expr):
@@ -77,26 +74,19 @@ class AttributeExpr(Expr):
     _fields = ('target', 'name')
 
 
-class _CompositeLiteralExpr(Expr):
+class ObjectLiteralExpr(Expr):
 
     _fields = ('items',)
 
 
-class ObjectLiteralExpr(_CompositeLiteralExpr):
-    pass
+class ArrayLiteralExpr(Expr):
+
+    _fields = ('items',)
 
 
-class ArrayLiteralExpr(_CompositeLiteralExpr):
-    pass
-
-
-class _AtomicLiteralExpr(Expr):
+class StringLiteralExpr(Expr):
 
     _fields = ('value',)
-
-
-class StringLiteralExpr(_AtomicLiteralExpr):
-    pass
 
 
 class NumberLiteralExpr(Expr):
@@ -104,13 +94,15 @@ class NumberLiteralExpr(Expr):
     _fields = ('value', 'tag')
 
 
-class BooleanLiteralExpr(_AtomicLiteralExpr):
-    pass
+class BooleanLiteralExpr(Expr):
+
+    _fields = ('value',)
 
 
 class NullLiteralExpr(Expr):
     pass
 
 
-class IdentifierExpr(_AtomicLiteralExpr):
-    pass
+class IdentifierExpr(Expr):
+
+    _fields = ('value',)
