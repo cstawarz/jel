@@ -6,34 +6,34 @@ def _gen_codes(*ops):
     return ops, dict((op, code) for code, op in enumerate(ops))
 
 
-op_names, op_codes = _gen_codes(
-    'BINARY_OP',
-    'BINARY_SUBSCR',
-    'BUILD_ARRAY',
-    'BUILD_OBJECT',
-    'CALL_FUNCTION',
-    'LOAD_ATTR',
-    'LOAD_CONST',
-    'LOAD_NAME',
-    'LOGICAL_AND',
-    'LOGICAL_OR',
-    'UNARY_OP',
-    )
-
-binary_op_names, binary_op_codes = _gen_codes(
-    '+', '-', '*', '/', '%', '**',
-    )
-
-unary_op_names, unary_op_codes = _gen_codes(
-    'not', '+', '-',
-    )
-
-comparison_op_names, comparison_op_codes = _gen_codes(
-    '<', '<=', '>', '>=', '!=', '==', 'in', 'not in',
-    )
-
-
 class Compiler(object):
+
+    op_names, op_codes = _gen_codes(
+        'BINARY_OP',
+        'BINARY_SUBSCR',
+        'BUILD_ARRAY',
+        'BUILD_OBJECT',
+        'CALL_FUNCTION',
+        'COMPARE_OP',
+        'LOAD_ATTR',
+        'LOAD_CONST',
+        'LOAD_NAME',
+        'LOGICAL_AND',
+        'LOGICAL_OR',
+        'UNARY_OP',
+        )
+
+    binary_op_names, binary_op_codes = _gen_codes(
+        '+', '-', '*', '/', '%', '**',
+        )
+
+    unary_op_names, unary_op_codes = _gen_codes(
+        'not', '+', '-',
+        )
+
+    comparison_op_names, comparison_op_codes = _gen_codes(
+        '<', '<=', '>', '>=', '!=', '==', 'in', 'not in',
+        )
 
     _cc_to_us_re = re.compile(
         '(((?<=[a-z])[A-Z])|([A-Z](?![A-Z]|$)))'
@@ -45,7 +45,7 @@ class Compiler(object):
 
     def __init__(self):
         self._ops = []
-        for name, code in op_codes.items():
+        for name, code in self.op_codes.items():
             gen_name = name.lower()
             assert not hasattr(self, gen_name)
             setattr(self, gen_name, self._make_op_gen(code))
@@ -69,11 +69,16 @@ class Compiler(object):
     def binary_op_expr(self, node):
         self._genops(node.operands[0])
         self._genops(node.operands[1])
-        self.binary_op(binary_op_codes[node.op])
+        self.binary_op(self.binary_op_codes[node.op])
 
     def unary_op_expr(self, node):
         self._genops(node.operand)
-        self.unary_op(unary_op_codes[node.op])
+        self.unary_op(self.unary_op_codes[node.op])
+
+    def comparison_expr(self, node):
+        ops = tuple(self.comparison_op_codes[o] for o in node.ops)
+        operand_ops = tuple(self.compile(o) for o in node.operands)
+        self.compare_op(ops, operand_ops)
 
     def call_expr(self, node):
         self._genops(node.target)
@@ -124,19 +129,27 @@ class Compiler(object):
     @classmethod
     def print_ops(cls, ops, indent=0):
         for index, (op, args) in enumerate(ops):
-            op = op_names[op]
+            op = cls.op_names[op]
             print('{}{:4} {:15}'.format(' ' * indent, index, op), end='')
             if op == 'BINARY_OP':
-                print(binary_op_names[args[0]])
+                print(cls.binary_op_names[args[0]])
             elif op == 'UNARY_OP':
-                print(unary_op_names[args[0]])
+                print(cls.unary_op_names[args[0]])
+            elif op == 'COMPARE_OP':
+                print(', '.join(cls.comparison_op_names[code]
+                                for code in args[0]))
+                cls._print_arg_ops(args[1], indent)
             elif op in ('CALL_FUNCTION', 'LOGICAL_AND', 'LOGICAL_OR'):
                 print()
-                for arg_num, arg_ops in enumerate(args):
-                    print('{}arg {}:'.format(' ' * (indent+7), arg_num))
-                    cls.print_ops(arg_ops, indent+9)
+                cls._print_arg_ops(args, indent)
             elif op == 'LOAD_CONST':
                 print(repr(args[0]))
             else:
                 assert len(args) == 1
                 print(args[0])
+
+    @classmethod
+    def _print_arg_ops(cls, args, indent):
+        for arg_num, arg_ops in enumerate(args):
+            print('{}arg {}:'.format(' ' * (indent+7), arg_num))
+            cls.print_ops(arg_ops, indent+9)
