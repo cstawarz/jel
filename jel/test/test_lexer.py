@@ -162,22 +162,22 @@ class TestLexer(LexerTestMixin, unittest.TestCase):
             self.assertToken('NEWLINE', '\n')
 
     def test_operators(self):
-        with self.input(': , / . == > >= < <= - % != + ** *'):
+        with self.input('+ - : , <= < >= > == != . * / % **'):
+            self.assertToken('ADDITIVEOP', '+')
+            self.assertToken('ADDITIVEOP', '-')
             self.assertToken('COLON', ':')
             self.assertToken('COMMA', ',')
-            self.assertToken('MULTIPLICATIVEOP', '/')
-            self.assertToken('DOT', '.')
-            self.assertToken('COMPARISONOP', '==')
-            self.assertToken('COMPARISONOP', '>')
-            self.assertToken('COMPARISONOP', '>=')
-            self.assertToken('COMPARISONOP', '<')
             self.assertToken('COMPARISONOP', '<=')
-            self.assertToken('ADDITIVEOP', '-')
-            self.assertToken('MULTIPLICATIVEOP', '%')
+            self.assertToken('COMPARISONOP', '<')
+            self.assertToken('COMPARISONOP', '>=')
+            self.assertToken('COMPARISONOP', '>')
+            self.assertToken('COMPARISONOP', '==')
             self.assertToken('COMPARISONOP', '!=')
-            self.assertToken('ADDITIVEOP', '+')
-            self.assertToken('POWER', '**')
+            self.assertToken('DOT', '.')
             self.assertToken('MULTIPLICATIVEOP', '*')
+            self.assertToken('MULTIPLICATIVEOP', '/')
+            self.assertToken('MULTIPLICATIVEOP', '%')
+            self.assertToken('POWER', '**')
 
     def test_identifiers(self):
         with self.input('a A z Z foo Bar12 FOO_bar _ _foo _f1 F_0_9 2_ 23foo'):
