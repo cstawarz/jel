@@ -49,6 +49,8 @@ class Parser(JELParser):
                                     ASSIGN \
                                     chained_assignment_stmt
         '''
+        p[3].lineno += (p.lineno(2),)
+        p[3].lexpos += (p.lexpos(2),)
         p[3].targets += (p[1],)
         p[0] = p[3]
 
@@ -56,8 +58,8 @@ class Parser(JELParser):
         '''
         chained_assignment_stmt : assignment_target ASSIGN expr
         '''
-        p[0] = ast.ChainedAssignmentStmt(p.lineno(2),
-                                         p.lexpos(2),
+        p[0] = ast.ChainedAssignmentStmt((p.lineno(2),),
+                                         (p.lexpos(2),),
                                          targets = (p[1],),
                                          value = p[3])
 

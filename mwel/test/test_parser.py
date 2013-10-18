@@ -46,22 +46,24 @@ class TestParser(ParserTestMixin, unittest.TestCase):
                 self.assertEqual(1, len(p.statements))
                 p = p.statements[0]
                 self.assertIsInstance(p, ast.ChainedAssignmentStmt)
-                self.assertLocation(p, 1, lexpos)
+                self.assertLocation(p, (1,), lexpos)
                 self.assertIsInstance(p.targets, tuple)
                 self.assertEqual(1, len(p.targets))
                 self.assertIsInstance(p.targets[0], target_type)
                 self.assertIsInstance(p.value, value_type)
 
-        test_assign('foo = 1', ast.IdentifierExpr, ast.NumberLiteralExpr, 4)
-        test_assign('foo.bar = foo', ast.AttributeExpr, ast.IdentifierExpr, 8)
-        test_assign('foo[bar] = 2*x+1', ast.SubscriptExpr, ast.BinaryOpExpr, 9)
+        test_assign('foo = 1', ast.IdentifierExpr, ast.NumberLiteralExpr, (4,))
+        test_assign('foo.bar = foo', ast.AttributeExpr, ast.IdentifierExpr,
+                    (8,))
+        test_assign('foo[bar] = 2*x+1', ast.SubscriptExpr, ast.BinaryOpExpr,
+                    (9,))
 
         with self.parse('foo[bar] = foo.bar = foo = 1') as p:
             self.assertIsInstance(p, ast.Module)
             self.assertEqual(1, len(p.statements))
             p = p.statements[0]
             self.assertIsInstance(p, ast.ChainedAssignmentStmt)
-            self.assertLocation(p, 1, 25)
+            self.assertLocation(p, (1,1,1), (25,19,9))
             
             self.assertIsInstance(p.targets, tuple)
             self.assertEqual(3, len(p.targets))

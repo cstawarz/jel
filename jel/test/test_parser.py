@@ -356,7 +356,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
         def test_comp(op):
             with self.parse('1 %s 2' % op) as p:
                 self.assertIsInstance(p, ast.ComparisonExpr)
-                self.assertLocation(p, 1, 2)
+                self.assertLocation(p, (1,), (2,))
                 self.assertEqual((op,), p.ops)
                 self.assertEqual((self.one, self.two), p.operands)
 
@@ -371,7 +371,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
 
         with self.parse('1 < 2 <= 3 not in [1,2]') as p:
             self.assertIsInstance(p, ast.ComparisonExpr)
-            self.assertLocation(p, 1, 2)
+            self.assertLocation(p, (1,1,1), (2,6,11))
             self.assertEqual(('<', '<=', 'not in'), p.ops)
             self.assertEqual((self.one, self.two, self.three, self.array_12),
                              p.operands)
@@ -379,7 +379,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
         # Parentheses break comparison chaining
         with self.parse('(1 < 2) != (1 > 3)') as p:
             self.assertIsInstance(p, ast.ComparisonExpr)
-            self.assertLocation(p, 1, 8)
+            self.assertLocation(p, (1,), (8,))
             self.assertEqual(('!=',), p.ops)
             self.assertEqual(
                 (
@@ -395,23 +395,31 @@ class TestParser(ParserTestMixin, unittest.TestCase):
         self._test_unary_op('not')
 
     def _test_logical_op(self, op, node_type):
-        def test_logical(expr, operands, lexpos):
+        def getlexpos(expr):
+            lexpos = []
+            start = 0
+            while True:
+                index = expr.find(op, start)
+                if index == -1:
+                    break
+                lexpos.append(index)
+                start = index+1
+            return tuple(lexpos)
+            
+        def test_logical(expr, operands):
             with self.parse(expr) as p:
                 self.assertIsInstance(p, node_type)
-                self.assertLocation(p, 1, lexpos)
+                self.assertLocation(p, (1,)*(len(operands)-1), getlexpos(expr))
                 self.assertEqual(operands, p.operands)
 
-        test_logical('1 %s 2' % op, (self.one, self.two), 2)
+        test_logical('1 %s 2' % op, (self.one, self.two))
 
         test_logical('1 %s 2 %s 3' % (op, op),
-                     (self.one, self.two, self.three),
-                     2)
+                     (self.one, self.two, self.three))
         test_logical('(1 %s 2) %s 3' % (op, op),
-                     (self.one, self.two, self.three),
-                     3)
+                     (self.one, self.two, self.three))
         test_logical('1 %s (2 %s 3)' % (op, op),
-                     (self.one, self.two, self.three),
-                     2)
+                     (self.one, self.two, self.three))
 
     def test_and_expr(self):
         self._test_logical_op('and', ast.AndExpr)

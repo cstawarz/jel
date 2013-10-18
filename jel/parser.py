@@ -50,11 +50,15 @@ class Parser(object):
 
     def logical_op(self, p, node_type):
         if isinstance(p[1], node_type):
+            p[1].lineno += (p.lineno(2),)
+            p[1].lexpos += (p.lexpos(2),)
             p[0] = p[1]
         else:
-            p[0] = node_type(p.lineno(2), p.lexpos(2), operands=(p[1],))
+            p[0] = node_type((p.lineno(2),), (p.lexpos(2),), operands=(p[1],))
 
         if isinstance(p[3], node_type):
+            p[0].lineno += p[3].lineno
+            p[0].lexpos += p[3].lexpos
             p[0].operands += p[3].operands
         else:
             p[0].operands += (p[3],)
@@ -101,12 +105,14 @@ class Parser(object):
 
     def comparison_op(self, p):
         if isinstance(p[1], ast.ComparisonExpr) and (not p[1]._parenthetic):
+            p[1].lineno += (p.lineno(2),)
+            p[1].lexpos += (p.lexpos(2),)
             p[1].ops += (p[2],)
             p[1].operands += (p[3],)
             p[0] = p[1]
         else:
-            p[0] = ast.ComparisonExpr(p.lineno(2),
-                                      p.lexpos(2),
+            p[0] = ast.ComparisonExpr((p.lineno(2),),
+                                      (p.lexpos(2),),
                                       ops = (p[2],),
                                       operands = (p[1], p[3]))
 
