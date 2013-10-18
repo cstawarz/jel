@@ -47,21 +47,13 @@ class Lexer(object):
     t_INITIAL_nlescape_ignore = ' \t\r'
     t_msstring_mdstring_sstring_dstring_ignore = ''
 
+    t_ADDITIVEOP = r'\+|-'
     t_COLON = r':'
     t_COMMA = r','
-    t_DIVIDE = r'/'
+    t_COMPARISONOP = r'<=|<|>=|>|==|!='
     t_DOT = r'\.'
-    t_EQUAL = r'=='
-    t_GREATERTHAN = r'>'
-    t_GREATERTHANOREQUAL = r'>='
-    t_LESSTHAN = r'<'
-    t_LESSTHANOREQUAL = r'<='
-    t_MINUS = r'-'
-    t_MODULO = r'%'
-    t_NOTEQUAL = r'!='
-    t_PLUS = r'\+'
+    t_MULTIPLICATIVEOP = r'\*(?!\*)|/|%'
     t_POWER = r'\*\*'
-    t_TIMES = r'\*'
 
     def begin_string(self, t, state):
         t.lexer.push_state(state)

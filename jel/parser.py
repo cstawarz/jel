@@ -92,8 +92,11 @@ class Parser(object):
 
     def p_comparison_expr(self, p):
         '''
-        comparison_expr : comparison_expr comparison_op additive_expr
+        comparison_expr : comparison_expr COMPARISONOP additive_expr
         '''
+        self.comparison_op(p)
+
+    def comparison_op(self, p):
         if isinstance(p[1], ast.ComparisonExpr) and (not p[1]._parenthetic):
             p[1].ops += (p[2],)
             p[1].operands += (p[3],)
@@ -101,33 +104,29 @@ class Parser(object):
         else:
             p[0] = ast.ComparisonExpr(ops=(p[2],), operands=(p[1], p[3]))
 
+    def p_comparison_expr_in(self, p):
+        '''
+        comparison_expr : comparison_expr IN additive_expr
+        '''
+        self.comparison_op(p)
+
+    def p_comparison_expr_not_in(self, p):
+        '''
+        comparison_expr : comparison_expr NOT IN additive_expr
+        '''
+        p[2] = 'not in'
+        p[3] = p[4]
+        self.comparison_op(p)
+
     def p_comparison_expr_passthrough(self, p):
         '''
         comparison_expr : additive_expr
         '''
         self.same(p)
 
-    def p_comparison_op(self, p):
-        '''
-        comparison_op : LESSTHAN
-                      | LESSTHANOREQUAL
-                      | GREATERTHAN
-                      | GREATERTHANOREQUAL
-                      | NOTEQUAL
-                      | EQUAL
-                      | IN
-        '''
-        self.same(p)
-
-    def p_comparison_op_NOT_IN(self, p):
-        '''
-        comparison_op : NOT IN
-        '''
-        p[0] = p[1] + ' ' + p[2]
-
     def p_additive_expr(self, p):
         '''
-        additive_expr : additive_expr plus_or_minus multiplicative_expr
+        additive_expr : additive_expr ADDITIVEOP multiplicative_expr
                       | multiplicative_expr
         '''
         self.binary_op(p)
@@ -141,32 +140,17 @@ class Parser(object):
 
     def p_multiplicative_expr(self, p):
         '''
-        multiplicative_expr : multiplicative_expr multiplicative_op unary_expr
+        multiplicative_expr : multiplicative_expr MULTIPLICATIVEOP unary_expr
                             | unary_expr
         '''
         self.binary_op(p)
 
-    def p_multiplicative_op(self, p):
-        '''
-        multiplicative_op : TIMES
-                          | DIVIDE
-                          | MODULO
-        '''
-        self.same(p)
-
     def p_unary_expr(self, p):
         '''
-        unary_expr : plus_or_minus unary_expr
+        unary_expr : ADDITIVEOP unary_expr
                    | exponentiation_expr
         '''
         self.unary_op(p)
-
-    def p_plus_or_minus(self, p):
-        '''
-        plus_or_minus : PLUS
-                      | MINUS
-        '''
-        self.same(p)
 
     def p_exponentiation_expr(self, p):
         '''

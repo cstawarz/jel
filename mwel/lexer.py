@@ -10,7 +10,6 @@ class Lexer(JELLexer):
         )
 
     t_ASSIGN = r'='
-    t_MINUSASSIGN = r'-='
-    t_PLUSASSIGN = r'\+='
+    t_AUGASSIGN = r'(\+|-)='
 
     t_ignore_comment = r'\#[^\n]*'

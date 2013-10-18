@@ -21,8 +21,8 @@ class TestLexer(LexerTestMixin, unittest.TestCase):
     def test_operators(self):
         with self.input('= -= +='):
             self.assertToken('ASSIGN', '=')
-            self.assertToken('MINUSASSIGN', '-=')
-            self.assertToken('PLUSASSIGN', '+=')
+            self.assertToken('AUGASSIGN', '-=')
+            self.assertToken('AUGASSIGN', '+=')
 
     def test_comments(self):
         with self.input('   # foo # 123 abc'):

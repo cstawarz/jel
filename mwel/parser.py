@@ -60,9 +60,7 @@ class Parser(JELParser):
 
     def p_augmented_assignment_stmt(self, p):
         '''
-        augmented_assignment_stmt : assignment_target \
-                                      augmented_assignment_op \
-                                      expr
+        augmented_assignment_stmt : assignment_target AUGASSIGN expr
         '''
         p[0] = ast.AugmentedAssignmentStmt(target = p[1],
                                            op = p[2],
@@ -73,13 +71,6 @@ class Parser(JELParser):
         assignment_target : subscript_expr
                           | attribute_expr
                           | identifier_expr
-        '''
-        self.same(p)
-
-    def p_augmented_assignment_op(self, p):
-        '''
-        augmented_assignment_op : PLUSASSIGN
-                                | MINUSASSIGN
         '''
         self.same(p)
 
