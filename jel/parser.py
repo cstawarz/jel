@@ -52,7 +52,7 @@ class Parser(object):
         if isinstance(p[1], node_type):
             p[0] = p[1]
         else:
-            p[0] = node_type(operands=(p[1],))
+            p[0] = node_type(p.lineno(2), p.lexpos(2), operands=(p[1],))
 
         if isinstance(p[3], node_type):
             p[0].operands += p[3].operands
@@ -86,7 +86,10 @@ class Parser(object):
 
     def unary_op(self, p):
         if len(p) == 3:
-            p[0] = ast.UnaryOpExpr(op=p[1], operand=p[2])
+            p[0] = ast.UnaryOpExpr(p.lineno(1),
+                                   p.lexpos(1),
+                                   op = p[1],
+                                   operand = p[2])
         else:
             self.same(p)
 
@@ -102,7 +105,10 @@ class Parser(object):
             p[1].operands += (p[3],)
             p[0] = p[1]
         else:
-            p[0] = ast.ComparisonExpr(ops=(p[2],), operands=(p[1], p[3]))
+            p[0] = ast.ComparisonExpr(p.lineno(2),
+                                      p.lexpos(2),
+                                      ops = (p[2],),
+                                      operands = (p[1], p[3]))
 
     def p_comparison_expr_in(self, p):
         '''
@@ -133,7 +139,9 @@ class Parser(object):
 
     def binary_op(self, p):
         if len(p) == 4:
-            p[0] = ast.BinaryOpExpr(op = p[2],
+            p[0] = ast.BinaryOpExpr(p.lineno(2),
+                                    p.lexpos(2),
+                                    op = p[2],
                                     operands = (p[1], p[3]))
         else:
             self.same(p)

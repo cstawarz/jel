@@ -286,14 +286,15 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             self.assertEqual((self.one,), inner.args)
 
     def _test_binary_op(self, op, sibling_ops=(), left_assoc=True):
-        def test_binop(expr, operands):
+        def test_binop(expr, operands, lexpos):
             with self.parse(expr) as p:
                 self.assertIsInstance(p, ast.BinaryOpExpr)
+                self.assertLocation(p, 1, lexpos)
                 self.assertEqual(op, p.op)
                 assert len(operands) == 2
                 self.assertEqual(operands, p.operands)
                 
-        test_binop('1 %s 2' % op, (self.one, self.two))
+        test_binop('1 %s 2' % op, (self.one, self.two), 2)
 
         for other_op in (op,) + sibling_ops:
             if left_assoc:
@@ -302,6 +303,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
                     (ast.BinaryOpExpr(op = other_op,
                                      operands = (self.one, self.two)),
                      self.three),
+                    6,
                     )
             else:
                 test_binop(
@@ -309,12 +311,14 @@ class TestParser(ParserTestMixin, unittest.TestCase):
                     (self.one,
                      ast.BinaryOpExpr(op = other_op,
                                      operands = (self.two, self.three))),
+                    2,
                     )
 
     def _test_unary_op(self, op):
         def test_unop(expr, operand):
             with self.parse(expr) as p:
                 self.assertIsInstance(p, ast.UnaryOpExpr)
+                self.assertLocation(p, 1, 0)
                 self.assertEqual(op, p.op)
                 self.assertEqual(operand, p.operand)
                 
@@ -329,6 +333,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
 
         with self.parse('2**-1') as p:
             self.assertIsInstance(p, ast.BinaryOpExpr)
+            self.assertLocation(p, 1, 1)
             self.assertEqual('**', p.op)
             self.assertEqual((self.two,
                               ast.UnaryOpExpr(op='-', operand=self.one)),
@@ -351,6 +356,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
         def test_comp(op):
             with self.parse('1 %s 2' % op) as p:
                 self.assertIsInstance(p, ast.ComparisonExpr)
+                self.assertLocation(p, 1, 2)
                 self.assertEqual((op,), p.ops)
                 self.assertEqual((self.one, self.two), p.operands)
 
@@ -365,6 +371,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
 
         with self.parse('1 < 2 <= 3 not in [1,2]') as p:
             self.assertIsInstance(p, ast.ComparisonExpr)
+            self.assertLocation(p, 1, 2)
             self.assertEqual(('<', '<=', 'not in'), p.ops)
             self.assertEqual((self.one, self.two, self.three, self.array_12),
                              p.operands)
@@ -372,6 +379,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
         # Parentheses break comparison chaining
         with self.parse('(1 < 2) != (1 > 3)') as p:
             self.assertIsInstance(p, ast.ComparisonExpr)
+            self.assertLocation(p, 1, 8)
             self.assertEqual(('!=',), p.ops)
             self.assertEqual(
                 (
@@ -386,23 +394,30 @@ class TestParser(ParserTestMixin, unittest.TestCase):
     def test_not_expr(self):
         self._test_unary_op('not')
 
-    def _test_binary_logical(self, op, node_type):
-        def test_logical(expr, *operands):
+    def _test_logical_op(self, op, node_type):
+        def test_logical(expr, operands, lexpos):
             with self.parse(expr) as p:
                 self.assertIsInstance(p, node_type)
+                self.assertLocation(p, 1, lexpos)
                 self.assertEqual(operands, p.operands)
 
-        test_logical('1 %s 2' % op, self.one, self.two)
+        test_logical('1 %s 2' % op, (self.one, self.two), 2)
 
-        test_logical('1 %s 2 %s 3' % (op, op), self.one, self.two, self.three)
-        test_logical('(1 %s 2) %s 3' % (op, op), self.one, self.two, self.three)
-        test_logical('1 %s (2 %s 3)' % (op, op), self.one, self.two, self.three)
+        test_logical('1 %s 2 %s 3' % (op, op),
+                     (self.one, self.two, self.three),
+                     2)
+        test_logical('(1 %s 2) %s 3' % (op, op),
+                     (self.one, self.two, self.three),
+                     3)
+        test_logical('1 %s (2 %s 3)' % (op, op),
+                     (self.one, self.two, self.three),
+                     2)
 
     def test_and_expr(self):
-        self._test_binary_logical('and', ast.AndExpr)
+        self._test_logical_op('and', ast.AndExpr)
 
     def test_or_expr(self):
-        self._test_binary_logical('or', ast.OrExpr)
+        self._test_logical_op('or', ast.OrExpr)
 
     def test_precedence(self):
         x = ast.IdentifierExpr(value='x')
