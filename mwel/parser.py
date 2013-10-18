@@ -16,7 +16,7 @@ class Parser(JELParser):
         module : newline stmt_list
                | stmt_list
         '''
-        p[0] = ast.Module(statements=(p[2] if len(p) == 3 else p[1]))
+        p[0] = ast.Module(1, 0, statements=(p[2] if len(p) == 3 else p[1]))
 
     def p_stmt_list(self, p):
         '''
@@ -56,13 +56,18 @@ class Parser(JELParser):
         '''
         chained_assignment_stmt : assignment_target ASSIGN expr
         '''
-        p[0] = ast.ChainedAssignmentStmt(targets=(p[1],), value=p[3])
+        p[0] = ast.ChainedAssignmentStmt(p.lineno(2),
+                                         p.lexpos(2),
+                                         targets = (p[1],),
+                                         value = p[3])
 
     def p_augmented_assignment_stmt(self, p):
         '''
         augmented_assignment_stmt : assignment_target AUGASSIGN expr
         '''
-        p[0] = ast.AugmentedAssignmentStmt(target = p[1],
+        p[0] = ast.AugmentedAssignmentStmt(p.lineno(2),
+                                           p.lexpos(2),
+                                           target = p[1],
                                            op = p[2],
                                            value = p[3])
 
@@ -78,7 +83,10 @@ class Parser(JELParser):
         '''
         local_stmt : LOCAL identifier_expr ASSIGN expr
         '''
-        p[0] = ast.LocalStmt(name=p[2].value, value=p[4])
+        p[0] = ast.LocalStmt(p.lineno(1),
+                             p.lexpos(1),
+                             name = p[2].value,
+                             value = p[4])
 
     def p_call_stmt(self, p):
         '''
@@ -91,7 +99,11 @@ class Parser(JELParser):
         '''
         simple_call_stmt : call_expr
         '''
-        p[0] = ast.CallStmt(head=p[1], body=None, tail=None)
+        p[0] = ast.CallStmt(p[1].lineno,
+                            p[1].lexpos,
+                            head = p[1],
+                            body = None,
+                            tail = None)
 
     def p_compound_call_stmt(self, p):
         '''
@@ -136,7 +148,9 @@ class Parser(JELParser):
                          stmt_list \
                          END
         '''
-        p[0] = ast.FunctionStmt(name = p[2].value,
+        p[0] = ast.FunctionStmt(p.lineno(1),
+                                p.lexpos(1),
+                                name = p[2].value,
                                 args = p[3],
                                 body = p[6],
                                 local = False)
@@ -153,7 +167,9 @@ class Parser(JELParser):
         return_stmt : RETURN expr
                     | RETURN
         '''
-        p[0] = ast.ReturnStmt(value=(p[2] if len(p) == 3 else None))
+        p[0] = ast.ReturnStmt(p.lineno(1),
+                              p.lexpos(1),
+                              value = (p[2] if len(p) == 3 else None))
 
     def p_call_arg_list_named(self, p):
         '''
@@ -185,7 +201,7 @@ class Parser(JELParser):
         '''
         function_expr : FUNCTION function_args expr END
         '''
-        p[0] = ast.FunctionExpr(args=p[2], body=p[3])
+        p[0] = ast.FunctionExpr(p.lineno(1), p.lexpos(1), args=p[2], body=p[3])
 
     def p_function_args(self, p):
         '''
@@ -212,6 +228,8 @@ class Parser(JELParser):
         array_item : expr COLON expr COLON expr
                    | expr COLON expr
         '''
-        p[0] = ast.ArrayItemRange(start = p[1],
+        p[0] = ast.ArrayItemRange(p.lineno(2),
+                                  p.lexpos(2),
+                                  start = p[1],
                                   stop = p[3],
                                   step = (p[5] if len(p) == 6 else None))

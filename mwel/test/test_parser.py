@@ -18,6 +18,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
         def test_module(src):
             with self.parse(src) as p:
                 self.assertIsInstance(p, ast.Module)
+                self.assertLocation(p, 1, 0)
                 self.assertIsInstance(p.statements, tuple)
                 self.assertEqual(0, len(p.statements))
 
@@ -32,32 +33,35 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             ''') as p:
             
             self.assertIsInstance(p, ast.Module)
+            self.assertLocation(p, 1, 0)
             self.assertIsInstance(p.statements, tuple)
             self.assertEqual(2, len(p.statements))
             self.assertIsInstance(p.statements[0], ast.LocalStmt)
             self.assertIsInstance(p.statements[1], ast.LocalStmt)
 
     def test_chained_assignment(self):
-        def test_assign(src, target_type, value_type):
+        def test_assign(src, target_type, value_type, lexpos):
             with self.parse(src) as p:
                 self.assertIsInstance(p, ast.Module)
                 self.assertEqual(1, len(p.statements))
                 p = p.statements[0]
                 self.assertIsInstance(p, ast.ChainedAssignmentStmt)
+                self.assertLocation(p, 1, lexpos)
                 self.assertIsInstance(p.targets, tuple)
                 self.assertEqual(1, len(p.targets))
                 self.assertIsInstance(p.targets[0], target_type)
                 self.assertIsInstance(p.value, value_type)
 
-        test_assign('foo = 1', ast.IdentifierExpr, ast.NumberLiteralExpr)
-        test_assign('foo.bar = foo', ast.AttributeExpr, ast.IdentifierExpr)
-        test_assign('foo[bar] = 2*x+1', ast.SubscriptExpr, ast.BinaryOpExpr)
+        test_assign('foo = 1', ast.IdentifierExpr, ast.NumberLiteralExpr, 4)
+        test_assign('foo.bar = foo', ast.AttributeExpr, ast.IdentifierExpr, 8)
+        test_assign('foo[bar] = 2*x+1', ast.SubscriptExpr, ast.BinaryOpExpr, 9)
 
         with self.parse('foo[bar] = foo.bar = foo = 1') as p:
             self.assertIsInstance(p, ast.Module)
             self.assertEqual(1, len(p.statements))
             p = p.statements[0]
             self.assertIsInstance(p, ast.ChainedAssignmentStmt)
+            self.assertLocation(p, 1, 25)
             
             self.assertIsInstance(p.targets, tuple)
             self.assertEqual(3, len(p.targets))
@@ -75,20 +79,29 @@ class TestParser(ParserTestMixin, unittest.TestCase):
 
     def test_augmented_assignment(self):
         def test_op(op):
-            def test_assign(src, target_type, value_type):
+            def test_assign(src, target_type, value_type, lexpos):
                 with self.parse(src % op) as p:
                     self.assertIsInstance(p, ast.Module)
                     self.assertEqual(1, len(p.statements))
                     p = p.statements[0]
                     self.assertIsInstance(p, ast.AugmentedAssignmentStmt)
+                    self.assertLocation(p, 1, lexpos)
                     self.assertIsInstance(p.target, target_type)
                     self.assertEqual(op, p.op)
                     self.assertIsInstance(p.value, value_type)
 
-            test_assign('foo %s 1', ast.IdentifierExpr, ast.NumberLiteralExpr)
-            test_assign('foo.bar %s foo', ast.AttributeExpr, ast.IdentifierExpr)
-            test_assign('foo[bar] %s 2*x+1', ast.SubscriptExpr,
-                        ast.BinaryOpExpr)
+            test_assign('foo %s 1',
+                        ast.IdentifierExpr,
+                        ast.NumberLiteralExpr,
+                        4)
+            test_assign('foo.bar %s foo',
+                        ast.AttributeExpr,
+                        ast.IdentifierExpr,
+                        8)
+            test_assign('foo[bar] %s 2*x+1',
+                        ast.SubscriptExpr,
+                        ast.BinaryOpExpr,
+                        9)
 
         test_op('+=')
         test_op('-=')
@@ -108,6 +121,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             self.assertEqual(1, len(p.statements))
             p = p.statements[0]
             self.assertIsInstance(p, ast.LocalStmt)
+            self.assertLocation(p, 1, 0)
             self.assertEqual('foo', p.name)
             self.assertEqual(self.one, p.value)
 
@@ -115,13 +129,14 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             self.assertError(token='\n')
 
     def test_simple_call_stmt(self):
-        def test_call(src, target_type, args):
+        def test_call(src, target_type, args, lexpos):
             with self.parse(src) as p:
                 self.assertIsInstance(p, ast.Module)
                 self.assertEqual(1, len(p.statements))
                 p = p.statements[0]
                 
                 self.assertIsInstance(p, ast.CallStmt)
+                self.assertLocation(p, 1, lexpos)
                 self.assertIsInstance(p.head, ast.CallExpr)
                 self.assertIsNone(p.body)
                 self.assertIsNone(p.tail)
@@ -130,20 +145,22 @@ class TestParser(ParserTestMixin, unittest.TestCase):
                 self.assertIsInstance(p.target, target_type)
                 self.assertEqual(args, p.args)
 
-        test_call('foo()', ast.IdentifierExpr, ())
-        test_call('a.b(1)', ast.AttributeExpr, (self.one,))
+        test_call('foo()', ast.IdentifierExpr, (), 3)
+        test_call('a.b(1)', ast.AttributeExpr, (self.one,), 3)
         test_call('(x+2*y)(foo, [1,2],)',
                   ast.BinaryOpExpr,
-                  (self.foo, self.array_12))
+                  (self.foo, self.array_12),
+                  7)
 
         def od(*args):
             return collections.OrderedDict(zip(args[:-1:2], args[1::2]))
 
         # Named args
-        test_call('foo(a=1)', ast.IdentifierExpr, od('a', self.one))
+        test_call('foo(a=1)', ast.IdentifierExpr, od('a', self.one), 3)
         test_call('a.b(foo = foo, bar=[1,2],)',
                   ast.AttributeExpr,
-                  od('foo', self.foo, 'bar', self.array_12))
+                  od('foo', self.foo, 'bar', self.array_12),
+                  3)
 
         with self.parse('foo(1, a=2)'):
             self.assertError(token='=')
@@ -161,6 +178,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             p = p.statements[0]
             
             self.assertIsInstance(p, ast.CallStmt)
+            self.assertLocation(p, 2, 29)
             self.assertIsInstance(p.head, ast.CallExpr)
             self.assertIsInstance(p.body, tuple)
             self.assertEqual(0, len(p.body))
@@ -179,6 +197,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             p = p.statements[0]
             
             self.assertIsInstance(p, ast.CallStmt)
+            self.assertLocation(p, 2, 30)
             self.assertIsInstance(p.head, ast.CallExpr)
             self.assertIsInstance(p.body, tuple)
             self.assertEqual(1, len(p.body))
@@ -186,6 +205,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             p = p.tail
             
             self.assertIsInstance(p, ast.CallStmt)
+            self.assertLocation(p, 4, 152)
             self.assertIsInstance(p.head, ast.CallExpr)
             self.assertIsInstance(p.body, tuple)
             self.assertEqual(2, len(p.body))
@@ -208,6 +228,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             p = p.statements[0]
             
             self.assertIsInstance(p, ast.CallStmt)
+            self.assertLocation(p, 2, 28)
             self.assertIsInstance(p.head, ast.CallExpr)
             self.assertIsInstance(p.body, tuple)
             self.assertEqual(2, len(p.body))
@@ -215,6 +236,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             p = p.tail
             
             self.assertIsInstance(p, ast.CallStmt)
+            self.assertLocation(p, 5, 155)
             self.assertIsInstance(p.head, ast.CallExpr)
             self.assertIsInstance(p.body, tuple)
             self.assertEqual(1, len(p.body))
@@ -222,6 +244,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             p = p.tail
             
             self.assertIsInstance(p, ast.CallStmt)
+            self.assertLocation(p, 7, 233)
             self.assertIsInstance(p.head, ast.CallExpr)
             self.assertIsInstance(p.body, tuple)
             self.assertEqual(0, len(p.body))
@@ -243,6 +266,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
                 self.assertEqual(1, len(p.statements))
                 p = p.statements[0]
                 self.assertIsInstance(p, ast.FunctionStmt)
+                self.assertLocation(p, 2, (25 if local else 19))
                 self.assertEqual(name, p.name)
                 self.assertEqual(args, p.args)
                 self.assertIsInstance(p.body, tuple)
@@ -276,6 +300,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
                 self.assertEqual(1, len(p.statements))
                 p = p.statements[0]
                 self.assertIsInstance(p, ast.ReturnStmt)
+                self.assertLocation(p, 1, 0)
                 self.assertEqual(value, p.value)
 
         test_return('return foo', self.foo)
@@ -291,6 +316,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
                 self.assertIsInstance(p, ast.LocalStmt)
                 self.assertIsInstance(p.value, ast.FunctionExpr)
                 p = p.value
+                self.assertLocation(p, 1, 10)
                 self.assertEqual(args, p.args)
                 self.assertIsInstance(p.body, expr_type)
 
@@ -304,7 +330,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             self.assertError(token='end')
 
     def test_array_item_range(self):
-        with self.parse('local arr = [1, 2:(1+2), foo:9:f(4), 2]') as p:
+        with self.parse('local arr = [1, 2:(1+2), foo:3:f(4), 2]') as p:
             self.assertIsInstance(p, ast.Module)
             self.assertEqual(1, len(p.statements))
             p = p.statements[0]
@@ -318,6 +344,14 @@ class TestParser(ParserTestMixin, unittest.TestCase):
 
             p = items[1]
             self.assertIsInstance(p, ast.ArrayItemRange)
+            self.assertLocation(p, 1, 17)
             self.assertEqual(self.two, p.start)
             self.assertIsInstance(p.stop, ast.BinaryOpExpr)
             self.assertIsNone(p.step)
+
+            p = items[2]
+            self.assertIsInstance(p, ast.ArrayItemRange)
+            self.assertLocation(p, 1, 28)
+            self.assertEqual(self.foo, p.start)
+            self.assertEqual(self.three, p.stop)
+            self.assertIsInstance(p.step, ast.CallExpr)
