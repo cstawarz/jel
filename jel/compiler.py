@@ -10,7 +10,6 @@ class Compiler(object):
 
     op_names, op_codes = gen_codes(
         'BINARY_OP',
-        'BINARY_SUBSCR',
         'BUILD_ARRAY',
         'BUILD_OBJECT',
         'CALL_FUNCTION',
@@ -18,6 +17,7 @@ class Compiler(object):
         'LOAD_ATTR',
         'LOAD_CONST',
         'LOAD_NAME',
+        'LOAD_SUBSCR',
         'LOGICAL_AND',
         'LOGICAL_OR',
         'UNARY_OP',
@@ -88,7 +88,7 @@ class Compiler(object):
     def subscript_expr(self, node):
         self.genops(node.target)
         self.genops(node.value)
-        self.binary_subscr(node)
+        self.load_subscr(node.lineno, node.lexpos)
 
     def attribute_expr(self, node):
         self.genops(node.target)
@@ -109,8 +109,7 @@ class Compiler(object):
         self.load_const(node.lineno, node.lexpos, node.value)
 
     def number_literal_expr(self, node):
-        assert node.tag is None
-        self.load_const(node.lineno, node.lexpos, float(node.value))
+        self.load_const(node.lineno, node.lexpos, float(node.value), node.tag)
 
     def boolean_literal_expr(self, node):
         self.load_const(node.lineno, node.lexpos, node.value)
