@@ -153,3 +153,93 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
 
             with self.assertOpList(args[2]):
                 self.assertOp('LOAD_CONST', 1, 15, True)
+
+    def test_comparison_expr(self):
+        with self.compile('a < b <= c > d >= e != f == g in h not in i'):
+            args = self.assertOp('COMPARE_OP',
+                                 (1,1,1,1,1,1,1,1),
+                                 (2,6,11,15,20,25,30,35))
+            self.assertEqual(2, len(args))
+
+            ops = args[0]
+            self.assertEqual(8, len(ops))
+            op_codes = self.compiler.comparison_op_codes
+            self.assertEqual(op_codes['<'], ops[0])
+            self.assertEqual(op_codes['<='], ops[1])
+            self.assertEqual(op_codes['>'], ops[2])
+            self.assertEqual(op_codes['>='], ops[3])
+            self.assertEqual(op_codes['!='], ops[4])
+            self.assertEqual(op_codes['=='], ops[5])
+            self.assertEqual(op_codes['in'], ops[6])
+            self.assertEqual(op_codes['not in'], ops[7])
+
+            operand_ops = args[1]
+            self.assertEqual(9, len(operand_ops))
+            with self.assertOpList(operand_ops[0]):
+                self.assertOp('LOAD_NAME', 1, 0, 'a')
+            with self.assertOpList(operand_ops[1]):
+                self.assertOp('LOAD_NAME', 1, 4, 'b')
+            with self.assertOpList(operand_ops[2]):
+                self.assertOp('LOAD_NAME', 1, 9, 'c')
+            with self.assertOpList(operand_ops[3]):
+                self.assertOp('LOAD_NAME', 1, 13, 'd')
+            with self.assertOpList(operand_ops[4]):
+                self.assertOp('LOAD_NAME', 1, 18, 'e')
+            with self.assertOpList(operand_ops[5]):
+                self.assertOp('LOAD_NAME', 1, 23, 'f')
+            with self.assertOpList(operand_ops[6]):
+                self.assertOp('LOAD_NAME', 1, 28, 'g')
+            with self.assertOpList(operand_ops[7]):
+                self.assertOp('LOAD_NAME', 1, 33, 'h')
+            with self.assertOpList(operand_ops[8]):
+                self.assertOp('LOAD_NAME', 1, 42, 'i')
+
+    def test_unary_op_expr(self):
+        op_codes = self.compiler.unary_op_codes
+
+        with self.compile('not x'):
+            self.assertOp('LOAD_NAME', 1, 4, 'x')
+            self.assertOp('UNARY_OP', 1, 0, op_codes['not'])
+
+        with self.compile('+x'):
+            self.assertOp('LOAD_NAME', 1, 1, 'x')
+            self.assertOp('UNARY_OP', 1, 0, op_codes['+'])
+
+        with self.compile('-x'):
+            self.assertOp('LOAD_NAME', 1, 1, 'x')
+            self.assertOp('UNARY_OP', 1, 0, op_codes['-'])
+
+    def test_binary_op_expr(self):
+        def test_binop(op):
+            with self.compile('a %s b' % op):
+                self.assertOp('LOAD_NAME', 1, 0, 'a')
+                self.assertOp('LOAD_NAME', 1, len(op)+3, 'b')
+                self.assertOp('BINARY_OP', 1, 2,
+                              self.compiler.binary_op_codes[op])
+
+        test_binop('+')
+        test_binop('-')
+        test_binop('*')
+        test_binop('/')
+        test_binop('%')
+        test_binop('**')
+
+    def _test_logical_op(self, op, op_name):
+        with self.compile('a %s b %s c' % (op, op)):
+            args = self.assertOp(op_name, (1, 1), (2, len(op)+5))
+            self.assertEqual(3, len(args))
+
+            with self.assertOpList(args[0]):
+                self.assertOp('LOAD_NAME', 1, 0, 'a')
+
+            with self.assertOpList(args[1]):
+                self.assertOp('LOAD_NAME', 1, len(op)+3, 'b')
+
+            with self.assertOpList(args[2]):
+                self.assertOp('LOAD_NAME', 1, 2*len(op)+6, 'c')
+
+    def test_and_expr(self):
+        self._test_logical_op('and', 'LOGICAL_AND')
+
+    def test_or_expr(self):
+        self._test_logical_op('or', 'LOGICAL_OR')
