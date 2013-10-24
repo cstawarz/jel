@@ -96,7 +96,7 @@ class Compiler(object):
 
     def object_literal_expr(self, node):
         for key, value in node.items.items():
-            self.load_const(key)
+            self.load_const(node.lineno, node.lexpos, key)
             self.genops(value)
         self.build_object(node.lineno, node.lexpos, len(node.items))
 
