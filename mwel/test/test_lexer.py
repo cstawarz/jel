@@ -19,10 +19,14 @@ class TestLexer(LexerTestMixin, unittest.TestCase):
             self.assertToken('RETURN', 'return')
 
     def test_operators(self):
-        with self.input('= += -='):
+        with self.input('= += -= *= /= %= **='):
             self.assertToken('ASSIGN', '=')
             self.assertToken('AUGASSIGN', '+=')
             self.assertToken('AUGASSIGN', '-=')
+            self.assertToken('AUGASSIGN', '*=')
+            self.assertToken('AUGASSIGN', '/=')
+            self.assertToken('AUGASSIGN', '%=')
+            self.assertToken('AUGASSIGN', '**=')
 
     def test_comments(self):
         with self.input('   # foo # 123 abc'):

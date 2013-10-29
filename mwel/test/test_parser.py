@@ -107,6 +107,10 @@ class TestParser(ParserTestMixin, unittest.TestCase):
 
         test_op('+=')
         test_op('-=')
+        test_op('*=')
+        test_op('/=')
+        test_op('%=')
+        test_op('**=')
 
         with self.parse('1 += 2'):
             self.assertError(token='+=')

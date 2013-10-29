@@ -10,6 +10,10 @@ class Lexer(JELLexer):
         )
 
     t_ASSIGN = r'='
-    t_AUGASSIGN = r'(\+|-)='
+    t_AUGASSIGN = r'(%s)=' % r'|'.join((
+        JELLexer.t_ADDITIVEOP,
+        JELLexer.t_MULTIPLICATIVEOP,
+        JELLexer.t_POWER,
+        ))
 
     t_ignore_comment = r'\#[^\n]*'

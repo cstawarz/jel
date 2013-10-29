@@ -12,7 +12,7 @@ class CompilerTestMixin(object):
 
     def setUp(self):
         def error_logger(*info):
-            self.fail('unexpected error in input: %r' % info)
+            self.fail('unexpected error in input: ' + repr(info))
             
         l = self.lexer_class(error_logger)
         p = self.parser_class(l.tokens, error_logger)
