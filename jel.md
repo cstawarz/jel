@@ -1,5 +1,5 @@
-JEL ("JSON Expression Language")
-================================
+JSON Expression Language (JEL)
+==============================
 
 
 

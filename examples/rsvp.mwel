@@ -114,18 +114,21 @@ fixation_dot = stimulus.fixation_point (
     alpha_multiplier = 1.0,
     )
 
-RSVP_images = genlist(
-    RSVP_stim_counter, [1:100],
-    image_file (
-        path = format('images/RSVP_images/OSImage_%d.png', RSVP_stim_counter),
-        x_size = stm_size,
-        y_size = stm_size,
-        x_position = stm_pos_x,
-        y_position = stm_pos_y,
-        rotation = 0,
-        alpha_multiplier = 1,
-        )
-    )
+RSVP_images = []
+foreach (RSVP_stim_counter = [1:100]):
+    RSVP_images += [
+        image_file (
+            path = format('images/RSVP_images/OSImage_%d.png',
+                          RSVP_stim_counter),
+            x_size = stm_size,
+            y_size = stm_size,
+            x_position = stm_pos_x,
+            y_position = stm_pos_y,
+            rotation = 0,
+            alpha_multiplier = 1,
+            )
+        ]
+end
 
 
 #

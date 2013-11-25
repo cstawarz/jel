@@ -1,5 +1,5 @@
-MWEL ("MWorks Experiment Language")
-===================================
+MWorks Experiment Language (MWEL)
+=================================
 
 
 
@@ -64,7 +64,7 @@ As in Lua, functions are first-class values with proper lexical scoping.  As suc
 
 When a function created by a function definition statement or expression is called, its arguments are all evalutated and bound to local names within the function body, and then the body is executed.
 
-When a builtin function is called, it receives all its arguments (including all elements of the call statement body) as *unevaluated* expressions.  This allows the function to defer evaluation, selectively evaluate arguments, and/or inspect the AST.  (This is necessary because all control-flow constructs are implemented as functions.)
+When a builtin function is called, it receives all its arguments (including the call statement body) as *unevaluated* executable code.  This allows the function to defer evaluation and/or selectively evaluate arguments.  (This is necessary because all control-flow constructs are implemented as functions.)
 
 
 
