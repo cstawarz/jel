@@ -42,6 +42,11 @@ class ReturnStmt(Stmt):
     _fields = ('value',)
 
 
+class AttributeReferenceExpr(Expr):
+
+    _fields = ('target', 'name')
+
+
 class FunctionExpr(Expr):
 
     _fields = ('args', 'body')

@@ -174,6 +174,43 @@ class TestParser(ParserTestMixin, unittest.TestCase):
         with self.parse('foo("a"=2)'):
             self.assertError(token='=')
 
+    def test_simple_call_stmt_with_attribute_ref(self):
+        with self.parse('foo(a = 1, b <- x.y)') as p:
+            self.assertIsInstance(p, ast.Module)
+            self.assertEqual(1, len(p.statements))
+            p = p.statements[0]
+            
+            self.assertIsInstance(p, ast.CallStmt)
+            self.assertLocation(p, 1, 3)
+            self.assertIsInstance(p.head, ast.CallExpr)
+            self.assertIsNone(p.body)
+            self.assertIsNone(p.tail)
+
+            p = p.head
+            self.assertEqual(self.foo, p.target)
+            self.assertIsInstance(p.args, collections.OrderedDict)
+            args = tuple(p.args.items())
+
+            self.assertEqual('a', args[0][0])
+            self.assertEqual(self.one, args[0][1])
+            self.assertEqual('b', args[1][0])
+            p = args[1][1]
+
+            self.assertIsInstance(p, ast.AttributeReferenceExpr)
+            self.assertLocation(p, 1, 17)
+            self.assertIsInstance(p.target, ast.IdentifierExpr)
+            self.assertEqual('x', p.target.value)
+            self.assertEqual('y', p.name)
+
+        with self.parse('foo(a <- 2)'):
+            self.assertError(token=')')
+
+        with self.parse('foo(a <- x)'):
+            self.assertError(token=')')
+
+        with self.parse('foo(a <- x["y"])'):
+            self.assertError(token=')')
+
     def test_compound_call_stmt(self):
         with self.parse('''
                         foo ():

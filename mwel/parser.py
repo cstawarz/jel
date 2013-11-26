@@ -193,6 +193,16 @@ class Parser(JELParser):
         '''
         p[0] = (p[1].value, p[3])
 
+    def p_named_expr_list_item_attribute_ref(self, p):
+        '''
+        named_expr_list_item : identifier_expr BIND attribute_expr
+        '''
+        p[0] = (p[1].value,
+                ast.AttributeReferenceExpr(p[3].lineno,
+                                           p[3].lexpos,
+                                           target = p[3].target,
+                                           name = p[3].name))
+
     def p_primary_expr_function_expr(self, p):
         '''
         primary_expr : function_expr

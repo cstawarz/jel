@@ -148,7 +148,7 @@ class Compiler(object):
                 print()
                 cls._print_arg_ops(args, indent)
             elif op == 'LOAD_CONST':
-                print(repr(args[0]))
+                print(repr(args[0]) if len(args) == 1 else args)
             else:
                 assert len(args) <= 1
                 print(args[0] if args else '')

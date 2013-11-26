@@ -9,8 +9,8 @@ local mouse_input = iodevice.mouse_input ()
 itc = mouse_input  # Production device will be an ITC-18
 
 eye_monitor = filter.basic_eye_monitor (
-    eyeh_calibrated = mouse_input.mouse_position_x,
-    eyev_calibrated = mouse_input.mouse_position_y,
+    eyeh_calibrated <- mouse_input.mouse_position_x,
+    eyev_calibrated <- mouse_input.mouse_position_y,
     width_samples = 1,
     saccade_entry_speed = 60,
     saccade_exit_speed = 20,
