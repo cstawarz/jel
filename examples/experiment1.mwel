@@ -48,9 +48,8 @@ current_sample_image_index = selection (
     autoreset = false,
     )
 
-image_windows = []
-repeat (num_test_images):
-    image_windows += [
+image_windows = repeat (
+    function () (
         stimulus.fixation_point (
             color = 'black',
             trigger_width = image_size,
@@ -63,12 +62,12 @@ repeat (num_test_images):
             rotation = 0,
             alpha_multiplier = 0,  # Fully transparent
             )
-        ]
-end
+        ) end,
+    num_test_images,
+    )
 
-images = []
-foreach (index = [1:num_images:1]):
-    images += [
+images = map(
+    function (index) (
         stimulus.image_file (
             path = format('images/img%s.png', index),
             x_size = image_size,
@@ -78,8 +77,9 @@ foreach (index = [1:num_images:1]):
             rotation = 0,
             alpha_multiplier = 1,
             )
-        ]
-end
+        ) end,
+    [1:num_images:1],
+    )
 
 
 #
