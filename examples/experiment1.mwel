@@ -137,7 +137,7 @@ function present_sample_image ():
     sample_image.pos_y = 0
 
     display.queue (sample_image)
-    num_images_queue += 1
+    num_images_queued += 1
     display.update ()
 
     print ('Presenting sample image')
