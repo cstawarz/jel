@@ -104,16 +104,37 @@ class Parser(JELParser):
         p[0] = ast.CallStmt(p[1].lineno,
                             p[1].lexpos,
                             head = p[1],
+                            local_names = (),
                             body = None,
                             tail = None)
 
     def p_compound_call_stmt(self, p):
         '''
-        compound_call_stmt : simple_call_stmt call_stmt_body call_stmt_tail
+        compound_call_stmt : simple_call_stmt \
+                               call_stmt_local_names \
+                               call_stmt_body \
+                               call_stmt_tail
         '''
-        p[1].body = p[2]
-        p[1].tail = p[3]
+        p[1].local_names = p[2]
+        p[1].body = p[3]
+        p[1].tail = p[4]
         p[0] = p[1]
+
+    def p_call_stmt_local_names(self, p):
+        '''
+        call_stmt_local_names : RARROW call_stmt_local_name_list
+                              | empty
+        '''
+        p[0] = (p[2] if len(p) > 2 else ())
+
+    def p_call_stmt_local_name_list(self, p):
+        '''
+        call_stmt_local_name_list : identifier_expr \
+                                      COMMA \
+                                      call_stmt_local_name_list
+                                  | identifier_expr
+        '''
+        p[0] = (p[1].value,) + (p[3] if len(p) == 4 else ())
 
     def p_call_stmt_body(self, p):
         '''
@@ -195,7 +216,7 @@ class Parser(JELParser):
 
     def p_named_expr_list_item_attribute_ref(self, p):
         '''
-        named_expr_list_item : identifier_expr BIND attribute_expr
+        named_expr_list_item : identifier_expr LARROW attribute_expr
         '''
         p[0] = (p[1].value,
                 ast.AttributeReferenceExpr(p[3].lineno,

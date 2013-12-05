@@ -75,8 +75,6 @@ Call expressions (i.e. simple call statements) may be used as call statements on
 
 Compound call statements (i.e. those with a statement body) are not expressions and cannot return a result.
 
-Compound call statements can add local names to the environment in which their body statements execute.  For example, "while" could add a local "break" function that terminates execution of the body and exits the loop.  Similarly, "trial" could add local functions for accepting/rejecting selections.
-
 
 
 Modules

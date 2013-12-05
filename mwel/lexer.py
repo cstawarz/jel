@@ -18,6 +18,10 @@ class Lexer(JELLexer):
 
     t_ignore_comment = r'\#[^\n]*'
 
-    def t_BIND(self, t):
+    def t_LARROW(self, t):
         r'<-'
+        return t
+
+    def t_RARROW(self, t):
+        r'->'
         return t

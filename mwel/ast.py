@@ -29,7 +29,7 @@ class LocalStmt(Stmt):
 
 class CallStmt(Stmt):
 
-    _fields = ('head', 'body', 'tail')
+    _fields = ('head', 'local_names', 'body', 'tail')
 
 
 class FunctionStmt(Stmt):

@@ -230,7 +230,7 @@ local function eye_in_other_image_window ():
         return false
     end
 
-    foreach (i = [1:num_test_images-1]):
+    foreach ([1:num_test_images-1]) -> i:
         if (image_windows[i].eye_in_window):
             return true
         end
@@ -241,7 +241,7 @@ end
 
 
 function end_trial ():
-    foreach (i = [0:num_images_queued-1]):
+    foreach ([0:num_images_queued-1]) -> i:
         display.dequeue (images[current_sample_image_index[i]])
         display.dequeue (image_windows[i])
     end

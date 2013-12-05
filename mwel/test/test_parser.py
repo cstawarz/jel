@@ -223,6 +223,8 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             self.assertIsInstance(p, ast.CallStmt)
             self.assertLocation(p, 2, 29)
             self.assertIsInstance(p.head, ast.CallExpr)
+            self.assertIsInstance(p.local_names, tuple)
+            self.assertEqual(0, len(p.local_names))
             self.assertIsInstance(p.body, tuple)
             self.assertEqual(0, len(p.body))
             self.assertIsNone(p.tail)
@@ -242,6 +244,8 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             self.assertIsInstance(p, ast.CallStmt)
             self.assertLocation(p, 2, 30)
             self.assertIsInstance(p.head, ast.CallExpr)
+            self.assertIsInstance(p.local_names, tuple)
+            self.assertEqual(0, len(p.local_names))
             self.assertIsInstance(p.body, tuple)
             self.assertEqual(1, len(p.body))
             self.assertIsInstance(p.tail, ast.CallStmt)
@@ -250,6 +254,8 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             self.assertIsInstance(p, ast.CallStmt)
             self.assertLocation(p, 4, 152)
             self.assertIsInstance(p.head, ast.CallExpr)
+            self.assertIsInstance(p.local_names, tuple)
+            self.assertEqual(0, len(p.local_names))
             self.assertIsInstance(p.body, tuple)
             self.assertEqual(2, len(p.body))
             self.assertIsNone(p.tail)
@@ -273,6 +279,8 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             self.assertIsInstance(p, ast.CallStmt)
             self.assertLocation(p, 2, 28)
             self.assertIsInstance(p.head, ast.CallExpr)
+            self.assertIsInstance(p.local_names, tuple)
+            self.assertEqual(0, len(p.local_names))
             self.assertIsInstance(p.body, tuple)
             self.assertEqual(2, len(p.body))
             self.assertIsInstance(p.tail, ast.CallStmt)
@@ -281,6 +289,8 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             self.assertIsInstance(p, ast.CallStmt)
             self.assertLocation(p, 5, 155)
             self.assertIsInstance(p.head, ast.CallExpr)
+            self.assertIsInstance(p.local_names, tuple)
+            self.assertEqual(0, len(p.local_names))
             self.assertIsInstance(p.body, tuple)
             self.assertEqual(1, len(p.body))
             self.assertIsInstance(p.tail, ast.CallStmt)
@@ -289,6 +299,8 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             self.assertIsInstance(p, ast.CallStmt)
             self.assertLocation(p, 7, 233)
             self.assertIsInstance(p.head, ast.CallExpr)
+            self.assertIsInstance(p.local_names, tuple)
+            self.assertEqual(0, len(p.local_names))
             self.assertIsInstance(p.body, tuple)
             self.assertEqual(0, len(p.body))
             self.assertIsInstance(p.tail, tuple)
@@ -301,6 +313,53 @@ class TestParser(ParserTestMixin, unittest.TestCase):
                         end
                         ''') as p:
             self.assertError(token='else')
+
+    def test_compound_call_stmt_with_local_names(self):
+        with self.parse('''
+                        foreach ([1,2,3]) -> i:
+                        end
+                        ''') as p:
+            self.assertIsInstance(p, ast.Module)
+            self.assertEqual(1, len(p.statements))
+            p = p.statements[0]
+            
+            self.assertIsInstance(p, ast.CallStmt)
+            self.assertLocation(p, 2, 33)
+            self.assertIsInstance(p.head, ast.CallExpr)
+            self.assertIsInstance(p.local_names, tuple)
+            self.assertEqual(('i',), p.local_names)
+            self.assertIsInstance(p.body, tuple)
+            self.assertEqual(0, len(p.body))
+            self.assertIsNone(p.tail)
+
+        with self.parse('''
+                        unpack ([1,2,3]) -> foo, bar, blah:
+                        end
+                        ''') as p:
+            self.assertIsInstance(p, ast.Module)
+            self.assertEqual(1, len(p.statements))
+            p = p.statements[0]
+            
+            self.assertIsInstance(p, ast.CallStmt)
+            self.assertLocation(p, 2, 32)
+            self.assertIsInstance(p.head, ast.CallExpr)
+            self.assertIsInstance(p.local_names, tuple)
+            self.assertEqual(('foo', 'bar', 'blah'), p.local_names)
+            self.assertIsInstance(p.body, tuple)
+            self.assertEqual(0, len(p.body))
+            self.assertIsNone(p.tail)
+
+        with self.parse('''
+                        foreach ([1,2,3]) -> :
+                        end
+                        ''') as p:
+            self.assertError(token=':')
+
+        with self.parse('''
+                        foreach ([1,2,3]) -> x, y,:
+                        end
+                        ''') as p:
+            self.assertError(token=':')
 
     def test_function_stmt(self):
         def test_func(src, name, args, num_stmts, local=False):
