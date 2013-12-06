@@ -1,4 +1,6 @@
 from __future__ import division, print_function, unicode_literals
+import collections
+from contextlib import contextmanager
 
 from jel.compiler import Compiler as JELCompiler, gen_codes
 
@@ -10,17 +12,47 @@ class Compiler(JELCompiler):
     op_names, op_codes = gen_codes(
         'DUP_TOP',
         'DUP_TOP_TWO',
+        'INIT_LOCAL',
+        'LOAD_GLOBAL',
+        'LOAD_LOCAL',
+        'POP_SCOPE',
+        'PUSH_SCOPE',
         'ROT_THREE',
         'ROT_TWO',
         'STORE_ATTR',
+        'STORE_GLOBAL',
+        'STORE_LOCAL',
         'STORE_NAME',
         'STORE_SUBSCR',
         *JELCompiler.op_names
         )
 
+    def __init__(self):
+        super(Compiler, self).__init__()
+        self._local_names = collections.deque()
+
+    def _new_scope(self, lineno, lexpos, toplevel=False):
+        @contextmanager
+        def scope():
+            self._local_names.appendleft(set())
+            if not toplevel:
+                self.push_scope(lineno, lexpos)
+            yield
+            if not toplevel:
+                self.pop_scope(lineno, lexpos)
+            self._local_names.popleft()
+        return scope()
+
+    def _name_depth(self, name):
+        for depth, local_names in enumerate(self._local_names):
+            if name in local_names:
+                return depth
+        return -1
+
     def module(self, node):
-        for stmt in node.statements:
-            self.genops(stmt)
+        with self._new_scope(node.lineno, node.lexpos, toplevel=True):
+            for stmt in node.statements:
+                self.genops(stmt)
 
     def chained_assignment_stmt(self, node):
         self.genops(node.value)
@@ -40,7 +72,13 @@ class Compiler(JELCompiler):
                 self.store_attr(ln, lp, t.name)
             else:
                 assert isinstance(t, ast.IdentifierExpr)
-                self.store_name(ln, lp, t.value)
+                name_depth = self._name_depth(t.value)
+                if name_depth < 0:
+                    self.store_global(ln, lp, t.value)
+                elif name_depth == 0:
+                    self.store_local(ln, lp, t.value)
+                else:
+                    assert False
 
     def augmented_assignment_stmt(self, node):
         if isinstance(node.target, ast.SubscriptExpr):
@@ -74,4 +112,24 @@ class Compiler(JELCompiler):
             self.rot_two(node.lineno, node.lexpos)
             self.store_attr(node.lineno, node.lexpos, node.target.name)
         else:
-            self.store_name(node.lineno, node.lexpos, node.target.value)
+            name_depth = self._name_depth(node.target.value)
+            if name_depth < 0:
+                self.store_global(node.lineno, node.lexpos, node.target.value)
+            elif name_depth == 0:
+                self.store_local(node.lineno, node.lexpos, node.target.value)
+            else:
+                assert False
+
+    def local_stmt(self, node):
+        self.genops(node.value)
+        self.init_local(node.lineno, node.lexpos, node.name)
+        self._local_names[0].add(node.name)
+
+    def identifier_expr(self, node):
+        name_depth = self._name_depth(node.value)
+        if name_depth < 0:
+            self.load_global(node.lineno, node.lexpos, node.value)
+        elif name_depth == 0:
+            self.load_local(node.lineno, node.lexpos, node.value)
+        else:
+            assert False

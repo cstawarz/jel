@@ -17,17 +17,17 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
     def test_chained_assignment_stmt(self):
         with self.compile('foo = true'):
             self.assertOp('LOAD_CONST', 1, 6, True)
-            self.assertOp('STORE_NAME', 1, 4, 'foo')
+            self.assertOp('STORE_GLOBAL', 1, 4, 'foo')
 
         with self.compile('a[b] = c.d = e = null'):
             self.assertOp('LOAD_CONST', 1, 17, None)
             self.assertOp('DUP_TOP', 1, 15)
-            self.assertOp('STORE_NAME', 1, 15, 'e')
+            self.assertOp('STORE_GLOBAL', 1, 15, 'e')
             self.assertOp('DUP_TOP', 1, 11)
-            self.assertOp('LOAD_NAME', 1, 7, 'c')
+            self.assertOp('LOAD_GLOBAL', 1, 7, 'c')
             self.assertOp('STORE_ATTR', 1, 11, 'd')
-            self.assertOp('LOAD_NAME', 1, 0, 'a')
-            self.assertOp('LOAD_NAME', 1, 2, 'b')
+            self.assertOp('LOAD_GLOBAL', 1, 0, 'a')
+            self.assertOp('LOAD_GLOBAL', 1, 2, 'b')
             self.assertOp('STORE_SUBSCR', 1, 5)
 
     def test_augmented_assignment_stmt(self):
@@ -35,13 +35,13 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             op_code = self.compiler.binary_op_codes[op]
 
             with self.compile('foo %s= 1' % op):
-                self.assertOp('LOAD_NAME', 1, 0, 'foo')
+                self.assertOp('LOAD_GLOBAL', 1, 0, 'foo')
                 self.assertOp('LOAD_CONST', 1, len(op)+6, 1.0, None)
                 self.assertOp('BINARY_OP', 1, 4, op_code)
-                self.assertOp('STORE_NAME', 1, 4, 'foo')
+                self.assertOp('STORE_GLOBAL', 1, 4, 'foo')
 
             with self.compile('foo.bar %s= 2' % op):
-                self.assertOp('LOAD_NAME', 1, 0, 'foo')
+                self.assertOp('LOAD_GLOBAL', 1, 0, 'foo')
                 self.assertOp('DUP_TOP', 1, 8)
                 self.assertOp('LOAD_ATTR', 1, 3, 'bar')
                 self.assertOp('LOAD_CONST', 1, len(op)+10, 2.0, None)
@@ -50,8 +50,8 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                 self.assertOp('STORE_ATTR', 1, 8, 'bar')
 
             with self.compile('foo[bar] %s= 3' % op):
-                self.assertOp('LOAD_NAME', 1, 0, 'foo')
-                self.assertOp('LOAD_NAME', 1, 4, 'bar')
+                self.assertOp('LOAD_GLOBAL', 1, 0, 'foo')
+                self.assertOp('LOAD_GLOBAL', 1, 4, 'bar')
                 self.assertOp('DUP_TOP_TWO', 1, 9)
                 self.assertOp('LOAD_SUBSCR', 1, 3)
                 self.assertOp('LOAD_CONST', 1, len(op)+11, 3.0, None)
@@ -65,3 +65,21 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
         test_augassign('/')
         test_augassign('%')
         test_augassign('**')
+
+    def test_local_stmt(self):
+        with self.compile('''
+            local foo = 1
+            foo += 2
+            foo = true
+            '''):
+            self.assertOp('LOAD_CONST', 2, 25, 1.0, None)
+            self.assertOp('INIT_LOCAL', 2, 13, 'foo')
+
+            self.assertOp('LOAD_LOCAL', 3, 39, 'foo')
+            self.assertOp('LOAD_CONST', 3, 46, 2.0, None)
+            self.assertOp('BINARY_OP', 3, 43,
+                          self.compiler.binary_op_codes['+'])
+            self.assertOp('STORE_LOCAL', 3, 43, 'foo')
+
+            self.assertOp('LOAD_CONST', 4, 66, True)
+            self.assertOp('STORE_LOCAL', 4, 64, 'foo')
