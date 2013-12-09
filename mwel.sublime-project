@@ -1,0 +1,19 @@
+{
+    "folders":
+    [
+        {
+            "path": ".",
+            "follow_symlinks": true,
+            "folder_exclude_patterns": [
+                "__pycache__",
+                "sandbox",
+                ],
+            "file_exclude_patterns": [
+                "*.swp",
+                ".gitignore",
+                "parser.out",
+                "yacctab.py",
+                ],
+        },
+    ]
+}
