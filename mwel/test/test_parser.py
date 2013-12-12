@@ -141,13 +141,11 @@ class TestParser(ParserTestMixin, unittest.TestCase):
                 self.assertEqual(1, len(p.statements))
                 p = p.statements[0]
                 
-                self.assertIsInstance(p, ast.CallStmt)
+                self.assertIsInstance(p, ast.SimpleCallStmt)
                 self.assertLocation(p, 1, lexpos)
-                self.assertIsInstance(p.head, ast.CallExpr)
-                self.assertIsNone(p.body)
-                self.assertIsNone(p.tail)
+                self.assertIsInstance(p.call_expr, ast.CallExpr)
 
-                p = p.head
+                p = p.call_expr
                 self.assertIsInstance(p.target, target_type)
                 self.assertEqual(args, p.args)
 
@@ -180,13 +178,11 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             self.assertEqual(1, len(p.statements))
             p = p.statements[0]
             
-            self.assertIsInstance(p, ast.CallStmt)
+            self.assertIsInstance(p, ast.SimpleCallStmt)
             self.assertLocation(p, 1, 3)
-            self.assertIsInstance(p.head, ast.CallExpr)
-            self.assertIsNone(p.body)
-            self.assertIsNone(p.tail)
+            self.assertIsInstance(p.call_expr, ast.CallExpr)
 
-            p = p.head
+            p = p.call_expr
             self.assertEqual(self.foo, p.target)
             self.assertIsInstance(p.args, collections.OrderedDict)
             args = tuple(p.args.items())
@@ -220,14 +216,20 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             self.assertEqual(1, len(p.statements))
             p = p.statements[0]
             
-            self.assertIsInstance(p, ast.CallStmt)
+            self.assertIsInstance(p, ast.CompoundCallStmt)
             self.assertLocation(p, 2, 29)
-            self.assertIsInstance(p.head, ast.CallExpr)
+            self.assertEqual('foo:', p.function_name)
+            self.assertIsInstance(p.clauses, tuple)
+            self.assertEqual(1, len(p.clauses))
+            p = p.clauses[0]
+
+            self.assertIsInstance(p, ast.CompoundCallStmtClause)
+            self.assertIsInstance(p.args, tuple)
+            self.assertEqual(0, len(p.args))
             self.assertIsInstance(p.local_names, tuple)
             self.assertEqual(0, len(p.local_names))
             self.assertIsInstance(p.body, tuple)
             self.assertEqual(0, len(p.body))
-            self.assertIsNone(p.tail)
 
         with self.parse('''
                         when (eye_in_window and not eye_in_saccade):
@@ -241,24 +243,30 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             self.assertEqual(1, len(p.statements))
             p = p.statements[0]
             
-            self.assertIsInstance(p, ast.CallStmt)
+            self.assertIsInstance(p, ast.CompoundCallStmt)
             self.assertLocation(p, 2, 30)
-            self.assertIsInstance(p.head, ast.CallExpr)
+            self.assertEqual('when:after:', p.function_name)
+            self.assertIsInstance(p.clauses, tuple)
+            self.assertEqual(2, len(p.clauses))
+            clauses = p.clauses
+
+            p = clauses[0]
+            self.assertIsInstance(p, ast.CompoundCallStmtClause)
+            self.assertIsInstance(p.args, tuple)
+            self.assertEqual(1, len(p.args))
             self.assertIsInstance(p.local_names, tuple)
             self.assertEqual(0, len(p.local_names))
             self.assertIsInstance(p.body, tuple)
             self.assertEqual(1, len(p.body))
-            self.assertIsInstance(p.tail, ast.CallStmt)
-            p = p.tail
             
-            self.assertIsInstance(p, ast.CallStmt)
-            self.assertLocation(p, 4, 152)
-            self.assertIsInstance(p.head, ast.CallExpr)
+            p = clauses[1]
+            self.assertIsInstance(p, ast.CompoundCallStmtClause)
+            self.assertIsInstance(p.args, tuple)
+            self.assertEqual(1, len(p.args))
             self.assertIsInstance(p.local_names, tuple)
             self.assertEqual(0, len(p.local_names))
             self.assertIsInstance(p.body, tuple)
             self.assertEqual(2, len(p.body))
-            self.assertIsNone(p.tail)
 
         with self.parse('''
                         if (x > 2):
@@ -276,35 +284,48 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             self.assertEqual(1, len(p.statements))
             p = p.statements[0]
             
-            self.assertIsInstance(p, ast.CallStmt)
+            self.assertIsInstance(p, ast.CompoundCallStmt)
             self.assertLocation(p, 2, 28)
-            self.assertIsInstance(p.head, ast.CallExpr)
+            self.assertEqual('if:if:if::', p.function_name)
+            self.assertIsInstance(p.clauses, tuple)
+            self.assertEqual(4, len(p.clauses))
+            clauses = p.clauses
+
+            p = clauses[0]
+            self.assertIsInstance(p, ast.CompoundCallStmtClause)
+            self.assertIsInstance(p.args, tuple)
+            self.assertEqual(1, len(p.args))
             self.assertIsInstance(p.local_names, tuple)
             self.assertEqual(0, len(p.local_names))
             self.assertIsInstance(p.body, tuple)
             self.assertEqual(2, len(p.body))
-            self.assertIsInstance(p.tail, ast.CallStmt)
-            p = p.tail
             
-            self.assertIsInstance(p, ast.CallStmt)
-            self.assertLocation(p, 5, 155)
-            self.assertIsInstance(p.head, ast.CallExpr)
+            p = clauses[1]
+            self.assertIsInstance(p, ast.CompoundCallStmtClause)
+            self.assertIsInstance(p.args, tuple)
+            self.assertEqual(1, len(p.args))
             self.assertIsInstance(p.local_names, tuple)
             self.assertEqual(0, len(p.local_names))
             self.assertIsInstance(p.body, tuple)
             self.assertEqual(1, len(p.body))
-            self.assertIsInstance(p.tail, ast.CallStmt)
-            p = p.tail
             
-            self.assertIsInstance(p, ast.CallStmt)
-            self.assertLocation(p, 7, 233)
-            self.assertIsInstance(p.head, ast.CallExpr)
+            p = clauses[2]
+            self.assertIsInstance(p, ast.CompoundCallStmtClause)
+            self.assertIsInstance(p.args, tuple)
+            self.assertEqual(1, len(p.args))
             self.assertIsInstance(p.local_names, tuple)
             self.assertEqual(0, len(p.local_names))
             self.assertIsInstance(p.body, tuple)
             self.assertEqual(0, len(p.body))
-            self.assertIsInstance(p.tail, tuple)
-            self.assertEqual(1, len(p.tail))
+            
+            p = clauses[3]
+            self.assertIsInstance(p, ast.CompoundCallStmtClause)
+            self.assertIsInstance(p.args, tuple)
+            self.assertEqual(0, len(p.args))
+            self.assertIsInstance(p.local_names, tuple)
+            self.assertEqual(0, len(p.local_names))
+            self.assertIsInstance(p.body, tuple)
+            self.assertEqual(1, len(p.body))
 
         with self.parse('''
                         if (x):
@@ -323,14 +344,20 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             self.assertEqual(1, len(p.statements))
             p = p.statements[0]
             
-            self.assertIsInstance(p, ast.CallStmt)
+            self.assertIsInstance(p, ast.CompoundCallStmt)
             self.assertLocation(p, 2, 33)
-            self.assertIsInstance(p.head, ast.CallExpr)
+            self.assertEqual('foreach:', p.function_name)
+            self.assertIsInstance(p.clauses, tuple)
+            self.assertEqual(1, len(p.clauses))
+            p = p.clauses[0]
+
+            self.assertIsInstance(p, ast.CompoundCallStmtClause)
+            self.assertIsInstance(p.args, tuple)
+            self.assertEqual(1, len(p.args))
             self.assertIsInstance(p.local_names, tuple)
             self.assertEqual(('i',), p.local_names)
             self.assertIsInstance(p.body, tuple)
             self.assertEqual(0, len(p.body))
-            self.assertIsNone(p.tail)
 
         with self.parse('''
                         unpack ([1,2,3]) -> foo, bar, blah:
@@ -340,14 +367,20 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             self.assertEqual(1, len(p.statements))
             p = p.statements[0]
             
-            self.assertIsInstance(p, ast.CallStmt)
+            self.assertIsInstance(p, ast.CompoundCallStmt)
             self.assertLocation(p, 2, 32)
-            self.assertIsInstance(p.head, ast.CallExpr)
+            self.assertEqual('unpack:', p.function_name)
+            self.assertIsInstance(p.clauses, tuple)
+            self.assertEqual(1, len(p.clauses))
+            p = p.clauses[0]
+
+            self.assertIsInstance(p, ast.CompoundCallStmtClause)
+            self.assertIsInstance(p.args, tuple)
+            self.assertEqual(1, len(p.args))
             self.assertIsInstance(p.local_names, tuple)
             self.assertEqual(('foo', 'bar', 'blah'), p.local_names)
             self.assertIsInstance(p.body, tuple)
             self.assertEqual(0, len(p.body))
-            self.assertIsNone(p.tail)
 
         with self.parse('''
                         foreach ([1,2,3]) -> :

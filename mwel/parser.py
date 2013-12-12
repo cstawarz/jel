@@ -101,12 +101,7 @@ class Parser(JELParser):
         '''
         simple_call_stmt : call_expr
         '''
-        p[0] = ast.CallStmt(p[1].lineno,
-                            p[1].lexpos,
-                            head = p[1],
-                            local_names = (),
-                            body = None,
-                            tail = None)
+        p[0] = ast.SimpleCallStmt(p[1].lineno, p[1].lexpos, call_expr=p[1])
 
     def p_compound_call_stmt(self, p):
         '''
@@ -115,10 +110,21 @@ class Parser(JELParser):
                                call_stmt_body \
                                call_stmt_tail
         '''
-        p[1].local_names = p[2]
-        p[1].body = p[3]
-        p[1].tail = p[4]
-        p[0] = p[1]
+        assert isinstance(p[1].call_expr.target, ast.IdentifierExpr)
+
+        function_name = p[1].call_expr.target.value + ':'
+        clauses = (ast.CompoundCallStmtClause(args = p[1].call_expr.args,
+                                              local_names = p[2],
+                                              body = p[3]),)
+
+        if p[4] is not None:
+            function_name += p[4].function_name
+            clauses += p[4].clauses
+
+        p[0] = ast.CompoundCallStmt(p[1].lineno,
+                                    p[1].lexpos,
+                                    function_name = function_name,
+                                    clauses = clauses)
 
     def p_call_stmt_local_names(self, p):
         '''
@@ -145,10 +151,23 @@ class Parser(JELParser):
     def p_call_stmt_tail(self, p):
         '''
         call_stmt_tail : ELSE compound_call_stmt
-                       | ELSE call_stmt_body END
-                       | END
         '''
-        p[0] = (p[2] if len(p) > 2 else None)
+        p[0] = p[2]
+
+    def p_call_stmt_tail_bare_else(self, p):
+        '''
+        call_stmt_tail : ELSE call_stmt_body END
+        '''
+        clause = ast.CompoundCallStmtClause(args = (),
+                                            local_names = (),
+                                            body = p[2])
+        p[0] = ast.CompoundCallStmt(function_name=':', clauses=(clause,))
+
+    def p_call_stmt_tail_empty(self, p):
+        '''
+        call_stmt_tail : END
+        '''
+        p[0] = None
 
     def p_function_stmt(self, p):
         '''

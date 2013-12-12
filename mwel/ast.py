@@ -27,9 +27,19 @@ class LocalStmt(Stmt):
     _fields = ('name', 'value')
 
 
-class CallStmt(Stmt):
+class SimpleCallStmt(Stmt):
 
-    _fields = ('head', 'local_names', 'body', 'tail')
+    _fields = ('call_expr',)
+
+
+class CompoundCallStmt(Stmt):
+
+    _fields = ('function_name', 'clauses')
+
+
+class CompoundCallStmtClause(AST):
+
+    _fields = ('args', 'local_names', 'body')
 
 
 class FunctionStmt(Stmt):
