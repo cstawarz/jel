@@ -274,7 +274,7 @@ class TestParser(ParserTestMixin, unittest.TestCase):
                             do_something(y)
                         else if (x < -1):
                             error()
-                        else if (2*y == foo):
+                        else (if) (2*y == foo):
                             # No idea what to do here!
                         else:
                             call_for_help()
@@ -334,6 +334,12 @@ class TestParser(ParserTestMixin, unittest.TestCase):
                         end
                         ''') as p:
             self.assertError(token='else')
+
+        with self.parse('''
+                        a.b (x):
+                        end
+                        ''') as p:
+            self.assertError('Expected an identifier', lineno=2, lexpos=26)
 
     def test_compound_call_stmt_with_local_names(self):
         with self.parse('''

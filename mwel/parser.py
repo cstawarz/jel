@@ -110,9 +110,14 @@ class Parser(JELParser):
                                call_stmt_body \
                                call_stmt_tail
         '''
-        assert isinstance(p[1].call_expr.target, ast.IdentifierExpr)
+        target = p[1].call_expr.target
+        if not isinstance(target, ast.IdentifierExpr):
+            self.error_logger('Expected an identifier',
+                              lineno = target.lineno,
+                              lexpos = target.lexpos)
+            return
 
-        function_name = p[1].call_expr.target.value + ':'
+        function_name = target.value + ':'
         clauses = (ast.CompoundCallStmtClause(args = p[1].call_expr.args,
                                               local_names = p[2],
                                               body = p[3]),)
@@ -167,7 +172,7 @@ class Parser(JELParser):
         '''
         call_stmt_tail : END
         '''
-        p[0] = None
+        pass
 
     def p_function_stmt(self, p):
         '''

@@ -13,8 +13,8 @@ class ParserTestMixin(object):
 
     def setUp(self):
         self.errors = collections.deque()
-        def error_logger(*info):
-            self.errors.append(info)
+        def error_logger(msg, token=None, lineno=None, lexpos=None):
+            self.errors.append((msg, token, lineno, lexpos))
             
         l = self.lexer_class(error_logger)
         p = self.parser_class(l.tokens, error_logger)
