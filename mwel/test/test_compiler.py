@@ -83,3 +83,45 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
 
             self.assertOp('LOAD_CONST', 4, 66, True)
             self.assertOp('STORE_LOCAL', 4, 64, 'foo')
+
+    def test_simple_call_stmt(self):
+        with self.compile('foo()'):
+            self.assertOp('LOAD_GLOBAL', 1, 0, 'foo')
+            args = self.assertOp('CALL_SIMPLE', 1, 3)
+            self.assertEqual(1, len(args))
+            self.assertIsInstance(args[0], tuple)
+            self.assertEqual(0, len(args[0]))
+
+        with self.compile('foo(a, b.c[d], true)'):
+            self.assertOp('LOAD_GLOBAL', 1, 0, 'foo')
+            args = self.assertOp('CALL_SIMPLE', 1, 3)
+            self.assertEqual(1, len(args))
+            self.assertIsInstance(args[0], tuple)
+            self.assertEqual(3, len(args[0]))
+
+            with self.assertOpList(args[0][0]):
+                self.assertOp('LOAD_GLOBAL', 1, 4, 'a')
+
+            with self.assertOpList(args[0][1]):
+                self.assertOp('LOAD_GLOBAL', 1, 7, 'b')
+                self.assertOp('LOAD_ATTR', 1, 8, 'c')
+                self.assertOp('LOAD_GLOBAL', 1, 11, 'd')
+                self.assertOp('LOAD_SUBSCR', 1, 10)
+
+            with self.assertOpList(args[0][2]):
+                self.assertOp('LOAD_CONST', 1, 15, True)
+
+        with self.compile('foo(a=true, b=false)'):
+            self.assertOp('LOAD_GLOBAL', 1, 0, 'foo')
+            args = self.assertOp('CALL_SIMPLE', 1, 3)
+            self.assertEqual(2, len(args))
+            self.assertIsInstance(args[0], tuple)
+            self.assertEqual(('a', 'b'), args[0])
+            self.assertIsInstance(args[1], tuple)
+            self.assertEqual(2, len(args[1]))
+
+            with self.assertOpList(args[1][0]):
+                self.assertOp('LOAD_CONST', 1, 6, True)
+
+            with self.assertOpList(args[1][1]):
+                self.assertOp('LOAD_CONST', 1, 14, False)

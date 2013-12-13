@@ -10,6 +10,7 @@ from . import ast
 class Compiler(JELCompiler):
 
     op_names, op_codes = gen_codes(
+        'CALL_SIMPLE',
         'DUP_TOP',
         'DUP_TOP_TWO',
         'INIT_LOCAL',
@@ -120,6 +121,16 @@ class Compiler(JELCompiler):
         self.genops(node.value)
         self.init_local(node.lineno, node.lexpos, node.name)
         self._local_names[0].add(node.name)
+
+    def simple_call_stmt(self, node):
+        self.genops(node.target)
+        if isinstance(node.args, tuple):
+            args = (tuple(self.compile(a) for a in node.args),)
+        else:
+            assert isinstance(node.args, collections.OrderedDict)
+            args = (tuple(node.args.keys()),
+                    tuple(self.compile(a) for a in node.args.values()))
+        self.call_simple(node.lineno, node.lexpos, *args)
 
     def identifier_expr(self, node):
         name_depth = self._name_depth(node.value)
