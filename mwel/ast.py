@@ -29,7 +29,7 @@ class LocalStmt(Stmt):
 
 class SimpleCallStmt(Stmt):
 
-    _fields = ('call_expr',)
+    _fields = ('target', 'args')
 
 
 class CompoundCallStmt(Stmt):

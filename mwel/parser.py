@@ -101,7 +101,10 @@ class Parser(JELParser):
         '''
         simple_call_stmt : call_expr
         '''
-        p[0] = ast.SimpleCallStmt(p[1].lineno, p[1].lexpos, call_expr=p[1])
+        p[0] = ast.SimpleCallStmt(p[1].lineno,
+                                  p[1].lexpos,
+                                  target = p[1].target,
+                                  args = p[1].args)
 
     def p_compound_call_stmt(self, p):
         '''
@@ -110,7 +113,7 @@ class Parser(JELParser):
                                call_stmt_body \
                                call_stmt_tail
         '''
-        target = p[1].call_expr.target
+        target = p[1].target
         if not isinstance(target, ast.IdentifierExpr):
             self.error_logger('Expected an identifier',
                               lineno = target.lineno,
@@ -118,7 +121,7 @@ class Parser(JELParser):
             return
 
         function_name = target.value + ':'
-        clauses = (ast.CompoundCallStmtClause(args = p[1].call_expr.args,
+        clauses = (ast.CompoundCallStmtClause(args = p[1].args,
                                               local_names = p[2],
                                               body = p[3]),)
 

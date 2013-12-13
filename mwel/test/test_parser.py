@@ -143,9 +143,6 @@ class TestParser(ParserTestMixin, unittest.TestCase):
                 
                 self.assertIsInstance(p, ast.SimpleCallStmt)
                 self.assertLocation(p, 1, lexpos)
-                self.assertIsInstance(p.call_expr, ast.CallExpr)
-
-                p = p.call_expr
                 self.assertIsInstance(p.target, target_type)
                 self.assertEqual(args, p.args)
 
@@ -180,9 +177,6 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             
             self.assertIsInstance(p, ast.SimpleCallStmt)
             self.assertLocation(p, 1, 3)
-            self.assertIsInstance(p.call_expr, ast.CallExpr)
-
-            p = p.call_expr
             self.assertEqual(self.foo, p.target)
             self.assertIsInstance(p.args, collections.OrderedDict)
             args = tuple(p.args.items())

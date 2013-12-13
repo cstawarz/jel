@@ -135,23 +135,27 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
         with self.compile('foo()'):
             self.assertOp('LOAD_NAME', 1, 0, 'foo')
             args = self.assertOp('CALL_FUNCTION', 1, 3)
-            self.assertEqual(0, len(args))
+            self.assertEqual(1, len(args))
+            self.assertIsInstance(args[0], tuple)
+            self.assertEqual(0, len(args[0]))
 
         with self.compile('foo(a, b.c[d], true)'):
             self.assertOp('LOAD_NAME', 1, 0, 'foo')
             args = self.assertOp('CALL_FUNCTION', 1, 3)
-            self.assertEqual(3, len(args))
+            self.assertEqual(1, len(args))
+            self.assertIsInstance(args[0], tuple)
+            self.assertEqual(3, len(args[0]))
 
-            with self.assertOpList(args[0]):
+            with self.assertOpList(args[0][0]):
                 self.assertOp('LOAD_NAME', 1, 4, 'a')
 
-            with self.assertOpList(args[1]):
+            with self.assertOpList(args[0][1]):
                 self.assertOp('LOAD_NAME', 1, 7, 'b')
                 self.assertOp('LOAD_ATTR', 1, 8, 'c')
                 self.assertOp('LOAD_NAME', 1, 11, 'd')
                 self.assertOp('LOAD_SUBSCR', 1, 10)
 
-            with self.assertOpList(args[2]):
+            with self.assertOpList(args[0][2]):
                 self.assertOp('LOAD_CONST', 1, 15, True)
 
     def test_comparison_expr(self):
@@ -227,15 +231,17 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
     def _test_logical_op(self, op, op_name):
         with self.compile('a %s b %s c' % (op, op)):
             args = self.assertOp(op_name, (1, 1), (2, len(op)+5))
-            self.assertEqual(3, len(args))
+            self.assertEqual(1, len(args))
+            self.assertIsInstance(args[0], tuple)
+            self.assertEqual(3, len(args[0]))
 
-            with self.assertOpList(args[0]):
+            with self.assertOpList(args[0][0]):
                 self.assertOp('LOAD_NAME', 1, 0, 'a')
 
-            with self.assertOpList(args[1]):
+            with self.assertOpList(args[0][1]):
                 self.assertOp('LOAD_NAME', 1, len(op)+3, 'b')
 
-            with self.assertOpList(args[2]):
+            with self.assertOpList(args[0][2]):
                 self.assertOp('LOAD_NAME', 1, 2*len(op)+6, 'c')
 
     def test_and_expr(self):

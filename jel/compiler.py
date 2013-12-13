@@ -60,11 +60,11 @@ class Compiler(object):
 
     def or_expr(self, node):
         operand_ops = tuple(self.compile(o) for o in node.operands)
-        self.logical_or(node.lineno, node.lexpos, *operand_ops)
+        self.logical_or(node.lineno, node.lexpos, operand_ops)
 
     def and_expr(self, node):
         operand_ops = tuple(self.compile(o) for o in node.operands)
-        self.logical_and(node.lineno, node.lexpos, *operand_ops)
+        self.logical_and(node.lineno, node.lexpos, operand_ops)
 
     def binary_op_expr(self, node):
         self.genops(node.operands[0])
@@ -83,7 +83,7 @@ class Compiler(object):
     def call_expr(self, node):
         self.genops(node.target)
         arg_ops = tuple(self.compile(arg) for arg in node.args)
-        self.call_function(node.lineno, node.lexpos, *arg_ops)
+        self.call_function(node.lineno, node.lexpos, arg_ops)
 
     def subscript_expr(self, node):
         self.genops(node.target)
@@ -146,7 +146,7 @@ class Compiler(object):
                 cls._print_arg_ops(args[1], indent)
             elif op in ('CALL_FUNCTION', 'LOGICAL_AND', 'LOGICAL_OR'):
                 print()
-                cls._print_arg_ops(args, indent)
+                cls._print_arg_ops(args[0], indent)
             elif op == 'LOAD_CONST':
                 print(repr(args[0]) if len(args) == 1 else args)
             else:

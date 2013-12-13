@@ -89,21 +89,17 @@ class Compiler(JELCompiler):
         elif isinstance(node.target, ast.AttributeExpr):
             self.genops(node.target.target)
             self.dup_top(node.lineno, node.lexpos)
-            self.load_attr(
-                node.target.lineno,
-                node.target.lexpos,
-                node.target.name,
-                )
+            self.load_attr(node.target.lineno,
+                           node.target.lexpos,
+                           node.target.name)
         else:
             assert isinstance(node.target, ast.IdentifierExpr)
             self.genops(node.target)
 
         self.genops(node.value)
-        self.binary_op(
-            node.lineno,
-            node.lexpos,
-            self.binary_op_codes[node.op[:-1]],
-            )
+        self.binary_op(node.lineno,
+                       node.lexpos,
+                       self.binary_op_codes[node.op[:-1]])
 
         if isinstance(node.target, ast.SubscriptExpr):
             self.rot_three(node.lineno, node.lexpos)
