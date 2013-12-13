@@ -14,50 +14,88 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
     parser_class = Parser
     compiler_class = Compiler
 
-    def test_chained_assignment_stmt(self):
-        with self.compile('foo = true'):
-            self.assertOp('LOAD_CONST', 1, 6, True)
-            self.assertOp('STORE_GLOBAL', 1, 4, 'foo')
+    def setUp(self):
+        super(TestCompiler, self).setUp()
 
-        with self.compile('a[b] = c.d = e = null'):
-            self.assertOp('LOAD_CONST', 1, 17, None)
-            self.assertOp('DUP_TOP', 1, 15)
-            self.assertOp('STORE_GLOBAL', 1, 15, 'e')
-            self.assertOp('DUP_TOP', 1, 11)
-            self.assertOp('LOAD_GLOBAL', 1, 7, 'c')
-            self.assertOp('STORE_ATTR', 1, 11, 'd')
-            self.assertOp('LOAD_GLOBAL', 1, 0, 'a')
-            self.assertOp('LOAD_GLOBAL', 1, 2, 'b')
-            self.assertOp('STORE_SUBSCR', 1, 5)
+        orig_compile = self.compile
+        def compile_wrapper(s):
+            self.lineno_to_lexpos = {}
+            current_lineno = 1
+            current_lexpos = 0
+
+            while True:
+                self.lineno_to_lexpos[current_lineno] = current_lexpos
+                index = s.find('\n', current_lexpos)
+                if index == -1:
+                    break
+                current_lineno += 1
+                current_lexpos = index + 1
+
+            return orig_compile(s)
+
+        self.compile = compile_wrapper
+
+    def assertOp(self, op_name, lineno, colno, *args):
+        lexpos = self.lineno_to_lexpos[lineno] + colno - 1
+        return super(TestCompiler, self).assertOp(op_name,
+                                                  lineno,
+                                                  lexpos,
+                                                  *args)
+
+    def test_chained_assignment_stmt(self):
+        with self.compile('''
+                          foo = true
+                          '''):
+            self.assertOp('LOAD_CONST', 2, 33, True)
+            self.assertOp('STORE_GLOBAL', 2, 31, 'foo')
+
+        with self.compile('''
+                          a[b] = c.d = e = null
+                          '''):
+            self.assertOp('LOAD_CONST', 2, 44, None)
+            self.assertOp('DUP_TOP', 2, 42)
+            self.assertOp('STORE_GLOBAL', 2, 42, 'e')
+            self.assertOp('DUP_TOP', 2, 38)
+            self.assertOp('LOAD_GLOBAL', 2, 34, 'c')
+            self.assertOp('STORE_ATTR', 2, 38, 'd')
+            self.assertOp('LOAD_GLOBAL', 2, 27, 'a')
+            self.assertOp('LOAD_GLOBAL', 2, 29, 'b')
+            self.assertOp('STORE_SUBSCR', 2, 32)
 
     def test_augmented_assignment_stmt(self):
         def test_augassign(op):
             op_code = self.compiler.binary_op_codes[op]
 
-            with self.compile('foo %s= 1' % op):
-                self.assertOp('LOAD_GLOBAL', 1, 0, 'foo')
-                self.assertOp('LOAD_CONST', 1, len(op)+6, 1.0, None)
-                self.assertOp('BINARY_OP', 1, 4, op_code)
-                self.assertOp('STORE_GLOBAL', 1, 4, 'foo')
+            with self.compile('''
+                              foo %s= 1
+                              ''' % op):
+                self.assertOp('LOAD_GLOBAL', 2, 31, 'foo')
+                self.assertOp('LOAD_CONST', 2, len(op)+37, 1.0, None)
+                self.assertOp('BINARY_OP', 2, 35, op_code)
+                self.assertOp('STORE_GLOBAL', 2, 35, 'foo')
 
-            with self.compile('foo.bar %s= 2' % op):
-                self.assertOp('LOAD_GLOBAL', 1, 0, 'foo')
-                self.assertOp('DUP_TOP', 1, 8)
-                self.assertOp('LOAD_ATTR', 1, 3, 'bar')
-                self.assertOp('LOAD_CONST', 1, len(op)+10, 2.0, None)
-                self.assertOp('BINARY_OP', 1, 8, op_code)
-                self.assertOp('ROT_TWO', 1, 8)
-                self.assertOp('STORE_ATTR', 1, 8, 'bar')
+            with self.compile('''
+                              foo.bar %s= 2
+                              ''' % op):
+                self.assertOp('LOAD_GLOBAL', 2, 31, 'foo')
+                self.assertOp('DUP_TOP', 2, 39)
+                self.assertOp('LOAD_ATTR', 2, 34, 'bar')
+                self.assertOp('LOAD_CONST', 2, len(op)+41, 2.0, None)
+                self.assertOp('BINARY_OP', 2, 39, op_code)
+                self.assertOp('ROT_TWO', 2, 39)
+                self.assertOp('STORE_ATTR', 2, 39, 'bar')
 
-            with self.compile('foo[bar] %s= 3' % op):
-                self.assertOp('LOAD_GLOBAL', 1, 0, 'foo')
-                self.assertOp('LOAD_GLOBAL', 1, 4, 'bar')
-                self.assertOp('DUP_TOP_TWO', 1, 9)
-                self.assertOp('LOAD_SUBSCR', 1, 3)
-                self.assertOp('LOAD_CONST', 1, len(op)+11, 3.0, None)
-                self.assertOp('BINARY_OP', 1, 9, op_code)
-                self.assertOp('ROT_THREE', 1, 9)
-                self.assertOp('STORE_SUBSCR', 1, 9)
+            with self.compile('''
+                              foo[bar] %s= 3
+                              ''' % op):
+                self.assertOp('LOAD_GLOBAL', 2, 31, 'foo')
+                self.assertOp('LOAD_GLOBAL', 2, 35, 'bar')
+                self.assertOp('DUP_TOP_TWO', 2, 40)
+                self.assertOp('LOAD_SUBSCR', 2, 34)
+                self.assertOp('LOAD_CONST', 2, len(op)+42, 3.0, None)
+                self.assertOp('BINARY_OP', 2, 40, op_code)
+                self.assertOp('ROT_THREE', 2, 40)
+                self.assertOp('STORE_SUBSCR', 2, 40)
 
         test_augassign('+')
         test_augassign('-')
@@ -75,45 +113,51 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             self.assertOp('LOAD_CONST', 2, 25, 1.0, None)
             self.assertOp('INIT_LOCAL', 2, 13, 'foo')
 
-            self.assertOp('LOAD_LOCAL', 3, 39, 'foo')
-            self.assertOp('LOAD_CONST', 3, 46, 2.0, None)
-            self.assertOp('BINARY_OP', 3, 43,
+            self.assertOp('LOAD_LOCAL', 3, 13, 'foo')
+            self.assertOp('LOAD_CONST', 3, 20, 2.0, None)
+            self.assertOp('BINARY_OP', 3, 17,
                           self.compiler.binary_op_codes['+'])
-            self.assertOp('STORE_LOCAL', 3, 43, 'foo')
+            self.assertOp('STORE_LOCAL', 3, 17, 'foo')
 
-            self.assertOp('LOAD_CONST', 4, 66, True)
-            self.assertOp('STORE_LOCAL', 4, 64, 'foo')
+            self.assertOp('LOAD_CONST', 4, 19, True)
+            self.assertOp('STORE_LOCAL', 4, 17, 'foo')
 
     def test_simple_call_stmt(self):
-        with self.compile('foo()'):
-            self.assertOp('LOAD_GLOBAL', 1, 0, 'foo')
-            args = self.assertOp('CALL_SIMPLE', 1, 3)
+        with self.compile('''
+                          foo()
+                          '''):
+            self.assertOp('LOAD_GLOBAL', 2, 27, 'foo')
+            args = self.assertOp('CALL_SIMPLE', 2, 30)
             self.assertEqual(1, len(args))
             self.assertIsInstance(args[0], tuple)
             self.assertEqual(0, len(args[0]))
 
-        with self.compile('foo(a, b.c[d], true)'):
-            self.assertOp('LOAD_GLOBAL', 1, 0, 'foo')
-            args = self.assertOp('CALL_SIMPLE', 1, 3)
+        with self.compile('''
+                          foo(a, b.c[d], true)
+                          '''):
+            self.assertOp('LOAD_GLOBAL', 2, 27, 'foo')
+            args = self.assertOp('CALL_SIMPLE', 2, 30)
             self.assertEqual(1, len(args))
             self.assertIsInstance(args[0], tuple)
             self.assertEqual(3, len(args[0]))
 
             with self.assertOpList(args[0][0]):
-                self.assertOp('LOAD_GLOBAL', 1, 4, 'a')
+                self.assertOp('LOAD_GLOBAL', 2, 31, 'a')
 
             with self.assertOpList(args[0][1]):
-                self.assertOp('LOAD_GLOBAL', 1, 7, 'b')
-                self.assertOp('LOAD_ATTR', 1, 8, 'c')
-                self.assertOp('LOAD_GLOBAL', 1, 11, 'd')
-                self.assertOp('LOAD_SUBSCR', 1, 10)
+                self.assertOp('LOAD_GLOBAL', 2, 34, 'b')
+                self.assertOp('LOAD_ATTR', 2, 35, 'c')
+                self.assertOp('LOAD_GLOBAL', 2, 38, 'd')
+                self.assertOp('LOAD_SUBSCR', 2, 37)
 
             with self.assertOpList(args[0][2]):
-                self.assertOp('LOAD_CONST', 1, 15, True)
+                self.assertOp('LOAD_CONST', 2, 42, True)
 
-        with self.compile('foo(a=true, b=false)'):
-            self.assertOp('LOAD_GLOBAL', 1, 0, 'foo')
-            args = self.assertOp('CALL_SIMPLE', 1, 3)
+        with self.compile('''
+                          foo(a=true, b=false)
+                          '''):
+            self.assertOp('LOAD_GLOBAL', 2, 27, 'foo')
+            args = self.assertOp('CALL_SIMPLE', 2, 30)
             self.assertEqual(2, len(args))
             self.assertIsInstance(args[0], tuple)
             self.assertEqual(('a', 'b'), args[0])
@@ -121,10 +165,10 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             self.assertEqual(2, len(args[1]))
 
             with self.assertOpList(args[1][0]):
-                self.assertOp('LOAD_CONST', 1, 6, True)
+                self.assertOp('LOAD_CONST', 2, 33, True)
 
             with self.assertOpList(args[1][1]):
-                self.assertOp('LOAD_CONST', 1, 14, False)
+                self.assertOp('LOAD_CONST', 2, 41, False)
 
     def test_compound_call_stmt(self):
         def check_clause(c, expected_args, expected_local_names):
@@ -156,7 +200,7 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             self.assertEqual(1, len(clauses))
             body = check_clause(clauses[0], (), ())
             with self.assertOpList(body):
-                self.assertOp('LOAD_CONST', 3, 75, 2.0, None)
-                self.assertOp('INIT_LOCAL', 3, 65, 'x')
-                self.assertOp('LOAD_CONST', 4, 111, 3.0, None)
-                self.assertOp('STORE_GLOBAL', 4, 109, 'y')
+                self.assertOp('LOAD_CONST', 3, 41, 2.0, None)
+                self.assertOp('INIT_LOCAL', 3, 31, 'x')
+                self.assertOp('LOAD_CONST', 4, 35, 3.0, None)
+                self.assertOp('STORE_GLOBAL', 4, 33, 'y')
