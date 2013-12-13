@@ -10,6 +10,7 @@ from . import ast
 class Compiler(JELCompiler):
 
     op_names, op_codes = gen_codes(
+        'CALL_COMPOUND',
         'CALL_SIMPLE',
         'DUP_TOP',
         'DUP_TOP_TWO',
@@ -131,6 +132,19 @@ class Compiler(JELCompiler):
             args = (tuple(node.args.keys()),
                     tuple(self.compile(a) for a in node.args.values()))
         self.call_simple(node.lineno, node.lexpos, *args)
+
+    def compound_call_stmt(self, node):
+        clauses = []
+        for c in node.clauses:
+            body_ops = []
+            for body_node in c.body:
+                body_ops.extend(self.compile(body_node))
+            clauses.append(((), (), body_ops))
+        
+        self.call_compound(node.lineno,
+                           node.lexpos,
+                           node.function_name,
+                           tuple(clauses))
 
     def identifier_expr(self, node):
         name_depth = self._name_depth(node.value)
