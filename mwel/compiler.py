@@ -136,10 +136,8 @@ class Compiler(JELCompiler):
     def compound_call_stmt(self, node):
         clauses = []
         for c in node.clauses:
-            body_ops = []
-            for body_node in c.body:
-                body_ops.extend(self.compile(body_node))
-            clauses.append(((), (), body_ops))
+            body_ops = self.compile_stmt_list(c, c.body)
+            clauses.append(((), 0, body_ops))
         
         self.call_compound(node.lineno,
                            node.lexpos,
@@ -154,3 +152,10 @@ class Compiler(JELCompiler):
             self.load_local(node.lineno, node.lexpos, node.value)
         else:
             assert False
+
+    def compile_stmt_list(self, node, stmts):
+        self._ops.append([])
+        with self._new_scope(node.lineno, node.lexpos):
+            for s in stmts:
+                self.genops(s)
+        return self._ops.pop()

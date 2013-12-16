@@ -171,17 +171,17 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                 self.assertOp('LOAD_CONST', 2, 41, False)
 
     def test_compound_call_stmt(self):
-        def check_clause(c, expected_args, expected_local_names):
+        def check_clause(c, expected_num_args, expected_num_local_names):
             self.assertIsInstance(c, tuple)
             self.assertEqual(3, len(c))
 
             args = c[0]
             self.assertIsInstance(args, tuple)
-            self.assertEqual(expected_args, args)
+            self.assertEqual(expected_num_args, len(args))
 
-            local_names = c[1]
-            self.assertIsInstance(local_names, tuple)
-            self.assertEqual(expected_local_names, local_names)
+            num_local_names = c[1]
+            self.assertIsInstance(num_local_names, int)
+            self.assertEqual(expected_num_local_names, num_local_names)
 
             body = c[2]
             return body
@@ -192,15 +192,17 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                               y = 3
                           end
                           '''):
-            args = self.assertOp('CALL_COMPOUND', 2, 31)
+            args = self.assertOp('CALL_COMPOUND', 2, 27)
             self.assertEqual(2, len(args))
             self.assertEqual('foo:', args[0])
             clauses = args[1]
             self.assertIsInstance(clauses, tuple)
             self.assertEqual(1, len(clauses))
-            body = check_clause(clauses[0], (), ())
+            body = check_clause(clauses[0], 0, 0)
             with self.assertOpList(body):
+                self.assertOp('PUSH_SCOPE', 2, 33)
                 self.assertOp('LOAD_CONST', 3, 41, 2.0, None)
                 self.assertOp('INIT_LOCAL', 3, 31, 'x')
                 self.assertOp('LOAD_CONST', 4, 35, 3.0, None)
                 self.assertOp('STORE_GLOBAL', 4, 33, 'y')
+                self.assertOp('POP_SCOPE', 2, 33)

@@ -121,16 +121,17 @@ class Parser(JELParser):
             return
 
         function_name = target.value + ':'
-        clauses = (ast.CompoundCallStmtClause(args = p[1].args,
-                                              local_names = p[2],
-                                              body = p[3]),)
+
+        clauses = (p[3],)
+        clauses[0].args = p[1].args
+        clauses[0].local_names = p[2]
 
         if p[4] is not None:
             function_name += p[4].function_name
             clauses += p[4].clauses
 
-        p[0] = ast.CompoundCallStmt(p[1].lineno,
-                                    p[1].lexpos,
+        p[0] = ast.CompoundCallStmt(target.lineno,
+                                    target.lexpos,
                                     function_name = function_name,
                                     clauses = clauses)
 
@@ -154,7 +155,11 @@ class Parser(JELParser):
         '''
         call_stmt_body : COLON newline stmt_list
         '''
-        p[0] = p[3]
+        p[0] = ast.CompoundCallStmtClause(p.lineno(1),
+                                          p.lexpos(1),
+                                          args = (),
+                                          local_names = (),
+                                          body = p[3])
 
     def p_call_stmt_tail(self, p):
         '''
@@ -166,10 +171,7 @@ class Parser(JELParser):
         '''
         call_stmt_tail : ELSE call_stmt_body END
         '''
-        clause = ast.CompoundCallStmtClause(args = (),
-                                            local_names = (),
-                                            body = p[2])
-        p[0] = ast.CompoundCallStmt(function_name=':', clauses=(clause,))
+        p[0] = ast.CompoundCallStmt(function_name=':', clauses=(p[2],))
 
     def p_call_stmt_tail_empty(self, p):
         '''
