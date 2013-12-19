@@ -123,7 +123,7 @@ class Compiler(object):
     def compile(self, root):
         self._ops.append([])
         self.genops(root)
-        return self._ops.pop()
+        return tuple(self._ops.pop())
 
     @classmethod
     def print_ops(cls, ops, indent=0):

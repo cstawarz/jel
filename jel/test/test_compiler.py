@@ -30,7 +30,7 @@ class CompilerTestMixin(object):
         self.compile = compile_wrapper
 
     def assertOpList(self, ops):
-        self.assertIsInstance(ops, list)
+        self.assertIsInstance(ops, tuple)
 
         @contextmanager
         def ensure_ops_consumed():

@@ -158,4 +158,4 @@ class Compiler(JELCompiler):
         with self._new_scope(node.lineno, node.lexpos):
             for s in stmts:
                 self.genops(s)
-        return self._ops.pop()
+        return tuple(self._ops.pop())
