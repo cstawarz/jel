@@ -235,3 +235,38 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                 self.assertOp('LOAD_SUBSCR', 2, 38)
             with self.assertOpList(args[2]):
                 self.assertOp('LOAD_CONST', 2, 43, True)
+            with self.assertOpList(body):
+                self.assertOp('PUSH_SCOPE', 2, 56)
+                self.assertOp('INIT_LOCAL', 2, 55, 'y')
+                self.assertOp('INIT_LOCAL', 2, 52, 'x')
+                self.assertOp('LOAD_LOCAL', 3, 35, 'x')
+                self.assertOp('LOAD_LOCAL', 3, 39, 'y')
+                self.assertOp('BINARY_OP', 3, 37,
+                              self.compiler.binary_op_codes['+'])
+                self.assertOp('STORE_GLOBAL', 3, 33, 'z')
+                self.assertOp('POP_SCOPE', 2, 56)
+
+            args, body = check_clause(clauses[1], 2, 1)
+            args = tuple(args.items())
+            self.assertEqual('a', args[0][0])
+            with self.assertOpList(args[0][1]):
+                self.assertOp('LOAD_CONST', 4, 38, True)
+            self.assertEqual('b', args[1][0])
+            with self.assertOpList(args[1][1]):
+                self.assertOp('LOAD_CONST', 4, 46, False)
+            with self.assertOpList(body):
+                self.assertOp('PUSH_SCOPE', 4, 57)
+                self.assertOp('INIT_LOCAL', 4, 56, 'q')
+                self.assertOp('LOAD_CONST', 5, 35, 5.0, None)
+                self.assertOp('LOAD_LOCAL', 5, 37, 'q')
+                self.assertOp('BINARY_OP', 5, 36,
+                              self.compiler.binary_op_codes['*'])
+                self.assertOp('STORE_GLOBAL', 5, 33, 'z')
+                self.assertOp('POP_SCOPE', 4, 57)
+
+            args, body = check_clause(clauses[2], 0, 0)
+            with self.assertOpList(body):
+                self.assertOp('PUSH_SCOPE', 6, 31)
+                self.assertOp('LOAD_CONST', 7, 35, 6.0, None)
+                self.assertOp('STORE_GLOBAL', 7, 33, 'z')
+                self.assertOp('POP_SCOPE', 6, 31)

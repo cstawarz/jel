@@ -343,6 +343,11 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             self.assertError('Expected an identifier', lineno=2, lexpos=26)
 
     def test_compound_call_stmt_with_local_names(self):
+        def check_local_name(p, name, lineno, lexpos):
+            self.assertIsInstance(p, ast.IdentifierExpr)
+            self.assertLocation(p, lineno, lexpos)
+            self.assertEqual(name, p.value)
+
         with self.parse('''
                         foreach ([1,2,3]) -> i:
                         end
@@ -363,7 +368,8 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             self.assertIsInstance(p.args, tuple)
             self.assertEqual(1, len(p.args))
             self.assertIsInstance(p.local_names, tuple)
-            self.assertEqual(('i',), p.local_names)
+            self.assertEqual(1, len(p.local_names))
+            check_local_name(p.local_names[0], 'i', 2, 46)
             self.assertIsInstance(p.body, tuple)
             self.assertEqual(0, len(p.body))
 
@@ -387,7 +393,10 @@ class TestParser(ParserTestMixin, unittest.TestCase):
             self.assertIsInstance(p.args, tuple)
             self.assertEqual(1, len(p.args))
             self.assertIsInstance(p.local_names, tuple)
-            self.assertEqual(('foo', 'bar', 'blah'), p.local_names)
+            self.assertEqual(3, len(p.local_names))
+            check_local_name(p.local_names[0], 'foo', 2, 45)
+            check_local_name(p.local_names[1], 'bar', 2, 50)
+            check_local_name(p.local_names[2], 'blah', 2, 55)
             self.assertIsInstance(p.body, tuple)
             self.assertEqual(0, len(p.body))
 

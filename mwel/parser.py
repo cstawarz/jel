@@ -149,7 +149,7 @@ class Parser(JELParser):
                                       call_stmt_local_name_list
                                   | identifier_expr
         '''
-        p[0] = (p[1].value,) + (p[3] if len(p) == 4 else ())
+        p[0] = (p[1],) + (p[3] if len(p) == 4 else ())
 
     def p_call_stmt_body(self, p):
         '''

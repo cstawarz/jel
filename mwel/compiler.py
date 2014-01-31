@@ -120,8 +120,11 @@ class Compiler(JELCompiler):
 
     def local_stmt(self, node):
         self.genops(node.value)
-        self.init_local(node.lineno, node.lexpos, node.name)
-        self._local_names[0].add(node.name)
+        self._new_local(node.lineno, node.lexpos, node.name)
+
+    def _new_local(self, lineno, lexpos, name):
+        self.init_local(lineno, lexpos, name)
+        self._local_names[0].add(name)
 
     def simple_call_stmt(self, node):
         self.genops(node.target)
@@ -132,7 +135,7 @@ class Compiler(JELCompiler):
     def compound_call_stmt(self, node):
         clauses = tuple((self.compile_arg_list(c),
                          len(c.local_names),
-                         self.compile_stmt_list(c, c.body))
+                         self.compile_stmt_list(c, c.body, c.local_names))
                         for c in node.clauses)
         self.call_compound(node.lineno,
                            node.lexpos,
@@ -157,9 +160,11 @@ class Compiler(JELCompiler):
         else:
             assert False
 
-    def compile_stmt_list(self, node, stmts):
+    def compile_stmt_list(self, node, stmts, local_names=()):
         self._ops.append([])
         with self._new_scope(node.lineno, node.lexpos):
+            for n in reversed(local_names):
+                self._new_local(n.lineno, n.lexpos, n.value)
             for s in stmts:
                 self.genops(s)
         return tuple(self._ops.pop())
