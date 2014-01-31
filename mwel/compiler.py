@@ -125,24 +125,28 @@ class Compiler(JELCompiler):
 
     def simple_call_stmt(self, node):
         self.genops(node.target)
+        self.call_simple(node.lineno,
+                         node.lexpos,
+                         *self.compile_arg_list(node))
+
+    def compound_call_stmt(self, node):
+        clauses = tuple((self.compile_arg_list(c),
+                         len(c.local_names),
+                         self.compile_stmt_list(c, c.body))
+                        for c in node.clauses)
+        self.call_compound(node.lineno,
+                           node.lexpos,
+                           node.function_name,
+                           tuple(clauses))
+
+    def compile_arg_list(self, node):
         if isinstance(node.args, tuple):
             args = (tuple(self.compile(a) for a in node.args),)
         else:
             assert isinstance(node.args, collections.OrderedDict)
             args = (tuple(node.args.keys()),
                     tuple(self.compile(a) for a in node.args.values()))
-        self.call_simple(node.lineno, node.lexpos, *args)
-
-    def compound_call_stmt(self, node):
-        clauses = []
-        for c in node.clauses:
-            body_ops = self.compile_stmt_list(c, c.body)
-            clauses.append(((), 0, body_ops))
-        
-        self.call_compound(node.lineno,
-                           node.lexpos,
-                           node.function_name,
-                           tuple(clauses))
+        return args
 
     def identifier_expr(self, node):
         name_depth = self._name_depth(node.value)
