@@ -127,7 +127,7 @@ class Compiler(JELCompiler):
         self.genops(node.target)
         self.call_simple(node.lineno,
                          node.lexpos,
-                         *self.compile_arg_list(node))
+                         self.compile_arg_list(node))
 
     def compound_call_stmt(self, node):
         clauses = tuple((self.compile_arg_list(c),
@@ -141,11 +141,11 @@ class Compiler(JELCompiler):
 
     def compile_arg_list(self, node):
         if isinstance(node.args, tuple):
-            args = (tuple(self.compile(a) for a in node.args),)
+            args = tuple(self.compile(a) for a in node.args)
         else:
             assert isinstance(node.args, collections.OrderedDict)
-            args = (tuple(node.args.keys()),
-                    tuple(self.compile(a) for a in node.args.values()))
+            args = collections.OrderedDict((k, self.compile(v)) for k, v in
+                                           node.args.items())
         return args
 
     def identifier_expr(self, node):

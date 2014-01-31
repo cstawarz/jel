@@ -1,4 +1,5 @@
 from __future__ import division, print_function, unicode_literals
+import collections
 import unittest
 
 from jel.test.test_compiler import CompilerTestMixin
@@ -158,37 +159,27 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                           '''):
             self.assertOp('LOAD_GLOBAL', 2, 27, 'foo')
             args = self.assertOp('CALL_SIMPLE', 2, 30)
-            self.assertEqual(2, len(args))
-            self.assertIsInstance(args[0], tuple)
-            self.assertEqual(('a', 'b'), args[0])
-            self.assertIsInstance(args[1], tuple)
-            self.assertEqual(2, len(args[1]))
+            self.assertEqual(1, len(args))
+            self.assertIsInstance(args[0], collections.OrderedDict)
+            self.assertEqual(2, len(args[0]))
+            args = tuple(args[0].items())
 
-            with self.assertOpList(args[1][0]):
+            self.assertEqual('a', args[0][0])
+            with self.assertOpList(args[0][1]):
                 self.assertOp('LOAD_CONST', 2, 33, True)
 
+            self.assertEqual('b', args[1][0])
             with self.assertOpList(args[1][1]):
                 self.assertOp('LOAD_CONST', 2, 41, False)
 
     def test_compound_call_stmt(self):
-        def check_clause(c,
-                         expected_num_args,
-                         expect_named_args,
-                         expected_num_local_names):
+        def check_clause(c, expected_num_args, expected_num_local_names):
             self.assertIsInstance(c, tuple)
             self.assertEqual(3, len(c))
 
             args = c[0]
-            self.assertIsInstance(args, tuple)
-            if not expect_named_args:
-                self.assertEqual(1, len(args))
-                self.assertIsInstance(args[0], tuple)
-            else:
-                self.assertEqual(2, len(args))
-                self.assertIsInstance(args[0], tuple)
-                self.assertIsInstance(args[1], tuple)
-                self.assertEqual(len(args[0]), len(args[1]))
-            self.assertEqual(expected_num_args, len(args[0]))
+            self.assertIsInstance(args, (tuple, collections.OrderedDict))
+            self.assertEqual(expected_num_args, len(args))
 
             num_local_names = c[1]
             self.assertIsInstance(num_local_names, int)
@@ -209,7 +200,7 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             clauses = args[1]
             self.assertIsInstance(clauses, tuple)
             self.assertEqual(1, len(clauses))
-            args, body = check_clause(clauses[0], 0, False, 0)
+            args, body = check_clause(clauses[0], 0, 0)
             with self.assertOpList(body):
                 self.assertOp('PUSH_SCOPE', 2, 33)
                 self.assertOp('LOAD_CONST', 3, 41, 2.0, None)
@@ -234,13 +225,13 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             self.assertIsInstance(clauses, tuple)
             self.assertEqual(3, len(clauses))
 
-            args, body = check_clause(clauses[0], 3, False, 2)
-            with self.assertOpList(args[0][0]):
+            args, body = check_clause(clauses[0], 3, 2)
+            with self.assertOpList(args[0]):
                 self.assertOp('LOAD_GLOBAL', 2, 32, 'a')
-            with self.assertOpList(args[0][1]):
+            with self.assertOpList(args[1]):
                 self.assertOp('LOAD_GLOBAL', 2, 35, 'b')
                 self.assertOp('LOAD_ATTR', 2, 36, 'c')
                 self.assertOp('LOAD_GLOBAL', 2, 39, 'd')
                 self.assertOp('LOAD_SUBSCR', 2, 38)
-            with self.assertOpList(args[0][2]):
+            with self.assertOpList(args[2]):
                 self.assertOp('LOAD_CONST', 2, 43, True)
