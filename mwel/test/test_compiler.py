@@ -368,3 +368,16 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                 self.assertOp('LOAD_CONST', 2, 45, False)
 
             self.assertOp('STORE_GLOBAL', 2, 29, 'x')
+
+    def test_return_stmt(self):
+        with self.compile('''
+                          return 2
+                          '''):
+            self.assertOp('LOAD_CONST', 2, 34, 2.0, None)
+            self.assertOp('RETURN_VALUE', 2, 27)
+
+        with self.compile('''
+                          return
+                          '''):
+            self.assertOp('LOAD_CONST', 2, 27, None)
+            self.assertOp('RETURN_VALUE', 2, 27)

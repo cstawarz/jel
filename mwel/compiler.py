@@ -20,6 +20,7 @@ class Compiler(JELCompiler):
         'LOAD_NONLOCAL',
         'POP_SCOPE',
         'PUSH_SCOPE',
+        'RETURN_VALUE',
         'ROT_THREE',
         'ROT_TWO',
         'STORE_ATTR',
@@ -151,6 +152,13 @@ class Compiler(JELCompiler):
             return collections.OrderedDict((k, self.compile(v)) for k, v in
                                            node.args.items())
         return super(Compiler, self).compile_arg_list(node)
+
+    def return_stmt(self, node):
+        if node.value is not None:
+            self.genops(node.value)
+        else:
+            self.null_literal_expr(node)
+        self.return_value(node.lineno, node.lexpos)
 
     def identifier_expr(self, node):
         name_depth = self._name_depth(node.value)
