@@ -106,22 +106,99 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
         test_augassign('**')
 
     def test_local_stmt(self):
+        def get_body(lineno, lexpos):
+            args = self.assertOp('CALL_COMPOUND', lineno, lexpos)
+            return args[1][0][2]
+
+        #
+        #  Test name depth
+        #
+
         with self.compile('''
             local foo = 1
             foo += 2
             foo = true
+            scope ():
+                foo += 2
+                foo = true
+                scope ():
+                    foo += 2
+                    foo = true
+                end
+            end
             '''):
             self.assertOp('LOAD_CONST', 2, 25, 1.0, None)
             self.assertOp('INIT_LOCAL', 2, 13, 'foo')
-
             self.assertOp('LOAD_LOCAL', 3, 13, 'foo')
             self.assertOp('LOAD_CONST', 3, 20, 2.0, None)
             self.assertOp('BINARY_OP', 3, 17,
                           self.compiler.binary_op_codes['+'])
             self.assertOp('STORE_LOCAL', 3, 17, 'foo')
-
             self.assertOp('LOAD_CONST', 4, 19, True)
             self.assertOp('STORE_LOCAL', 4, 17, 'foo')
+
+            with self.assertOpList(get_body(5, 13)):
+                self.assertOp('PUSH_SCOPE', 5, 21)
+                self.assertOp('LOAD_NONLOCAL', 6, 17, 'foo', 1)
+                self.assertOp('LOAD_CONST', 6, 24, 2.0, None)
+                self.assertOp('BINARY_OP', 6, 21,
+                              self.compiler.binary_op_codes['+'])
+                self.assertOp('STORE_NONLOCAL', 6, 21, 'foo', 1)
+                self.assertOp('LOAD_CONST', 7, 23, True)
+                self.assertOp('STORE_NONLOCAL', 7, 21, 'foo', 1)
+
+                with self.assertOpList(get_body(8, 17)):
+                    self.assertOp('PUSH_SCOPE', 8, 25)
+                    self.assertOp('LOAD_NONLOCAL', 9, 21, 'foo', 2)
+                    self.assertOp('LOAD_CONST', 9, 28, 2.0, None)
+                    self.assertOp('BINARY_OP', 9, 25,
+                                  self.compiler.binary_op_codes['+'])
+                    self.assertOp('STORE_NONLOCAL', 9, 25, 'foo', 2)
+                    self.assertOp('LOAD_CONST', 10, 27, True)
+                    self.assertOp('STORE_NONLOCAL', 10, 25, 'foo', 2)
+                    self.assertOp('POP_SCOPE', 8, 25)
+
+                self.assertOp('POP_SCOPE', 5, 21)
+
+        #
+        #  Test name masking
+        #
+
+        with self.compile('''
+            local foo = false
+            scope ():
+                local foo = foo
+                scope ():
+                    local foo = foo
+                    foo = true
+                end
+                foo = true
+            end
+            foo = true
+            '''):
+
+            self.assertOp('LOAD_CONST', 2, 25, False)
+            self.assertOp('INIT_LOCAL', 2, 13, 'foo')
+
+            with self.assertOpList(get_body(3, 13)):
+                self.assertOp('PUSH_SCOPE', 3, 21)
+                self.assertOp('LOAD_NONLOCAL', 4, 29, 'foo', 1)
+                self.assertOp('INIT_LOCAL', 4, 17, 'foo')
+
+                with self.assertOpList(get_body(5, 17)):
+                    self.assertOp('PUSH_SCOPE', 5, 25)
+                    self.assertOp('LOAD_NONLOCAL', 6, 33, 'foo', 1)
+                    self.assertOp('INIT_LOCAL', 6, 21, 'foo')
+                    self.assertOp('LOAD_CONST', 7, 27, True)
+                    self.assertOp('STORE_LOCAL', 7, 25, 'foo')
+                    self.assertOp('POP_SCOPE', 5, 25)
+
+                self.assertOp('LOAD_CONST', 9, 23, True)
+                self.assertOp('STORE_LOCAL', 9, 21, 'foo')
+                self.assertOp('POP_SCOPE', 3, 21)
+
+            self.assertOp('LOAD_CONST', 11, 19, True)
+            self.assertOp('STORE_LOCAL', 11, 17, 'foo')
 
     def test_simple_call_stmt(self):
         with self.compile('''

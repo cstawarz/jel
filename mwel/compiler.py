@@ -17,6 +17,7 @@ class Compiler(JELCompiler):
         'INIT_LOCAL',
         'LOAD_GLOBAL',
         'LOAD_LOCAL',
+        'LOAD_NONLOCAL',
         'POP_SCOPE',
         'PUSH_SCOPE',
         'ROT_THREE',
@@ -24,7 +25,7 @@ class Compiler(JELCompiler):
         'STORE_ATTR',
         'STORE_GLOBAL',
         'STORE_LOCAL',
-        'STORE_NAME',
+        'STORE_NONLOCAL',
         'STORE_SUBSCR',
         *JELCompiler.op_names
         )
@@ -80,7 +81,7 @@ class Compiler(JELCompiler):
                 elif name_depth == 0:
                     self.store_local(ln, lp, t.value)
                 else:
-                    assert False
+                    self.store_nonlocal(ln, lp, t.value, name_depth)
 
     def augmented_assignment_stmt(self, node):
         if isinstance(node.target, ast.SubscriptExpr):
@@ -116,7 +117,10 @@ class Compiler(JELCompiler):
             elif name_depth == 0:
                 self.store_local(node.lineno, node.lexpos, node.target.value)
             else:
-                assert False
+                self.store_nonlocal(node.lineno,
+                                    node.lexpos,
+                                    node.target.value,
+                                    name_depth)
 
     def local_stmt(self, node):
         self.genops(node.value)
@@ -155,7 +159,7 @@ class Compiler(JELCompiler):
         elif name_depth == 0:
             self.load_local(node.lineno, node.lexpos, node.value)
         else:
-            assert False
+            self.load_nonlocal(node.lineno, node.lexpos, node.value, name_depth)
 
     def compile_stmt_list(self, node, stmts, local_names=()):
         self._ops.append([])
