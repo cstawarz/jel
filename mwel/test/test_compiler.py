@@ -270,3 +270,24 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                 self.assertOp('LOAD_CONST', 7, 35, 6.0, None)
                 self.assertOp('STORE_GLOBAL', 7, 33, 'z')
                 self.assertOp('POP_SCOPE', 6, 31)
+
+    def test_call_expr_with_named_args(self):
+        with self.compile('''
+                          x = foo(a=true, b=false)
+                          '''):
+            self.assertOp('LOAD_GLOBAL', 2, 31, 'foo')
+            args = self.assertOp('CALL_FUNCTION', 2, 34)
+            self.assertEqual(1, len(args))
+            self.assertIsInstance(args[0], collections.OrderedDict)
+            self.assertEqual(2, len(args[0]))
+            args = tuple(args[0].items())
+
+            self.assertEqual('a', args[0][0])
+            with self.assertOpList(args[0][1]):
+                self.assertOp('LOAD_CONST', 2, 37, True)
+
+            self.assertEqual('b', args[1][0])
+            with self.assertOpList(args[1][1]):
+                self.assertOp('LOAD_CONST', 2, 45, False)
+
+            self.assertOp('STORE_GLOBAL', 2, 29, 'x')

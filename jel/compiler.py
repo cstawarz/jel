@@ -82,8 +82,12 @@ class Compiler(object):
 
     def call_expr(self, node):
         self.genops(node.target)
-        arg_ops = tuple(self.compile(arg) for arg in node.args)
-        self.call_function(node.lineno, node.lexpos, arg_ops)
+        self.call_function(node.lineno,
+                           node.lexpos,
+                           self.compile_arg_list(node))
+
+    def compile_arg_list(self, node):
+        return tuple(self.compile(arg) for arg in node.args)
 
     def subscript_expr(self, node):
         self.genops(node.target)
