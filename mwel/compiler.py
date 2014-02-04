@@ -153,7 +153,10 @@ class Compiler(JELCompiler):
                            node.lexpos,
                            len(node.args),
                            self.compile_stmt_list(node, node.body, node.args))
-        self._store_name(node.lineno, node.lexpos, node.name)
+        if node.local:
+            self._new_local(node.lineno, node.lexpos, node.name)
+        else:
+            self._store_name(node.lineno, node.lexpos, node.name)
 
     def return_stmt(self, node):
         if node.value is not None:

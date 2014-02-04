@@ -408,6 +408,39 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                 self.assertOp('POP_SCOPE', 2, 27)
             self.assertOp('STORE_GLOBAL', 2, 27, 'sum')
 
+        with self.compile('''
+                          local function foo():
+                          end
+                          local bar = null
+                          function bar():
+                          end
+                          scope ():
+                              function foo():
+                              end
+                          end
+                          '''):
+            with self.assertOpList(check_function(2, 33, 0)):
+                self.assertOp('PUSH_SCOPE', 2, 33)
+                self.assertOp('POP_SCOPE', 2, 33)
+            self.assertOp('INIT_LOCAL', 2, 33, 'foo')
+
+            self.assertOp('LOAD_CONST', 4, 39, None)
+            self.assertOp('INIT_LOCAL', 4, 27, 'bar')
+
+            with self.assertOpList(check_function(5, 27, 0)):
+                self.assertOp('PUSH_SCOPE', 5, 27)
+                self.assertOp('POP_SCOPE', 5, 27)
+            self.assertOp('STORE_LOCAL', 5, 27, 'bar')
+
+            body = self.assertOp('CALL_COMPOUND', 7, 27)[1][0][2]
+            with self.assertOpList(body):
+                self.assertOp('PUSH_SCOPE', 7, 35)
+                with self.assertOpList(check_function(8, 31, 0)):
+                    self.assertOp('PUSH_SCOPE', 8, 31)
+                    self.assertOp('POP_SCOPE', 8, 31)
+                self.assertOp('STORE_NONLOCAL', 8, 31, 'foo', 1)
+                self.assertOp('POP_SCOPE', 7, 35)
+
     def test_return_stmt(self):
         with self.compile('''
                           return 2*x
