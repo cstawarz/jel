@@ -283,7 +283,7 @@ class Parser(JELParser):
         '''
         function_arg_list_item : identifier_expr
         '''
-        p[0] = p[1].value
+        p[0] = p[1]
 
     def p_array_item_range_expr(self, p):
         '''

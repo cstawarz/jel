@@ -18,6 +18,7 @@ class Compiler(JELCompiler):
         'LOAD_GLOBAL',
         'LOAD_LOCAL',
         'LOAD_NONLOCAL',
+        'MAKE_FUNCTION',
         'POP_SCOPE',
         'PUSH_SCOPE',
         'RETURN_VALUE',
@@ -76,13 +77,7 @@ class Compiler(JELCompiler):
                 self.store_attr(ln, lp, t.name)
             else:
                 assert isinstance(t, ast.IdentifierExpr)
-                name_depth = self._name_depth(t.value)
-                if name_depth < 0:
-                    self.store_global(ln, lp, t.value)
-                elif name_depth == 0:
-                    self.store_local(ln, lp, t.value)
-                else:
-                    self.store_nonlocal(ln, lp, t.value, name_depth)
+                self._store_name(ln, lp, t.value)
 
     def augmented_assignment_stmt(self, node):
         if isinstance(node.target, ast.SubscriptExpr):
@@ -112,16 +107,16 @@ class Compiler(JELCompiler):
             self.rot_two(node.lineno, node.lexpos)
             self.store_attr(node.lineno, node.lexpos, node.target.name)
         else:
-            name_depth = self._name_depth(node.target.value)
-            if name_depth < 0:
-                self.store_global(node.lineno, node.lexpos, node.target.value)
-            elif name_depth == 0:
-                self.store_local(node.lineno, node.lexpos, node.target.value)
-            else:
-                self.store_nonlocal(node.lineno,
-                                    node.lexpos,
-                                    node.target.value,
-                                    name_depth)
+            self._store_name(node.lineno, node.lexpos, node.target.value)
+
+    def _store_name(self, lineno, lexpos, name):
+        name_depth = self._name_depth(name)
+        if name_depth < 0:
+            self.store_global(lineno, lexpos, name)
+        elif name_depth == 0:
+            self.store_local(lineno, lexpos, name)
+        else:
+            self.store_nonlocal(lineno, lexpos, name, name_depth)
 
     def local_stmt(self, node):
         self.genops(node.value)
@@ -152,6 +147,13 @@ class Compiler(JELCompiler):
             return collections.OrderedDict((k, self.compile(v)) for k, v in
                                            node.args.items())
         return super(Compiler, self).compile_arg_list(node)
+
+    def function_stmt(self, node):
+        self.make_function(node.lineno,
+                           node.lexpos,
+                           len(node.args),
+                           self.compile_stmt_list(node, node.body, node.args))
+        self._store_name(node.lineno, node.lexpos, node.name)
 
     def return_stmt(self, node):
         if node.value is not None:

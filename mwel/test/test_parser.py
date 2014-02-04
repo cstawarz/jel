@@ -421,7 +421,11 @@ class TestParser(ParserTestMixin, unittest.TestCase):
                 self.assertIsInstance(p, ast.FunctionStmt)
                 self.assertLocation(p, 2, (25 if local else 19))
                 self.assertEqual(name, p.name)
-                self.assertEqual(args, p.args)
+                self.assertIsInstance(p.args, tuple)
+                self.assertEqual(len(args), len(p.args))
+                for arg_num, arg_node in enumerate(p.args):
+                    self.assertIsInstance(arg_node, ast.IdentifierExpr)
+                    self.assertEqual(args[arg_num], arg_node.value)
                 self.assertIsInstance(p.body, tuple)
                 self.assertEqual(num_stmts, len(p.body))
                 self.assertEqual(local, p.local)
@@ -470,7 +474,11 @@ class TestParser(ParserTestMixin, unittest.TestCase):
                 self.assertIsInstance(p.value, ast.FunctionExpr)
                 p = p.value
                 self.assertLocation(p, 1, 10)
-                self.assertEqual(args, p.args)
+                self.assertIsInstance(p.args, tuple)
+                self.assertEqual(len(args), len(p.args))
+                for arg_num, arg_node in enumerate(p.args):
+                    self.assertIsInstance(arg_node, ast.IdentifierExpr)
+                    self.assertEqual(args[arg_num], arg_node.value)
                 self.assertIsInstance(p.body, expr_type)
 
         test_func('function () true end', (), ast.BooleanLiteralExpr)

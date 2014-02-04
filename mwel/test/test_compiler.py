@@ -369,11 +369,53 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
 
             self.assertOp('STORE_GLOBAL', 2, 29, 'x')
 
+    def test_function_stmt(self):
+        def check_function(lineno, lexpos, expected_num_args):
+            args = self.assertOp('MAKE_FUNCTION', lineno, lexpos)
+            self.assertEqual(2, len(args))
+            self.assertIsInstance(args[0], int)
+            self.assertEqual(expected_num_args, args[0])
+            return args[1]
+
+        with self.compile('''
+                          function two():
+                              return 2
+                          end
+                          '''):
+            body = check_function(2, 27, 0)
+            with self.assertOpList(body):
+                self.assertOp('PUSH_SCOPE', 2, 27)
+                self.assertOp('LOAD_CONST', 3, 38, 2.0, None)
+                self.assertOp('RETURN_VALUE', 3, 31)
+                self.assertOp('POP_SCOPE', 2, 27)
+            self.assertOp('STORE_GLOBAL', 2, 27, 'two')
+
+        with self.compile('''
+                          function sum(a, b):
+                              return a+b
+                          end
+                          '''):
+            body = check_function(2, 27, 2)
+            with self.assertOpList(body):
+                self.assertOp('PUSH_SCOPE', 2, 27)
+                self.assertOp('INIT_LOCAL', 2, 43, 'b')
+                self.assertOp('INIT_LOCAL', 2, 40, 'a')
+                self.assertOp('LOAD_LOCAL', 3, 38, 'a')
+                self.assertOp('LOAD_LOCAL', 3, 40, 'b')
+                self.assertOp('BINARY_OP', 3, 39,
+                              self.compiler.binary_op_codes['+'])
+                self.assertOp('RETURN_VALUE', 3, 31)
+                self.assertOp('POP_SCOPE', 2, 27)
+            self.assertOp('STORE_GLOBAL', 2, 27, 'sum')
+
     def test_return_stmt(self):
         with self.compile('''
-                          return 2
+                          return 2*x
                           '''):
             self.assertOp('LOAD_CONST', 2, 34, 2.0, None)
+            self.assertOp('LOAD_GLOBAL', 2, 36, 'x')
+            self.assertOp('BINARY_OP', 2, 35,
+                          self.compiler.binary_op_codes['*'])
             self.assertOp('RETURN_VALUE', 2, 27)
 
         with self.compile('''
