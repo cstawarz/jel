@@ -37,7 +37,7 @@ class Compiler(JELCompiler):
     def __init__(self):
         super(Compiler, self).__init__()
         self._local_names = collections.deque()
-        self._closure_names = {}
+        self._closure_names = collections.OrderedDict()
 
     def _new_scope(self, lineno, lexpos, toplevel=False):
         @contextmanager
@@ -197,10 +197,14 @@ class Compiler(JELCompiler):
             absolute_depth >= max(self._closure_names.keys())):
             return False
 
+        prev_names = None
         for ad, names in self._closure_names.items():
             relative_depth = ad - absolute_depth
             if relative_depth > 0:
-                names[name] = relative_depth
+                names[name] = relative_depth - 1
+                if prev_names and name in prev_names:
+                    names[name] *= -1
+            prev_names = names
 
         return True
 

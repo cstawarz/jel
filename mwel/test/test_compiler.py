@@ -476,7 +476,7 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             self.assertOp('INIT_LOCAL', 2, 27, 'x')
 
             closure, body = check_function(3, 33, 0)
-            self.assertEqual((('x', 1), ('w', 1)), closure)
+            self.assertEqual((('x', 0), ('w', 0)), closure)
             with self.assertOpList(body):
                 self.assertOp('PUSH_SCOPE', 3, 33)
 
@@ -494,7 +494,7 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                     self.assertOp('INIT_LOCAL', 6, 35, 'z')
     
                     closure, body = check_function(7, 41, 1)
-                    self.assertEqual((('y', 2), ('w', 3), ('x', 3)), closure)
+                    self.assertEqual((('y', 1), ('w', -2), ('x', -2)), closure)
                     with self.assertOpList(body):
                         self.assertOp('PUSH_SCOPE', 7, 41)
                         self.assertOp('INIT_LOCAL', 7, 54, 'z')
