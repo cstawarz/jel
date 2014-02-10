@@ -15,6 +15,7 @@ class Compiler(JELCompiler):
         'DUP_TOP',
         'DUP_TOP_TWO',
         'INIT_LOCAL',
+        'LOAD_CLOSURE',
         'LOAD_GLOBAL',
         'LOAD_LOCAL',
         'LOAD_NONLOCAL',
@@ -25,6 +26,7 @@ class Compiler(JELCompiler):
         'ROT_THREE',
         'ROT_TWO',
         'STORE_ATTR',
+        'STORE_CLOSURE',
         'STORE_GLOBAL',
         'STORE_LOCAL',
         'STORE_NONLOCAL',
@@ -35,6 +37,7 @@ class Compiler(JELCompiler):
     def __init__(self):
         super(Compiler, self).__init__()
         self._local_names = collections.deque()
+        self._closure_names = {}
 
     def _new_scope(self, lineno, lexpos, toplevel=False):
         @contextmanager
@@ -115,6 +118,8 @@ class Compiler(JELCompiler):
             self.store_global(lineno, lexpos, name)
         elif name_depth == 0:
             self.store_local(lineno, lexpos, name)
+        elif self._need_closure(name, name_depth):
+            self.store_closure(lineno, lexpos, name)
         else:
             self.store_nonlocal(lineno, lexpos, name, name_depth)
 
@@ -149,10 +154,19 @@ class Compiler(JELCompiler):
         return super(Compiler, self).compile_arg_list(node)
 
     def function_stmt(self, node):
+        absolute_depth = len(self._local_names)
+        self._closure_names[absolute_depth] = collections.OrderedDict()
+        try:
+            body = self.compile_stmt_list(node, node.body, node.args)
+        finally:
+            closure = tuple(self._closure_names.pop(absolute_depth).items())
+
         self.make_function(node.lineno,
                            node.lexpos,
                            len(node.args),
-                           self.compile_stmt_list(node, node.body, node.args))
+                           body,
+                           closure)
+
         if node.local:
             self._new_local(node.lineno, node.lexpos, node.name)
         else:
@@ -171,8 +185,24 @@ class Compiler(JELCompiler):
             self.load_global(node.lineno, node.lexpos, node.value)
         elif name_depth == 0:
             self.load_local(node.lineno, node.lexpos, node.value)
+        elif self._need_closure(node.value, name_depth):
+            self.load_closure(node.lineno, node.lexpos, node.value)
         else:
             self.load_nonlocal(node.lineno, node.lexpos, node.value, name_depth)
+
+    def _need_closure(self, name, depth):
+        absolute_depth = len(self._local_names) - depth - 1
+
+        if (not self._closure_names or
+            absolute_depth >= max(self._closure_names.keys())):
+            return False
+
+        for ad, names in self._closure_names.items():
+            relative_depth = ad - absolute_depth
+            if relative_depth > 0:
+                names[name] = relative_depth
+
+        return True
 
     def compile_stmt_list(self, node, stmts, local_names=()):
         self._ops.append([])
