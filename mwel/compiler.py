@@ -1,6 +1,7 @@
 from __future__ import division, print_function, unicode_literals
 import collections
 from contextlib import contextmanager
+from itertools import dropwhile
 
 from jel.compiler import Compiler as JELCompiler, gen_codes
 
@@ -71,7 +72,7 @@ class Compiler(JELCompiler):
             self.load_global(lineno, lexpos, name)
         elif depth == 0:
             self.load_local(lineno, lexpos, name)
-        elif self._need_closure(name, depth):
+        elif self._in_closure(name, depth):
             self.load_closure(lineno, lexpos, name)
         else:
             self.load_nonlocal(lineno, lexpos, name, depth)
@@ -82,26 +83,28 @@ class Compiler(JELCompiler):
             self.store_global(lineno, lexpos, name)
         elif depth == 0:
             self.store_local(lineno, lexpos, name)
-        elif self._need_closure(name, depth):
+        elif self._in_closure(name, depth):
             self.store_closure(lineno, lexpos, name)
         else:
             self.store_nonlocal(lineno, lexpos, name, depth)
 
-    def _need_closure(self, name, depth):
+    def _in_closure(self, name, depth):
+        if not self._closures:
+            return False
+
+        if name in self._closures[-1]:
+            return True
+
         name_level = len(self._scopes) - depth - 1
-        need_closure = False
+        closures = tuple(dropwhile(lambda c: c[0] < 0,
+                                   ((level - name_level - 1, names)
+                                    for level, names in self._closures)))
+        if not closures:
+            return False
 
-        prev_names = None
-        for closure_level, closure_names in self._closures:
-            relative_depth = closure_level - name_level
-            if relative_depth > 0:
-                closure_names[name] = relative_depth - 1
-                if prev_names and name in prev_names:
-                    closure_names[name] *= -1
-                need_closure = True
-            prev_names = closure_names
-
-        return need_closure
+        for index, (relative_depth, closure_names) in enumerate(closures):
+            closure_names[name] = relative_depth * (-1 if index > 0 else 1)
+        return True
 
     def _name_depth(self, name):
         for depth, local_names in enumerate(self._scopes):
@@ -193,6 +196,10 @@ class Compiler(JELCompiler):
         return super(Compiler, self).compile_arg_list(node)
 
     def function_stmt(self, node):
+        if node.local:
+            self.null_literal_expr(node)
+            self._new_local(node.lineno, node.lexpos, node.name)
+
         with self._new_op_list() as body:
             with self._new_scope(node.lineno, node.lexpos):
                 with self._new_closure() as closure:
@@ -203,11 +210,7 @@ class Compiler(JELCompiler):
                            len(node.args),
                            tuple(body),
                            tuple(closure.items()))
-
-        if node.local:
-            self._new_local(node.lineno, node.lexpos, node.name)
-        else:
-            self._store_name(node.lineno, node.lexpos, node.name)
+        self._store_name(node.lineno, node.lexpos, node.name)
 
     def compile_stmt_list(self, stmts, local_names=()):
         for n in reversed(local_names):

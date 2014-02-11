@@ -370,13 +370,16 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             self.assertOp('STORE_GLOBAL', 2, 29, 'x')
 
     def test_function_stmt(self):
-        def check_function(lineno, lexpos, expected_num_args):
+        def check_function(lineno,
+                           lexpos,
+                           expected_num_args,
+                           *expected_closures):
             args = self.assertOp('MAKE_FUNCTION', lineno, lexpos)
             self.assertEqual(3, len(args))
             self.assertIsInstance(args[0], int)
             self.assertEqual(expected_num_args, args[0])
             self.assertIsInstance(args[2], tuple)
-            self.assertEqual(0, len(args[2]))
+            self.assertEqual(expected_closures, args[2])
             return args[1]
 
         with self.compile('''
@@ -411,6 +414,21 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             self.assertOp('STORE_GLOBAL', 2, 27, 'sum')
 
         with self.compile('''
+                          local function self():
+                              return self
+                          end
+                          '''):
+            self.assertOp('LOAD_CONST', 2, 33, None)
+            self.assertOp('INIT_LOCAL', 2, 33, 'self')
+            body = check_function(2, 33, 0, ('self', 0))
+            with self.assertOpList(body):
+                self.assertOp('PUSH_SCOPE', 2, 33)
+                self.assertOp('LOAD_CLOSURE', 3, 38, 'self')
+                self.assertOp('RETURN_VALUE', 3, 31)
+                self.assertOp('POP_SCOPE', 2, 33)
+            self.assertOp('STORE_LOCAL', 2, 33, 'self')
+
+        with self.compile('''
                           local function foo():
                           end
                           local bar = null
@@ -421,10 +439,12 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                               end
                           end
                           '''):
+            self.assertOp('LOAD_CONST', 2, 33, None)
+            self.assertOp('INIT_LOCAL', 2, 33, 'foo')
             with self.assertOpList(check_function(2, 33, 0)):
                 self.assertOp('PUSH_SCOPE', 2, 33)
                 self.assertOp('POP_SCOPE', 2, 33)
-            self.assertOp('INIT_LOCAL', 2, 33, 'foo')
+            self.assertOp('STORE_LOCAL', 2, 33, 'foo')
 
             self.assertOp('LOAD_CONST', 4, 39, None)
             self.assertOp('INIT_LOCAL', 4, 27, 'bar')
@@ -475,6 +495,9 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             self.assertOp('LOAD_CONST', 2, 37, 1.0, None)
             self.assertOp('INIT_LOCAL', 2, 27, 'x')
 
+            self.assertOp('LOAD_CONST', 3, 33, None)
+            self.assertOp('INIT_LOCAL', 3, 33, 'foo')
+
             closure, body = check_function(3, 33, 0)
             self.assertEqual((('x', 0), ('w', 0)), closure)
             with self.assertOpList(body):
@@ -493,6 +516,9 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                                   self.compiler.binary_op_codes['*'])
                     self.assertOp('INIT_LOCAL', 6, 35, 'z')
     
+                    self.assertOp('LOAD_CONST', 7, 41, None)
+                    self.assertOp('INIT_LOCAL', 7, 41, 'bar')
+
                     closure, body = check_function(7, 41, 1)
                     self.assertEqual((('y', 1), ('w', -2), ('x', -2)), closure)
                     with self.assertOpList(body):
@@ -513,7 +539,7 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
     
                         self.assertOp('POP_SCOPE', 7, 41)
     
-                    self.assertOp('INIT_LOCAL', 7, 41, 'bar')
+                    self.assertOp('STORE_LOCAL', 7, 41, 'bar')
     
                     self.assertOp('LOAD_CONST', 11, 45, 4.0, None)
                     self.assertOp('INIT_LOCAL', 11, 35, 'x')
@@ -531,7 +557,7 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
 
                 self.assertOp('POP_SCOPE', 3, 33)
 
-            self.assertOp('INIT_LOCAL', 3, 33, 'foo')
+            self.assertOp('STORE_LOCAL', 3, 33, 'foo')
 
     def test_return_stmt(self):
         with self.compile('''
