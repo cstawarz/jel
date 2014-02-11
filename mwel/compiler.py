@@ -16,6 +16,7 @@ class Compiler(JELCompiler):
         'DUP_TOP',
         'DUP_TOP_TWO',
         'INIT_LOCAL',
+        'LOAD_ATTR_REF',
         'LOAD_CLOSURE',
         'LOAD_GLOBAL',
         'LOAD_LOCAL',
@@ -224,6 +225,10 @@ class Compiler(JELCompiler):
         else:
             self.null_literal_expr(node)
         self.return_value(node.lineno, node.lexpos)
+
+    def attribute_reference_expr(self, node):
+        self.genops(node.target)
+        self.load_attr_ref(node.lineno, node.lexpos, node.name)
 
     def identifier_expr(self, node):
         self._load_name(node.lineno, node.lexpos, node.value)

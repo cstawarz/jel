@@ -350,13 +350,13 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
 
     def test_call_expr_with_named_args(self):
         with self.compile('''
-                          x = foo(a=true, b=false)
+                          x = foo(a=true, b=false, c <- foo[0].bar, d=null)
                           '''):
             self.assertOp('LOAD_GLOBAL', 2, 31, 'foo')
             args = self.assertOp('CALL_FUNCTION', 2, 34)
             self.assertEqual(1, len(args))
             self.assertIsInstance(args[0], collections.OrderedDict)
-            self.assertEqual(2, len(args[0]))
+            self.assertEqual(4, len(args[0]))
             args = tuple(args[0].items())
 
             self.assertEqual('a', args[0][0])
@@ -366,6 +366,17 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             self.assertEqual('b', args[1][0])
             with self.assertOpList(args[1][1]):
                 self.assertOp('LOAD_CONST', 2, 45, False)
+
+            self.assertEqual('c', args[2][0])
+            with self.assertOpList(args[2][1]):
+                self.assertOp('LOAD_GLOBAL', 2, 57, 'foo')
+                self.assertOp('LOAD_CONST', 2, 61, 0.0, None)
+                self.assertOp('LOAD_SUBSCR', 2, 60)
+                self.assertOp('LOAD_ATTR_REF', 2, 63, 'bar')
+
+            self.assertEqual('d', args[3][0])
+            with self.assertOpList(args[3][1]):
+                self.assertOp('LOAD_CONST', 2, 71, None)
 
             self.assertOp('STORE_GLOBAL', 2, 29, 'x')
 
