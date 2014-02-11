@@ -22,8 +22,6 @@ class Compiler(JELCompiler):
         'LOAD_LOCAL',
         'LOAD_NONLOCAL',
         'MAKE_FUNCTION',
-        'POP_SCOPE',
-        'PUSH_SCOPE',
         'RETURN_VALUE',
         'ROT_THREE',
         'ROT_TWO',
@@ -41,15 +39,11 @@ class Compiler(JELCompiler):
         self._scopes = collections.deque()
         self._closures = []
 
-    def _new_scope(self, lineno, lexpos, toplevel=False):
+    def _new_scope(self):
         @contextmanager
         def scope():
             self._scopes.appendleft(set())
-            if not toplevel:
-                self.push_scope(lineno, lexpos)
             yield
-            if not toplevel:
-                self.pop_scope(lineno, lexpos)
             self._scopes.popleft()
         return scope()
 
@@ -113,7 +107,7 @@ class Compiler(JELCompiler):
                 return depth
 
     def module(self, node):
-        with self._new_scope(node.lineno, node.lexpos, toplevel=True):
+        with self._new_scope():
             self.compile_stmt_list(node.statements)
 
     def chained_assignment_stmt(self, node):
@@ -181,7 +175,7 @@ class Compiler(JELCompiler):
         for c in node.clauses:
             arg_list = self.compile_arg_list(c)
             with self._new_op_list() as body:
-                with self._new_scope(c.lineno, c.lexpos):
+                with self._new_scope():
                     self.compile_stmt_list(c.body, c.local_names)
             clauses.append((arg_list, len(c.local_names), tuple(body)))
 
@@ -202,7 +196,7 @@ class Compiler(JELCompiler):
             self._new_local(node.lineno, node.lexpos, node.name)
 
         with self._new_op_list() as body:
-            with self._new_scope(node.lineno, node.lexpos):
+            with self._new_scope():
                 with self._new_closure() as closure:
                     self.compile_stmt_list(node.body, node.args)
 
@@ -215,7 +209,7 @@ class Compiler(JELCompiler):
 
     def function_expr(self, node):
         with self._new_op_list() as body:
-            with self._new_scope(node.lineno, node.lexpos):
+            with self._new_scope():
                 with self._new_closure() as closure:
                     self.compile_stmt_list((node.body,), node.args)
                     self.return_value(node.body.lineno, node.body.lexpos)

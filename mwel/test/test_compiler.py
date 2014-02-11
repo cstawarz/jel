@@ -138,7 +138,6 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             self.assertOp('STORE_LOCAL', 4, 17, 'foo')
 
             with self.assertOpList(self.get_call_stmt_body(5, 13)):
-                self.assertOp('PUSH_SCOPE', 5, 21)
                 self.assertOp('LOAD_NONLOCAL', 6, 17, 'foo', 1)
                 self.assertOp('LOAD_CONST', 6, 24, 2.0, None)
                 self.assertOp('BINARY_OP', 6, 21,
@@ -148,7 +147,6 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                 self.assertOp('STORE_NONLOCAL', 7, 21, 'foo', 1)
 
                 with self.assertOpList(self.get_call_stmt_body(8, 17)):
-                    self.assertOp('PUSH_SCOPE', 8, 25)
                     self.assertOp('LOAD_NONLOCAL', 9, 21, 'foo', 2)
                     self.assertOp('LOAD_CONST', 9, 28, 2.0, None)
                     self.assertOp('BINARY_OP', 9, 25,
@@ -156,9 +154,6 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                     self.assertOp('STORE_NONLOCAL', 9, 25, 'foo', 2)
                     self.assertOp('LOAD_CONST', 10, 27, True)
                     self.assertOp('STORE_NONLOCAL', 10, 25, 'foo', 2)
-                    self.assertOp('POP_SCOPE', 8, 25)
-
-                self.assertOp('POP_SCOPE', 5, 21)
 
         #
         #  Test name masking
@@ -181,21 +176,17 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             self.assertOp('INIT_LOCAL', 2, 13, 'foo')
 
             with self.assertOpList(self.get_call_stmt_body(3, 13)):
-                self.assertOp('PUSH_SCOPE', 3, 21)
                 self.assertOp('LOAD_NONLOCAL', 4, 29, 'foo', 1)
                 self.assertOp('INIT_LOCAL', 4, 17, 'foo')
 
                 with self.assertOpList(self.get_call_stmt_body(5, 17)):
-                    self.assertOp('PUSH_SCOPE', 5, 25)
                     self.assertOp('LOAD_NONLOCAL', 6, 33, 'foo', 1)
                     self.assertOp('INIT_LOCAL', 6, 21, 'foo')
                     self.assertOp('LOAD_CONST', 7, 27, True)
                     self.assertOp('STORE_LOCAL', 7, 25, 'foo')
-                    self.assertOp('POP_SCOPE', 5, 25)
 
                 self.assertOp('LOAD_CONST', 9, 23, True)
                 self.assertOp('STORE_LOCAL', 9, 21, 'foo')
-                self.assertOp('POP_SCOPE', 3, 21)
 
             self.assertOp('LOAD_CONST', 11, 19, True)
             self.assertOp('STORE_LOCAL', 11, 17, 'foo')
@@ -279,12 +270,10 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             self.assertEqual(1, len(clauses))
             args, body = check_clause(clauses[0], 0, 0)
             with self.assertOpList(body):
-                self.assertOp('PUSH_SCOPE', 2, 33)
                 self.assertOp('LOAD_CONST', 3, 41, 2.0, None)
                 self.assertOp('INIT_LOCAL', 3, 31, 'x')
                 self.assertOp('LOAD_CONST', 4, 35, 3.0, None)
                 self.assertOp('STORE_GLOBAL', 4, 33, 'y')
-                self.assertOp('POP_SCOPE', 2, 33)
 
         with self.compile('''
                           foo (a, b.c[d], true) -> x, y:
@@ -313,7 +302,6 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             with self.assertOpList(args[2]):
                 self.assertOp('LOAD_CONST', 2, 43, True)
             with self.assertOpList(body):
-                self.assertOp('PUSH_SCOPE', 2, 56)
                 self.assertOp('INIT_LOCAL', 2, 55, 'y')
                 self.assertOp('INIT_LOCAL', 2, 52, 'x')
                 self.assertOp('LOAD_LOCAL', 3, 35, 'x')
@@ -321,7 +309,6 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                 self.assertOp('BINARY_OP', 3, 37,
                               self.compiler.binary_op_codes['+'])
                 self.assertOp('STORE_GLOBAL', 3, 33, 'z')
-                self.assertOp('POP_SCOPE', 2, 56)
 
             args, body = check_clause(clauses[1], 2, 1)
             args = tuple(args.items())
@@ -332,22 +319,18 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             with self.assertOpList(args[1][1]):
                 self.assertOp('LOAD_CONST', 4, 46, False)
             with self.assertOpList(body):
-                self.assertOp('PUSH_SCOPE', 4, 57)
                 self.assertOp('INIT_LOCAL', 4, 56, 'q')
                 self.assertOp('LOAD_CONST', 5, 35, 5.0, None)
                 self.assertOp('LOAD_LOCAL', 5, 37, 'q')
                 self.assertOp('BINARY_OP', 5, 36,
                               self.compiler.binary_op_codes['*'])
                 self.assertOp('STORE_GLOBAL', 5, 33, 'z')
-                self.assertOp('POP_SCOPE', 4, 57)
 
             args, body = check_clause(clauses[2], 0, 0)
             with self.assertOpList(body):
-                self.assertOp('PUSH_SCOPE', 6, 31)
                 self.assertOp('LOAD_CONST', 7, 35, 6.0, None)
                 self.assertOp('STORE_GLOBAL', 7, 33, 'z')
-                self.assertOp('POP_SCOPE', 6, 31)
-
+ 
     def test_call_expr_with_named_args(self):
         with self.compile('''
                           x = foo(a=true, b=false, c <- foo[0].bar, d=null)
@@ -401,10 +384,8 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                           '''):
             body = self.check_function(2, 27, 0)
             with self.assertOpList(body):
-                self.assertOp('PUSH_SCOPE', 2, 27)
                 self.assertOp('LOAD_CONST', 3, 38, 2.0, None)
                 self.assertOp('RETURN_VALUE', 3, 31)
-                self.assertOp('POP_SCOPE', 2, 27)
             self.assertOp('STORE_GLOBAL', 2, 27, 'two')
 
         with self.compile('''
@@ -414,7 +395,6 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                           '''):
             body = self.check_function(2, 27, 2)
             with self.assertOpList(body):
-                self.assertOp('PUSH_SCOPE', 2, 27)
                 self.assertOp('INIT_LOCAL', 2, 43, 'b')
                 self.assertOp('INIT_LOCAL', 2, 40, 'a')
                 self.assertOp('LOAD_LOCAL', 3, 38, 'a')
@@ -422,7 +402,6 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                 self.assertOp('BINARY_OP', 3, 39,
                               self.compiler.binary_op_codes['+'])
                 self.assertOp('RETURN_VALUE', 3, 31)
-                self.assertOp('POP_SCOPE', 2, 27)
             self.assertOp('STORE_GLOBAL', 2, 27, 'sum')
 
         with self.compile('''
@@ -434,10 +413,8 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             self.assertOp('INIT_LOCAL', 2, 33, 'self')
             body = self.check_function(2, 33, 0, ('self', 0))
             with self.assertOpList(body):
-                self.assertOp('PUSH_SCOPE', 2, 33)
                 self.assertOp('LOAD_CLOSURE', 3, 38, 'self')
                 self.assertOp('RETURN_VALUE', 3, 31)
-                self.assertOp('POP_SCOPE', 2, 33)
             self.assertOp('STORE_LOCAL', 2, 33, 'self')
 
         with self.compile('''
@@ -454,26 +431,21 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             self.assertOp('LOAD_CONST', 2, 33, None)
             self.assertOp('INIT_LOCAL', 2, 33, 'foo')
             with self.assertOpList(self.check_function(2, 33, 0)):
-                self.assertOp('PUSH_SCOPE', 2, 33)
-                self.assertOp('POP_SCOPE', 2, 33)
+                pass
             self.assertOp('STORE_LOCAL', 2, 33, 'foo')
 
             self.assertOp('LOAD_CONST', 4, 39, None)
             self.assertOp('INIT_LOCAL', 4, 27, 'bar')
 
             with self.assertOpList(self.check_function(5, 27, 0)):
-                self.assertOp('PUSH_SCOPE', 5, 27)
-                self.assertOp('POP_SCOPE', 5, 27)
+                pass
             self.assertOp('STORE_LOCAL', 5, 27, 'bar')
 
             body = self.get_call_stmt_body(7, 27)
             with self.assertOpList(body):
-                self.assertOp('PUSH_SCOPE', 7, 35)
                 with self.assertOpList(self.check_function(8, 31, 0)):
-                    self.assertOp('PUSH_SCOPE', 8, 31)
-                    self.assertOp('POP_SCOPE', 8, 31)
+                    pass
                 self.assertOp('STORE_NONLOCAL', 8, 31, 'foo', 1)
-                self.assertOp('POP_SCOPE', 7, 35)
 
     def test_function_stmt_with_closure(self):
         with self.compile('''local w = 2
@@ -504,15 +476,11 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
 
             body = self.check_function(3, 33, 0, ('x', 0), ('w', 0))
             with self.assertOpList(body):
-                self.assertOp('PUSH_SCOPE', 3, 33)
-
                 self.assertOp('LOAD_CONST', 4, 41, 2.0, None)
                 self.assertOp('INIT_LOCAL', 4, 31, 'y')
 
                 body = self.get_call_stmt_body(5, 31)
                 with self.assertOpList(body):
-                    self.assertOp('PUSH_SCOPE', 5, 39)
-
                     self.assertOp('LOAD_NONLOCAL', 6, 45, 'y', 1)
                     self.assertOp('LOAD_CLOSURE', 6, 47, 'x')
                     self.assertOp('BINARY_OP', 6, 46,
@@ -525,7 +493,6 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                     body = self.check_function(7, 41, 1,
                                                ('y', 1), ('w', -2), ('x', -2))
                     with self.assertOpList(body):
-                        self.assertOp('PUSH_SCOPE', 7, 41)
                         self.assertOp('INIT_LOCAL', 7, 54, 'z')
     
                         self.assertOp('LOAD_CLOSURE', 8, 39, 'y')
@@ -540,8 +507,6 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                                       self.compiler.binary_op_codes['+'])
                         self.assertOp('RETURN_VALUE', 9, 39)
     
-                        self.assertOp('POP_SCOPE', 7, 41)
-    
                     self.assertOp('STORE_LOCAL', 7, 41, 'bar')
     
                     self.assertOp('LOAD_CONST', 11, 45, 4.0, None)
@@ -555,10 +520,6 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
     
                     self.assertOp('LOAD_LOCAL', 14, 42, 'bar')
                     self.assertOp('RETURN_VALUE', 14, 35)
-
-                    self.assertOp('POP_SCOPE', 5, 39)
-
-                self.assertOp('POP_SCOPE', 3, 33)
 
             self.assertOp('STORE_LOCAL', 3, 33, 'foo')
 
@@ -584,10 +545,8 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                           '''):
             body = self.check_function(2, 33, 0)
             with self.assertOpList(body):
-                self.assertOp('PUSH_SCOPE', 2, 33)
                 self.assertOp('LOAD_CONST', 2, 45, 2.0, None)
                 self.assertOp('RETURN_VALUE', 2, 45)
-                self.assertOp('POP_SCOPE', 2, 33)
             self.assertOp('STORE_GLOBAL', 2, 31, 'two')
 
         with self.compile('''
@@ -624,8 +583,6 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
 
             body = self.get_call_stmt_body(4, 27)
             with self.assertOpList(body):
-                self.assertOp('PUSH_SCOPE', 4, 35)
-
                 self.assertOp('LOAD_CONST', 5, 42, False)
                 self.assertOp('INIT_LOCAL', 5, 31, 'b1')
     
@@ -634,8 +591,6 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
 
                 body = self.get_call_stmt_body(7, 31)
                 with self.assertOpList(body):
-                    self.assertOp('PUSH_SCOPE', 7, 39)
-    
                     self.assertOp('LOAD_CONST', 8, 46, False)
                     self.assertOp('INIT_LOCAL', 8, 35, 'c1')
         
@@ -650,8 +605,6 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                                                ('y1', 1),
                                                ('z1', 0))
                     with self.assertOpList(body):
-                        self.assertOp('PUSH_SCOPE', 10, 41)
-
                         self.assertOp('LOAD_CONST', 11, 50, False)
                         self.assertOp('INIT_LOCAL', 11, 39, 'a2')
             
@@ -660,8 +613,6 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             
                         body = self.get_call_stmt_body(13, 39)
                         with self.assertOpList(body):
-                            self.assertOp('PUSH_SCOPE', 13, 47)
-            
                             self.assertOp('LOAD_CONST', 14, 54, False)
                             self.assertOp('INIT_LOCAL', 14, 43, 'b2')
                 
@@ -670,8 +621,6 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             
                             body = self.get_call_stmt_body(16, 43)
                             with self.assertOpList(body):
-                                self.assertOp('PUSH_SCOPE', 16, 51)
-                
                                 self.assertOp('LOAD_CONST', 17, 58, False)
                                 self.assertOp('INIT_LOCAL', 17, 47, 'c2')
                     
@@ -686,8 +635,6 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                                                            ('y2', 1),
                                                            ('z2', 0))
                                 with self.assertOpList(body):
-                                    self.assertOp('PUSH_SCOPE', 19, 59)
-
                                     self.assertOp('INIT_LOCAL', 19, 72, 'n')
                                     self.assertOp('INIT_LOCAL', 19, 69, 'm')
 
@@ -702,21 +649,9 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                                     self.assertOp('BUILD_ARRAY', 19, 75, 8)
                                     self.assertOp('RETURN_VALUE', 19, 75)
 
-                                    self.assertOp('POP_SCOPE', 19, 59)
-
                                 self.assertOp('INIT_LOCAL', 19, 47, 'bar')
 
                                 self.assertOp('LOAD_LOCAL', 20, 54, 'bar')
                                 self.assertOp('RETURN_VALUE', 20, 47)
-
-                                self.assertOp('POP_SCOPE', 16, 51)
-            
-                            self.assertOp('POP_SCOPE', 13, 47)
-
-                        self.assertOp('POP_SCOPE', 10, 41)
     
                     self.assertOp('STORE_LOCAL', 10, 41, 'foo')
-    
-                    self.assertOp('POP_SCOPE', 7, 39)
-
-                self.assertOp('POP_SCOPE', 4, 35)
