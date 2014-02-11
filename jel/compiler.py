@@ -1,4 +1,5 @@
 from __future__ import division, print_function, unicode_literals
+from contextlib import contextmanager
 import re
 
 
@@ -35,9 +36,7 @@ class Compiler(object):
         '<', '<=', '>', '>=', '!=', '==', 'in', 'not in',
         )
 
-    _cc_to_us_re = re.compile(
-        '(((?<=[a-z])[A-Z])|([A-Z](?![A-Z]|$)))'
-        )
+    _cc_to_us_re = re.compile(r'(((?<=[a-z])[A-Z])|([A-Z](?![A-Z]|$)))')
 
     @classmethod
     def _cc_to_us(cls, s):
@@ -57,6 +56,19 @@ class Compiler(object):
 
     def genops(self, node):
         getattr(self, self._cc_to_us(type(node).__name__))(node)
+
+    def _new_op_list(self):
+        @contextmanager
+        def op_list():
+            self._ops.append([])
+            yield self._ops[-1]
+            self._ops.pop()
+        return op_list()
+
+    def compile(self, root):
+        with self._new_op_list() as ops:
+            self.genops(root)
+        return tuple(ops)
 
     def or_expr(self, node):
         operand_ops = tuple(self.compile(o) for o in node.operands)
@@ -123,42 +135,3 @@ class Compiler(object):
 
     def identifier_expr(self, node):
         self.load_name(node.lineno, node.lexpos, node.value)
-
-    def compile(self, root):
-        self._ops.append([])
-        self.genops(root)
-        return tuple(self._ops.pop())
-
-    @classmethod
-    def print_ops(cls, ops, indent=0):
-        for index, (op, lineno, lexpos, args) in enumerate(ops):
-            op = cls.op_names[op]
-            if isinstance(lineno, tuple):
-                loc = ','.join('{}:{}'.format(ln, lp)
-                               for ln, lp in zip(lineno, lexpos))
-            else:
-                loc = '{}:{}'.format(lineno, lexpos)
-            print('{}{:4} {:14} {}  '.format(' ' * indent, index, op, loc),
-                  end = '')
-            if op == 'BINARY_OP':
-                print(cls.binary_op_names[args[0]])
-            elif op == 'UNARY_OP':
-                print(cls.unary_op_names[args[0]])
-            elif op == 'COMPARE_OP':
-                print(','.join(cls.comparison_op_names[code]
-                                for code in args[0]))
-                cls._print_arg_ops(args[1], indent)
-            elif op in ('CALL_FUNCTION', 'LOGICAL_AND', 'LOGICAL_OR'):
-                print()
-                cls._print_arg_ops(args[0], indent)
-            elif op == 'LOAD_CONST':
-                print(repr(args[0]) if len(args) == 1 else args)
-            else:
-                assert len(args) <= 1
-                print(args[0] if args else '')
-
-    @classmethod
-    def _print_arg_ops(cls, args, indent):
-        for arg_num, arg_ops in enumerate(args):
-            print('{}arg {}:'.format(' ' * (indent+7), arg_num))
-            cls.print_ops(arg_ops, indent+9)

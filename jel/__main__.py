@@ -9,4 +9,3 @@ src = ''.join(line for line in fileinput.input())
 root = parse(src)
 if root:
     ops = Compiler().compile(root)
-    Compiler.print_ops(ops)
