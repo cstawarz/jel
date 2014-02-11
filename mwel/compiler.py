@@ -213,6 +213,19 @@ class Compiler(JELCompiler):
                            tuple(closure.items()))
         self._store_name(node.lineno, node.lexpos, node.name)
 
+    def function_expr(self, node):
+        with self._new_op_list() as body:
+            with self._new_scope(node.lineno, node.lexpos):
+                with self._new_closure() as closure:
+                    self.compile_stmt_list((node.body,), node.args)
+                    self.return_value(node.body.lineno, node.body.lexpos)
+
+        self.make_function(node.lineno,
+                           node.lexpos,
+                           len(node.args),
+                           tuple(body),
+                           tuple(closure.items()))
+
     def compile_stmt_list(self, stmts, local_names=()):
         for n in reversed(local_names):
             self._new_local(n.lineno, n.lexpos, n.value)

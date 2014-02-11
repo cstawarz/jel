@@ -105,11 +105,11 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
         test_augassign('%')
         test_augassign('**')
 
-    def test_local_stmt(self):
-        def get_body(lineno, lexpos):
-            args = self.assertOp('CALL_COMPOUND', lineno, lexpos)
-            return args[1][0][2]
+    def get_call_stmt_body(self, lineno, lexpos):
+        args = self.assertOp('CALL_COMPOUND', lineno, lexpos)
+        return args[1][0][2]
 
+    def test_local_stmt(self):
         #
         #  Test name depth
         #
@@ -137,7 +137,7 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             self.assertOp('LOAD_CONST', 4, 19, True)
             self.assertOp('STORE_LOCAL', 4, 17, 'foo')
 
-            with self.assertOpList(get_body(5, 13)):
+            with self.assertOpList(self.get_call_stmt_body(5, 13)):
                 self.assertOp('PUSH_SCOPE', 5, 21)
                 self.assertOp('LOAD_NONLOCAL', 6, 17, 'foo', 1)
                 self.assertOp('LOAD_CONST', 6, 24, 2.0, None)
@@ -147,7 +147,7 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                 self.assertOp('LOAD_CONST', 7, 23, True)
                 self.assertOp('STORE_NONLOCAL', 7, 21, 'foo', 1)
 
-                with self.assertOpList(get_body(8, 17)):
+                with self.assertOpList(self.get_call_stmt_body(8, 17)):
                     self.assertOp('PUSH_SCOPE', 8, 25)
                     self.assertOp('LOAD_NONLOCAL', 9, 21, 'foo', 2)
                     self.assertOp('LOAD_CONST', 9, 28, 2.0, None)
@@ -180,12 +180,12 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             self.assertOp('LOAD_CONST', 2, 25, False)
             self.assertOp('INIT_LOCAL', 2, 13, 'foo')
 
-            with self.assertOpList(get_body(3, 13)):
+            with self.assertOpList(self.get_call_stmt_body(3, 13)):
                 self.assertOp('PUSH_SCOPE', 3, 21)
                 self.assertOp('LOAD_NONLOCAL', 4, 29, 'foo', 1)
                 self.assertOp('INIT_LOCAL', 4, 17, 'foo')
 
-                with self.assertOpList(get_body(5, 17)):
+                with self.assertOpList(self.get_call_stmt_body(5, 17)):
                     self.assertOp('PUSH_SCOPE', 5, 25)
                     self.assertOp('LOAD_NONLOCAL', 6, 33, 'foo', 1)
                     self.assertOp('INIT_LOCAL', 6, 21, 'foo')
@@ -380,25 +380,26 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
 
             self.assertOp('STORE_GLOBAL', 2, 29, 'x')
 
-    def test_function_stmt(self):
-        def check_function(lineno,
-                           lexpos,
-                           expected_num_args,
-                           *expected_closures):
-            args = self.assertOp('MAKE_FUNCTION', lineno, lexpos)
-            self.assertEqual(3, len(args))
-            self.assertIsInstance(args[0], int)
-            self.assertEqual(expected_num_args, args[0])
-            self.assertIsInstance(args[2], tuple)
-            self.assertEqual(expected_closures, args[2])
-            return args[1]
+    def check_function(self,
+                       lineno,
+                       lexpos,
+                       expected_num_args,
+                       *expected_closures):
+        args = self.assertOp('MAKE_FUNCTION', lineno, lexpos)
+        self.assertEqual(3, len(args))
+        self.assertIsInstance(args[0], int)
+        self.assertEqual(expected_num_args, args[0])
+        self.assertIsInstance(args[2], tuple)
+        self.assertEqual(expected_closures, args[2])
+        return args[1]
 
+    def test_function_stmt(self):
         with self.compile('''
                           function two():
                               return 2
                           end
                           '''):
-            body = check_function(2, 27, 0)
+            body = self.check_function(2, 27, 0)
             with self.assertOpList(body):
                 self.assertOp('PUSH_SCOPE', 2, 27)
                 self.assertOp('LOAD_CONST', 3, 38, 2.0, None)
@@ -411,7 +412,7 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                               return a+b
                           end
                           '''):
-            body = check_function(2, 27, 2)
+            body = self.check_function(2, 27, 2)
             with self.assertOpList(body):
                 self.assertOp('PUSH_SCOPE', 2, 27)
                 self.assertOp('INIT_LOCAL', 2, 43, 'b')
@@ -431,7 +432,7 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                           '''):
             self.assertOp('LOAD_CONST', 2, 33, None)
             self.assertOp('INIT_LOCAL', 2, 33, 'self')
-            body = check_function(2, 33, 0, ('self', 0))
+            body = self.check_function(2, 33, 0, ('self', 0))
             with self.assertOpList(body):
                 self.assertOp('PUSH_SCOPE', 2, 33)
                 self.assertOp('LOAD_CLOSURE', 3, 38, 'self')
@@ -452,7 +453,7 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                           '''):
             self.assertOp('LOAD_CONST', 2, 33, None)
             self.assertOp('INIT_LOCAL', 2, 33, 'foo')
-            with self.assertOpList(check_function(2, 33, 0)):
+            with self.assertOpList(self.check_function(2, 33, 0)):
                 self.assertOp('PUSH_SCOPE', 2, 33)
                 self.assertOp('POP_SCOPE', 2, 33)
             self.assertOp('STORE_LOCAL', 2, 33, 'foo')
@@ -460,29 +461,21 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             self.assertOp('LOAD_CONST', 4, 39, None)
             self.assertOp('INIT_LOCAL', 4, 27, 'bar')
 
-            with self.assertOpList(check_function(5, 27, 0)):
+            with self.assertOpList(self.check_function(5, 27, 0)):
                 self.assertOp('PUSH_SCOPE', 5, 27)
                 self.assertOp('POP_SCOPE', 5, 27)
             self.assertOp('STORE_LOCAL', 5, 27, 'bar')
 
-            body = self.assertOp('CALL_COMPOUND', 7, 27)[1][0][2]
+            body = self.get_call_stmt_body(7, 27)
             with self.assertOpList(body):
                 self.assertOp('PUSH_SCOPE', 7, 35)
-                with self.assertOpList(check_function(8, 31, 0)):
+                with self.assertOpList(self.check_function(8, 31, 0)):
                     self.assertOp('PUSH_SCOPE', 8, 31)
                     self.assertOp('POP_SCOPE', 8, 31)
                 self.assertOp('STORE_NONLOCAL', 8, 31, 'foo', 1)
                 self.assertOp('POP_SCOPE', 7, 35)
 
     def test_function_stmt_with_closure(self):
-        def check_function(lineno, lexpos, expected_num_args):
-            args = self.assertOp('MAKE_FUNCTION', lineno, lexpos)
-            self.assertEqual(3, len(args))
-            self.assertIsInstance(args[0], int)
-            self.assertEqual(expected_num_args, args[0])
-            self.assertIsInstance(args[2], tuple)
-            return args[2], args[1]
-
         with self.compile('''local w = 2
                           local x = 1
                           local function foo():
@@ -509,15 +502,14 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             self.assertOp('LOAD_CONST', 3, 33, None)
             self.assertOp('INIT_LOCAL', 3, 33, 'foo')
 
-            closure, body = check_function(3, 33, 0)
-            self.assertEqual((('x', 0), ('w', 0)), closure)
+            body = self.check_function(3, 33, 0, ('x', 0), ('w', 0))
             with self.assertOpList(body):
                 self.assertOp('PUSH_SCOPE', 3, 33)
 
                 self.assertOp('LOAD_CONST', 4, 41, 2.0, None)
                 self.assertOp('INIT_LOCAL', 4, 31, 'y')
 
-                body = self.assertOp('CALL_COMPOUND', 5, 31)[1][0][2]
+                body = self.get_call_stmt_body(5, 31)
                 with self.assertOpList(body):
                     self.assertOp('PUSH_SCOPE', 5, 39)
 
@@ -530,8 +522,8 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                     self.assertOp('LOAD_CONST', 7, 41, None)
                     self.assertOp('INIT_LOCAL', 7, 41, 'bar')
 
-                    closure, body = check_function(7, 41, 1)
-                    self.assertEqual((('y', 1), ('w', -2), ('x', -2)), closure)
+                    body = self.check_function(7, 41, 1,
+                                               ('y', 1), ('w', -2), ('x', -2))
                     with self.assertOpList(body):
                         self.assertOp('PUSH_SCOPE', 7, 41)
                         self.assertOp('INIT_LOCAL', 7, 54, 'z')
@@ -585,3 +577,146 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                           '''):
             self.assertOp('LOAD_CONST', 2, 27, None)
             self.assertOp('RETURN_VALUE', 2, 27)
+
+    def test_function_expr(self):
+        with self.compile('''
+                          two = function () 2 end
+                          '''):
+            body = self.check_function(2, 33, 0)
+            with self.assertOpList(body):
+                self.assertOp('PUSH_SCOPE', 2, 33)
+                self.assertOp('LOAD_CONST', 2, 45, 2.0, None)
+                self.assertOp('RETURN_VALUE', 2, 45)
+                self.assertOp('POP_SCOPE', 2, 33)
+            self.assertOp('STORE_GLOBAL', 2, 31, 'two')
+
+        with self.compile('''
+                          local a1 = false
+                          local x1 = true
+                          scope ():
+                              local b1 = false
+                              local y1 = true
+                              scope ():
+                                  local c1 = false
+                                  local z1 = true
+                                  local function foo():
+                                      local a2 = false
+                                      local x2 = true
+                                      scope ():
+                                          local b2 = false
+                                          local y2 = true
+                                          scope ():
+                                              local c2 = false
+                                              local z2 = true
+                                              local bar = function (m, n) [x1, y1, z1, x2, y2, z2, m, n] end
+                                              return bar
+                                          end
+                                      end
+                                  end
+                              end
+                          end
+                          '''):
+            self.assertOp('LOAD_CONST', 2, 38, False)
+            self.assertOp('INIT_LOCAL', 2, 27, 'a1')
+
+            self.assertOp('LOAD_CONST', 3, 38, True)
+            self.assertOp('INIT_LOCAL', 3, 27, 'x1')
+
+            body = self.get_call_stmt_body(4, 27)
+            with self.assertOpList(body):
+                self.assertOp('PUSH_SCOPE', 4, 35)
+
+                self.assertOp('LOAD_CONST', 5, 42, False)
+                self.assertOp('INIT_LOCAL', 5, 31, 'b1')
+    
+                self.assertOp('LOAD_CONST', 6, 42, True)
+                self.assertOp('INIT_LOCAL', 6, 31, 'y1')
+
+                body = self.get_call_stmt_body(7, 31)
+                with self.assertOpList(body):
+                    self.assertOp('PUSH_SCOPE', 7, 39)
+    
+                    self.assertOp('LOAD_CONST', 8, 46, False)
+                    self.assertOp('INIT_LOCAL', 8, 35, 'c1')
+        
+                    self.assertOp('LOAD_CONST', 9, 46, True)
+                    self.assertOp('INIT_LOCAL', 9, 35, 'z1')
+        
+                    self.assertOp('LOAD_CONST', 10, 41, None)
+                    self.assertOp('INIT_LOCAL', 10, 41, 'foo')
+
+                    body = self.check_function(10, 41, 0,
+                                               ('x1', 2),
+                                               ('y1', 1),
+                                               ('z1', 0))
+                    with self.assertOpList(body):
+                        self.assertOp('PUSH_SCOPE', 10, 41)
+
+                        self.assertOp('LOAD_CONST', 11, 50, False)
+                        self.assertOp('INIT_LOCAL', 11, 39, 'a2')
+            
+                        self.assertOp('LOAD_CONST', 12, 50, True)
+                        self.assertOp('INIT_LOCAL', 12, 39, 'x2')
+            
+                        body = self.get_call_stmt_body(13, 39)
+                        with self.assertOpList(body):
+                            self.assertOp('PUSH_SCOPE', 13, 47)
+            
+                            self.assertOp('LOAD_CONST', 14, 54, False)
+                            self.assertOp('INIT_LOCAL', 14, 43, 'b2')
+                
+                            self.assertOp('LOAD_CONST', 15, 54, True)
+                            self.assertOp('INIT_LOCAL', 15, 43, 'y2')
+            
+                            body = self.get_call_stmt_body(16, 43)
+                            with self.assertOpList(body):
+                                self.assertOp('PUSH_SCOPE', 16, 51)
+                
+                                self.assertOp('LOAD_CONST', 17, 58, False)
+                                self.assertOp('INIT_LOCAL', 17, 47, 'c2')
+                    
+                                self.assertOp('LOAD_CONST', 18, 58, True)
+                                self.assertOp('INIT_LOCAL', 18, 47, 'z2')
+
+                                body = self.check_function(19, 59, 2,
+                                                           ('x1', -5),
+                                                           ('y1', -4),
+                                                           ('z1', -3),
+                                                           ('x2', 2),
+                                                           ('y2', 1),
+                                                           ('z2', 0))
+                                with self.assertOpList(body):
+                                    self.assertOp('PUSH_SCOPE', 19, 59)
+
+                                    self.assertOp('INIT_LOCAL', 19, 72, 'n')
+                                    self.assertOp('INIT_LOCAL', 19, 69, 'm')
+
+                                    self.assertOp('LOAD_CLOSURE', 19, 76, 'x1')
+                                    self.assertOp('LOAD_CLOSURE', 19, 80, 'y1')
+                                    self.assertOp('LOAD_CLOSURE', 19, 84, 'z1')
+                                    self.assertOp('LOAD_CLOSURE', 19, 88, 'x2')
+                                    self.assertOp('LOAD_CLOSURE', 19, 92, 'y2')
+                                    self.assertOp('LOAD_CLOSURE', 19, 96, 'z2')
+                                    self.assertOp('LOAD_LOCAL', 19, 100, 'm')
+                                    self.assertOp('LOAD_LOCAL', 19, 103, 'n')
+                                    self.assertOp('BUILD_ARRAY', 19, 75, 8)
+                                    self.assertOp('RETURN_VALUE', 19, 75)
+
+                                    self.assertOp('POP_SCOPE', 19, 59)
+
+                                self.assertOp('INIT_LOCAL', 19, 47, 'bar')
+
+                                self.assertOp('LOAD_LOCAL', 20, 54, 'bar')
+                                self.assertOp('RETURN_VALUE', 20, 47)
+
+                                self.assertOp('POP_SCOPE', 16, 51)
+            
+                            self.assertOp('POP_SCOPE', 13, 47)
+
+                        self.assertOp('POP_SCOPE', 10, 41)
+    
+                    self.assertOp('STORE_LOCAL', 10, 41, 'foo')
+    
+                    self.assertOp('POP_SCOPE', 7, 39)
+
+                self.assertOp('POP_SCOPE', 4, 35)
