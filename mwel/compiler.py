@@ -11,8 +11,10 @@ from . import ast
 class Compiler(JELCompiler):
 
     op_names, op_codes = gen_codes(
+        'BUILD_RANGE_ARRAY',
         'CALL_COMPOUND',
         'CALL_SIMPLE',
+        'CONCAT_ARRAYS',
         'DUP_TOP',
         'DUP_TOP_TWO',
         'INIT_LOCAL',
@@ -236,6 +238,37 @@ class Compiler(JELCompiler):
     def attribute_reference_expr(self, node):
         self.genops(node.target)
         self.load_attr_ref(node.lineno, node.lexpos, node.name)
+
+    def array_literal_expr(self, node):
+        num_arrays = 0
+        num_items = 0
+
+        for item in node.items:
+            if not isinstance(item, ast.ArrayItemRange):
+                self.genops(item)
+                num_items += 1
+            else:
+                if num_items > 0:
+                    self.build_array(node.lineno, node.lexpos, num_items)
+                    num_arrays += 1
+                    num_items = 0
+
+                self.genops(item.start)
+                self.genops(item.stop)
+                if item.step is not None:
+                    self.genops(item.step)
+                else:
+                    self.null_literal_expr(node)
+
+                self.build_range_array(node.lineno, node.lexpos)
+                num_arrays += 1
+
+        if num_arrays == 0 or num_items > 0:
+            self.build_array(node.lineno, node.lexpos, num_items)
+            num_arrays += 1
+
+        if num_arrays > 1:
+            self.concat_arrays(node.lineno, node.lexpos, num_arrays)
 
     def identifier_expr(self, node):
         self._load_name(node.lineno, node.lexpos, node.value)

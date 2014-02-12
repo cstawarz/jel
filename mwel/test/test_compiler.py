@@ -655,3 +655,96 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                                 self.assertOp('RETURN_VALUE', 20, 47)
     
                     self.assertOp('STORE_LOCAL', 10, 41, 'foo')
+
+    def test_array_literal_expr(self):
+        with self.compile('''
+                          x = []
+                          '''):
+            self.assertOp('BUILD_ARRAY', 2, 31, 0)
+            self.assertOp('STORE_GLOBAL', 2, 29, 'x')
+
+        with self.compile('''
+                          x = [a,b,c]
+                          '''):
+            self.assertOp('LOAD_GLOBAL', 2, 32, 'a')
+            self.assertOp('LOAD_GLOBAL', 2, 34, 'b')
+            self.assertOp('LOAD_GLOBAL', 2, 36, 'c')
+            self.assertOp('BUILD_ARRAY', 2, 31, 3)
+            self.assertOp('STORE_GLOBAL', 2, 29, 'x')
+
+        with self.compile('''
+                          x = [a:b]
+                          '''):
+            self.assertOp('LOAD_GLOBAL', 2, 32, 'a')
+            self.assertOp('LOAD_GLOBAL', 2, 34, 'b')
+            self.assertOp('LOAD_CONST', 2, 31, None)
+            self.assertOp('BUILD_RANGE_ARRAY', 2, 31)
+            self.assertOp('STORE_GLOBAL', 2, 29, 'x')
+
+        with self.compile('''
+                          x = [a:b:c]
+                          '''):
+            self.assertOp('LOAD_GLOBAL', 2, 32, 'a')
+            self.assertOp('LOAD_GLOBAL', 2, 34, 'b')
+            self.assertOp('LOAD_GLOBAL', 2, 36, 'c')
+            self.assertOp('BUILD_RANGE_ARRAY', 2, 31)
+            self.assertOp('STORE_GLOBAL', 2, 29, 'x')
+
+        with self.compile('''
+                          x = [a:b,c]
+                          '''):
+            self.assertOp('LOAD_GLOBAL', 2, 32, 'a')
+            self.assertOp('LOAD_GLOBAL', 2, 34, 'b')
+            self.assertOp('LOAD_CONST', 2, 31, None)
+            self.assertOp('BUILD_RANGE_ARRAY', 2, 31)
+
+            self.assertOp('LOAD_GLOBAL', 2, 36, 'c')
+            self.assertOp('BUILD_ARRAY', 2, 31, 1)
+
+            self.assertOp('CONCAT_ARRAYS', 2, 31, 2)
+
+            self.assertOp('STORE_GLOBAL', 2, 29, 'x')
+
+        with self.compile('''
+                          x = [a,b:c]
+                          '''):
+            self.assertOp('LOAD_GLOBAL', 2, 32, 'a')
+            self.assertOp('BUILD_ARRAY', 2, 31, 1)
+
+            self.assertOp('LOAD_GLOBAL', 2, 34, 'b')
+            self.assertOp('LOAD_GLOBAL', 2, 36, 'c')
+            self.assertOp('LOAD_CONST', 2, 31, None)
+            self.assertOp('BUILD_RANGE_ARRAY', 2, 31)
+
+            self.assertOp('CONCAT_ARRAYS', 2, 31, 2)
+
+            self.assertOp('STORE_GLOBAL', 2, 29, 'x')
+
+        with self.compile('''
+                          x = [a,b,c:d:e,f,g,h,i:j,k]
+                          '''):
+            self.assertOp('LOAD_GLOBAL', 2, 32, 'a')
+            self.assertOp('LOAD_GLOBAL', 2, 34, 'b')
+            self.assertOp('BUILD_ARRAY', 2, 31, 2)
+
+            self.assertOp('LOAD_GLOBAL', 2, 36, 'c')
+            self.assertOp('LOAD_GLOBAL', 2, 38, 'd')
+            self.assertOp('LOAD_GLOBAL', 2, 40, 'e')
+            self.assertOp('BUILD_RANGE_ARRAY', 2, 31)
+
+            self.assertOp('LOAD_GLOBAL', 2, 42, 'f')
+            self.assertOp('LOAD_GLOBAL', 2, 44, 'g')
+            self.assertOp('LOAD_GLOBAL', 2, 46, 'h')
+            self.assertOp('BUILD_ARRAY', 2, 31, 3)
+
+            self.assertOp('LOAD_GLOBAL', 2, 48, 'i')
+            self.assertOp('LOAD_GLOBAL', 2, 50, 'j')
+            self.assertOp('LOAD_CONST', 2, 31, None)
+            self.assertOp('BUILD_RANGE_ARRAY', 2, 31)
+
+            self.assertOp('LOAD_GLOBAL', 2, 52, 'k')
+            self.assertOp('BUILD_ARRAY', 2, 31, 1)
+
+            self.assertOp('CONCAT_ARRAYS', 2, 31, 5)
+
+            self.assertOp('STORE_GLOBAL', 2, 29, 'x')
