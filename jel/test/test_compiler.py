@@ -81,16 +81,18 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
         test_bool('false', False)
 
     def test_number_literal_expr(self):
-        def test_num(expr, value, tag=None):
-            with self.compile(expr):
-                args = self.assertOp('LOAD_CONST', 1, 0)
-                self.assertEqual(2, len(args))
-                self.assertIsInstance(args[0], float)
-                self.assertEqual(value, args[0])
-                self.assertEqual(tag, args[1])
+        def check_num(value):
+            args = self.assertOp('LOAD_CONST', 1, 0)
+            self.assertEqual(1, len(args))
+            self.assertIsInstance(args[0], float)
+            self.assertEqual(value, args[0])
 
-        test_num('2', 2.0)
-        test_num('1.5abc', 1.5, 'abc')
+        with self.compile('2'):
+            check_num(2.0)
+
+        with self.compile('1.5abc'):
+            check_num(1.5)
+            self.assertOp('APPLY_TAG', 1, 0, 'abc')
 
     def test_string_literal_expr(self):
         with self.compile('"foo"'):
@@ -112,11 +114,11 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
 
         with self.compile('{a: 1, "b": 2, c: 3}'):
             self.assertOp('LOAD_CONST', 1, 0, 'a')
-            self.assertOp('LOAD_CONST', 1, 4, 1.0, None)
+            self.assertOp('LOAD_CONST', 1, 4, 1.0)
             self.assertOp('LOAD_CONST', 1, 0, 'b')
-            self.assertOp('LOAD_CONST', 1, 12, 2.0, None)
+            self.assertOp('LOAD_CONST', 1, 12, 2.0)
             self.assertOp('LOAD_CONST', 1, 0, 'c')
-            self.assertOp('LOAD_CONST', 1, 18, 3.0, None)
+            self.assertOp('LOAD_CONST', 1, 18, 3.0)
             self.assertOp('BUILD_OBJECT', 1, 0, 3)
 
     def test_attribute_expr(self):

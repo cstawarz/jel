@@ -71,7 +71,7 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                               foo %s= 1
                               ''' % op):
                 self.assertOp('LOAD_GLOBAL', 2, 31, 'foo')
-                self.assertOp('LOAD_CONST', 2, len(op)+37, 1.0, None)
+                self.assertOp('LOAD_CONST', 2, len(op)+37, 1.0)
                 self.assertOp('BINARY_OP', 2, 35, op_code)
                 self.assertOp('STORE_GLOBAL', 2, 35, 'foo')
 
@@ -81,7 +81,7 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                 self.assertOp('LOAD_GLOBAL', 2, 31, 'foo')
                 self.assertOp('DUP_TOP', 2, 39)
                 self.assertOp('LOAD_ATTR', 2, 34, 'bar')
-                self.assertOp('LOAD_CONST', 2, len(op)+41, 2.0, None)
+                self.assertOp('LOAD_CONST', 2, len(op)+41, 2.0)
                 self.assertOp('BINARY_OP', 2, 39, op_code)
                 self.assertOp('ROT_TWO', 2, 39)
                 self.assertOp('STORE_ATTR', 2, 39, 'bar')
@@ -93,7 +93,7 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                 self.assertOp('LOAD_GLOBAL', 2, 35, 'bar')
                 self.assertOp('DUP_TOP_TWO', 2, 40)
                 self.assertOp('LOAD_SUBSCR', 2, 34)
-                self.assertOp('LOAD_CONST', 2, len(op)+42, 3.0, None)
+                self.assertOp('LOAD_CONST', 2, len(op)+42, 3.0)
                 self.assertOp('BINARY_OP', 2, 40, op_code)
                 self.assertOp('ROT_THREE', 2, 40)
                 self.assertOp('STORE_SUBSCR', 2, 40)
@@ -127,10 +127,10 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                 end
             end
             '''):
-            self.assertOp('LOAD_CONST', 2, 25, 1.0, None)
+            self.assertOp('LOAD_CONST', 2, 25, 1.0)
             self.assertOp('INIT_LOCAL', 2, 13, 'foo')
             self.assertOp('LOAD_LOCAL', 3, 13, 'foo')
-            self.assertOp('LOAD_CONST', 3, 20, 2.0, None)
+            self.assertOp('LOAD_CONST', 3, 20, 2.0)
             self.assertOp('BINARY_OP', 3, 17,
                           self.compiler.binary_op_codes['+'])
             self.assertOp('STORE_LOCAL', 3, 17, 'foo')
@@ -139,7 +139,7 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
 
             with self.assertOpList(self.get_call_stmt_body(5, 13)):
                 self.assertOp('LOAD_NONLOCAL', 6, 17, 'foo', 1)
-                self.assertOp('LOAD_CONST', 6, 24, 2.0, None)
+                self.assertOp('LOAD_CONST', 6, 24, 2.0)
                 self.assertOp('BINARY_OP', 6, 21,
                               self.compiler.binary_op_codes['+'])
                 self.assertOp('STORE_NONLOCAL', 6, 21, 'foo', 1)
@@ -148,7 +148,7 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
 
                 with self.assertOpList(self.get_call_stmt_body(8, 17)):
                     self.assertOp('LOAD_NONLOCAL', 9, 21, 'foo', 2)
-                    self.assertOp('LOAD_CONST', 9, 28, 2.0, None)
+                    self.assertOp('LOAD_CONST', 9, 28, 2.0)
                     self.assertOp('BINARY_OP', 9, 25,
                                   self.compiler.binary_op_codes['+'])
                     self.assertOp('STORE_NONLOCAL', 9, 25, 'foo', 2)
@@ -270,9 +270,9 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             self.assertEqual(1, len(clauses))
             args, body = check_clause(clauses[0], 0, 0)
             with self.assertOpList(body):
-                self.assertOp('LOAD_CONST', 3, 41, 2.0, None)
+                self.assertOp('LOAD_CONST', 3, 41, 2.0)
                 self.assertOp('INIT_LOCAL', 3, 31, 'x')
-                self.assertOp('LOAD_CONST', 4, 35, 3.0, None)
+                self.assertOp('LOAD_CONST', 4, 35, 3.0)
                 self.assertOp('STORE_GLOBAL', 4, 33, 'y')
 
         with self.compile('''
@@ -320,7 +320,7 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                 self.assertOp('LOAD_CONST', 4, 46, False)
             with self.assertOpList(body):
                 self.assertOp('INIT_LOCAL', 4, 56, 'q')
-                self.assertOp('LOAD_CONST', 5, 35, 5.0, None)
+                self.assertOp('LOAD_CONST', 5, 35, 5.0)
                 self.assertOp('LOAD_LOCAL', 5, 37, 'q')
                 self.assertOp('BINARY_OP', 5, 36,
                               self.compiler.binary_op_codes['*'])
@@ -328,7 +328,7 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
 
             args, body = check_clause(clauses[2], 0, 0)
             with self.assertOpList(body):
-                self.assertOp('LOAD_CONST', 7, 35, 6.0, None)
+                self.assertOp('LOAD_CONST', 7, 35, 6.0)
                 self.assertOp('STORE_GLOBAL', 7, 33, 'z')
  
     def test_call_expr_with_named_args(self):
@@ -353,7 +353,7 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
             self.assertEqual('c', args[2][0])
             with self.assertOpList(args[2][1]):
                 self.assertOp('LOAD_GLOBAL', 2, 57, 'foo')
-                self.assertOp('LOAD_CONST', 2, 61, 0.0, None)
+                self.assertOp('LOAD_CONST', 2, 61, 0.0)
                 self.assertOp('LOAD_SUBSCR', 2, 60)
                 self.assertOp('LOAD_ATTR_REF', 2, 63, 'bar')
 
@@ -384,7 +384,7 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                           '''):
             body = self.check_function(2, 27, 0)
             with self.assertOpList(body):
-                self.assertOp('LOAD_CONST', 3, 38, 2.0, None)
+                self.assertOp('LOAD_CONST', 3, 38, 2.0)
                 self.assertOp('RETURN_VALUE', 3, 31)
             self.assertOp('STORE_GLOBAL', 2, 27, 'two')
 
@@ -465,10 +465,10 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                               end
                           end
                           '''):
-            self.assertOp('LOAD_CONST', 1, 11, 2.0, None)
+            self.assertOp('LOAD_CONST', 1, 11, 2.0)
             self.assertOp('INIT_LOCAL', 1, 1, 'w')
 
-            self.assertOp('LOAD_CONST', 2, 37, 1.0, None)
+            self.assertOp('LOAD_CONST', 2, 37, 1.0)
             self.assertOp('INIT_LOCAL', 2, 27, 'x')
 
             self.assertOp('LOAD_CONST', 3, 33, None)
@@ -476,7 +476,7 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
 
             body = self.check_function(3, 33, 0, ('x', 0), ('w', 0))
             with self.assertOpList(body):
-                self.assertOp('LOAD_CONST', 4, 41, 2.0, None)
+                self.assertOp('LOAD_CONST', 4, 41, 2.0)
                 self.assertOp('INIT_LOCAL', 4, 31, 'y')
 
                 body = self.get_call_stmt_body(5, 31)
@@ -509,13 +509,13 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
     
                     self.assertOp('STORE_LOCAL', 7, 41, 'bar')
     
-                    self.assertOp('LOAD_CONST', 11, 45, 4.0, None)
+                    self.assertOp('LOAD_CONST', 11, 45, 4.0)
                     self.assertOp('INIT_LOCAL', 11, 35, 'x')
     
-                    self.assertOp('LOAD_CONST', 12, 39, 5.0, None)
+                    self.assertOp('LOAD_CONST', 12, 39, 5.0)
                     self.assertOp('STORE_LOCAL', 12, 37, 'x')
     
-                    self.assertOp('LOAD_CONST', 13, 39, 6.0, None)
+                    self.assertOp('LOAD_CONST', 13, 39, 6.0)
                     self.assertOp('STORE_NONLOCAL', 13, 37, 'y', 1)
     
                     self.assertOp('LOAD_LOCAL', 14, 42, 'bar')
@@ -527,7 +527,7 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
         with self.compile('''
                           return 2*x
                           '''):
-            self.assertOp('LOAD_CONST', 2, 34, 2.0, None)
+            self.assertOp('LOAD_CONST', 2, 34, 2.0)
             self.assertOp('LOAD_GLOBAL', 2, 36, 'x')
             self.assertOp('BINARY_OP', 2, 35,
                           self.compiler.binary_op_codes['*'])
@@ -545,7 +545,7 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
                           '''):
             body = self.check_function(2, 33, 0)
             with self.assertOpList(body):
-                self.assertOp('LOAD_CONST', 2, 45, 2.0, None)
+                self.assertOp('LOAD_CONST', 2, 45, 2.0)
                 self.assertOp('RETURN_VALUE', 2, 45)
             self.assertOp('STORE_GLOBAL', 2, 31, 'two')
 

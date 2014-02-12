@@ -10,6 +10,7 @@ def gen_codes(*ops):
 class Compiler(object):
 
     op_names, op_codes = gen_codes(
+        'APPLY_TAG',
         'BINARY_OP',
         'BUILD_ARRAY',
         'BUILD_OBJECT',
@@ -125,7 +126,9 @@ class Compiler(object):
         self.load_const(node.lineno, node.lexpos, node.value)
 
     def number_literal_expr(self, node):
-        self.load_const(node.lineno, node.lexpos, float(node.value), node.tag)
+        self.load_const(node.lineno, node.lexpos, float(node.value))
+        if node.tag is not None:
+            self.apply_tag(node.lineno, node.lexpos, node.tag)
 
     def boolean_literal_expr(self, node):
         self.load_const(node.lineno, node.lexpos, node.value)
