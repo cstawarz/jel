@@ -95,7 +95,7 @@ class Lexer(object):
             value = t.value.encode().decode('unicode_escape')
             if t.value.startswith('\\u'):
                 # Recombine any surrogate pairs
-                value = value.encode('utf-16').decode('utf-16')
+                value = value.encode('utf-16', 'surrogatepass').decode('utf-16')
         self.string_value += value
 
     def t_msstring_body(self, t):
