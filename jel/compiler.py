@@ -4,7 +4,8 @@ import re
 
 
 def gen_codes(*ops):
-    return ops, dict((op, code) for code, op in enumerate(ops))
+    sorted_ops = tuple(sorted(ops))
+    return sorted_ops, dict((op, code) for code, op in enumerate(sorted_ops))
 
 
 class Compiler(object):

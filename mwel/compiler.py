@@ -272,3 +272,8 @@ class Compiler(JELCompiler):
 
     def identifier_expr(self, node):
         self._load_name(node.lineno, node.lexpos, node.value)
+
+
+if __name__ == '__main__':
+    for op_name in Compiler.op_names:
+        print(op_name, end=',\n')
