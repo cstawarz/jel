@@ -113,10 +113,9 @@ class Compiler(object):
         self.load_attr(node.lineno, node.lexpos, node.name)
 
     def object_literal_expr(self, node):
-        for key, value in node.items.items():
-            self.load_const(node.lineno, node.lexpos, key)
+        for value in node.items.values():
             self.genops(value)
-        self.build_object(node.lineno, node.lexpos, len(node.items))
+        self.build_object(node.lineno, node.lexpos, tuple(node.items.keys()))
 
     def array_literal_expr(self, node):
         for item in node.items:

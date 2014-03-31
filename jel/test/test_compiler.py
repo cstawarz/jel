@@ -110,16 +110,13 @@ class TestCompiler(CompilerTestMixin, unittest.TestCase):
 
     def test_object_literal_expr(self):
         with self.compile('{}'):
-            self.assertOp('BUILD_OBJECT', 1, 0, 0)
+            self.assertOp('BUILD_OBJECT', 1, 0, ())
 
         with self.compile('{a: 1, "b": 2, c: 3}'):
-            self.assertOp('LOAD_CONST', 1, 0, 'a')
             self.assertOp('LOAD_CONST', 1, 4, 1.0)
-            self.assertOp('LOAD_CONST', 1, 0, 'b')
             self.assertOp('LOAD_CONST', 1, 12, 2.0)
-            self.assertOp('LOAD_CONST', 1, 0, 'c')
             self.assertOp('LOAD_CONST', 1, 18, 3.0)
-            self.assertOp('BUILD_OBJECT', 1, 0, 3)
+            self.assertOp('BUILD_OBJECT', 1, 0, ('a', 'b', 'c'))
 
     def test_attribute_expr(self):
         with self.compile('foo.bar'):
